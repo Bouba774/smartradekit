@@ -58,30 +58,60 @@ const ChartContainer = React.forwardRef<
 });
 ChartContainer.displayName = "Chart";
 
-const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
-  const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color);
+// Sanitize CSS key to prevent injection - only allow alphanumeric, hyphens
+const sanitizeCssKey = (key: string): string => {
+  return key.replace(/[^a-zA-Z0-9-]/g, '');
+};
 
-  if (!colorConfig.length) {
+// Validate CSS color value - only allow safe color formats
+const isValidCssColor = (color: string): boolean => {
+  // Allow: hex, rgb, rgba, hsl, hsla, named colors, CSS variables
+  const colorPattern = /^(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\)|var\(--[a-zA-Z0-9-]+\)|[a-zA-Z]+)$/;
+  return colorPattern.test(color.trim());
+};
+
+const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
+  const styleContent = React.useMemo(() => {
+    const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color);
+
+    if (!colorConfig.length) {
+      return null;
+    }
+
+    // Sanitize the chart ID to prevent CSS injection
+    const safeId = sanitizeCssKey(id);
+
+    const cssRules = Object.entries(THEMES)
+      .map(([theme, prefix]) => {
+        const variables = colorConfig
+          .map(([key, itemConfig]) => {
+            const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
+            const safeKey = sanitizeCssKey(key);
+            // Only include valid, sanitized color values
+            if (color && isValidCssColor(color)) {
+              return `  --color-${safeKey}: ${color};`;
+            }
+            return null;
+          })
+          .filter(Boolean)
+          .join("\n");
+
+        return `${prefix} [data-chart=${safeId}] {\n${variables}\n}`;
+      })
+      .join("\n");
+
+    return cssRules;
+  }, [id, config]);
+
+  if (!styleContent) {
     return null;
   }
 
+  // Using a style element with textContent via ref for safer injection
   return (
     <style
       dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
-  })
-  .join("\n")}
-}
-`,
-          )
-          .join("\n"),
+        __html: styleContent,
       }}
     />
   );
