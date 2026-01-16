@@ -1402,6 +1402,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      hash_pin_value: {
+        Args: { p_pin: string; p_salt?: string }
+        Returns: {
+          hash: string
+          salt: string
+        }[]
+      }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_admin_blocked: { Args: { p_admin_id: string }; Returns: boolean }
       is_user_banned: { Args: { _user_id: string }; Returns: boolean }
