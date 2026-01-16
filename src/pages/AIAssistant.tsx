@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { 
   Send, Bot, User, Loader2, Sparkles, 
   ImagePlus, XCircle, History, Plus, Trash2, ChevronLeft,
-  FileText, Music, Video, File
+  FileText, Music, Video, File, Search, X
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTrades } from '@/hooks/useTrades';
@@ -65,6 +65,7 @@ const AIAssistant: React.FC = () => {
   } = useAIConversations();
 
   const [showHistory, setShowHistory] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -73,6 +74,12 @@ const AIAssistant: React.FC = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Filter conversations based on search query
+  const filteredConversations = conversations.filter(conv => 
+    conv.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // Sync saved messages to local state when conversation changes
   useEffect(() => {
@@ -97,6 +104,9 @@ const AIAssistant: React.FC = () => {
   useEffect(() => {
     if (inputRef.current && !showHistory) {
       inputRef.current.focus();
+    }
+    if (searchInputRef.current && showHistory) {
+      searchInputRef.current.focus();
     }
   }, [showHistory]);
 
@@ -258,11 +268,13 @@ const AIAssistant: React.FC = () => {
     startNewConversation();
     setLocalMessages([]);
     setShowHistory(false);
+    setSearchQuery('');
   };
 
   const handleSelectConversation = async (convId: string) => {
     await selectConversation(convId);
     setShowHistory(false);
+    setSearchQuery('');
   };
 
   const handleDeleteConversation = async (e: React.MouseEvent, convId: string) => {
@@ -278,6 +290,27 @@ const AIAssistant: React.FC = () => {
 
   const dateLocale = language === 'fr' ? fr : enUS;
   const FileIcon = selectedFile ? getFileIcon(selectedFile.type) : File;
+
+  // Helper function to highlight matching text in search results
+  const highlightText = (text: string, query: string) => {
+    if (!query.trim()) return text;
+    
+    const parts = text.split(new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'));
+    
+    return (
+      <>
+        {parts.map((part, i) => 
+          part.toLowerCase() === query.toLowerCase() ? (
+            <span key={i} className="bg-primary/30 text-primary-foreground rounded px-0.5">
+              {part}
+            </span>
+          ) : (
+            part
+          )
+        )}
+      </>
+    );
+  };
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -337,49 +370,102 @@ const AIAssistant: React.FC = () => {
 
       {/* Content */}
       {showHistory ? (
-        <ScrollArea className="flex-1 p-4">
-          {conversations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center py-8">
-              <History className="w-12 h-12 text-muted-foreground/50 mb-4" />
-              <p className="text-muted-foreground text-sm">
-                Aucune conversation
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {conversations.map((conv) => (
-                <div
-                  key={conv.id}
-                  onClick={() => handleSelectConversation(conv.id)}
-                  className={cn(
-                    "p-3 rounded-lg cursor-pointer transition-all group",
-                    "hover:bg-primary/10 border border-transparent hover:border-primary/20",
-                    currentConversationId === conv.id && "bg-primary/10 border-primary/30"
-                  )}
+        <div className="flex flex-col flex-1 overflow-hidden">
+          {/* Search Bar */}
+          <div className="p-4 border-b border-border shrink-0">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                ref={searchInputRef}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Rechercher une conversation..."
+                className="pl-9 pr-9"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-foreground truncate">
-                        {conv.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {format(new Date(conv.updated_at), 'PPp', { locale: dateLocale })}
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => handleDeleteConversation(e, conv.id)}
-                      className="opacity-0 group-hover:opacity-100 h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
-          )}
-        </ScrollArea>
+            {searchQuery && (
+              <p className="text-xs text-muted-foreground mt-2">
+                {filteredConversations.length} résultat{filteredConversations.length !== 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
+
+          <ScrollArea className="flex-1 p-4">
+            {filteredConversations.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                {searchQuery ? (
+                  <>
+                    <Search className="w-12 h-12 text-muted-foreground/50 mb-4" />
+                    <p className="text-muted-foreground text-sm">
+                      Aucun résultat pour "{searchQuery}"
+                    </p>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onClick={() => setSearchQuery('')}
+                      className="mt-2 text-primary"
+                    >
+                      Effacer la recherche
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <History className="w-12 h-12 text-muted-foreground/50 mb-4" />
+                    <p className="text-muted-foreground text-sm">
+                      Aucune conversation
+                    </p>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {filteredConversations.map((conv) => (
+                  <div
+                    key={conv.id}
+                    onClick={() => handleSelectConversation(conv.id)}
+                    className={cn(
+                      "p-3 rounded-lg cursor-pointer transition-all group",
+                      "hover:bg-primary/10 border border-transparent hover:border-primary/20",
+                      currentConversationId === conv.id && "bg-primary/10 border-primary/30"
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm text-foreground truncate">
+                          {searchQuery ? (
+                            // Highlight matching text
+                            highlightText(conv.title, searchQuery)
+                          ) : (
+                            conv.title
+                          )}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {format(new Date(conv.updated_at), 'PPp', { locale: dateLocale })}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => handleDeleteConversation(e, conv.id)}
+                        className="opacity-0 group-hover:opacity-100 h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </div>
       ) : (
         <>
           {/* Messages */}
