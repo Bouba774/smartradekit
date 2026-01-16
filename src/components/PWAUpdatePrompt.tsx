@@ -6,13 +6,15 @@ import { useLanguage } from '@/contexts/LanguageContext';
 const PWAUpdatePrompt: React.FC = () => {
   const { language } = useLanguage();
   const [showPrompt, setShowPrompt] = useState(false);
-  const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) {
       return;
     }
+
+    let intervalId: ReturnType<typeof setInterval>;
 
     const handleServiceWorker = async () => {
       try {
@@ -22,7 +24,6 @@ const PWAUpdatePrompt: React.FC = () => {
 
         // Check if there's already a waiting worker
         if (registration.waiting) {
-          setWaitingWorker(registration.waiting);
           setShowPrompt(true);
         }
 
@@ -32,7 +33,6 @@ const PWAUpdatePrompt: React.FC = () => {
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                setWaitingWorker(newWorker);
                 setShowPrompt(true);
               }
             });
@@ -40,11 +40,10 @@ const PWAUpdatePrompt: React.FC = () => {
         });
 
         // Periodic update check every 5 minutes
-        const intervalId = setInterval(() => {
+        intervalId = setInterval(() => {
           registration.update().catch(console.error);
         }, 5 * 60 * 1000);
 
-        return () => clearInterval(intervalId);
       } catch (error) {
         console.error('[PWA] Service worker error:', error);
       }
@@ -62,37 +61,58 @@ const PWAUpdatePrompt: React.FC = () => {
 
     return () => {
       navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+      if (intervalId) clearInterval(intervalId);
     };
   }, []);
 
-  const handleUpdate = useCallback(() => {
-    if (waitingWorker) {
-      // Send message to skip waiting
-      waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+  const handleUpdate = useCallback(async () => {
+    setIsUpdating(true);
+    
+    try {
+      const registration = registrationRef.current;
+      
+      if (registration?.waiting) {
+        // Tell the waiting service worker to activate
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        
+        // Wait a moment for the SW to take over, then reload
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      } else {
+        // No waiting worker - just reload to get latest version
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('[PWA] Update error:', error);
+      // Fallback: force reload
+      window.location.reload();
     }
-    setShowPrompt(false);
-  }, [waitingWorker]);
+  }, []);
 
   const handleDismiss = useCallback(() => {
     setShowPrompt(false);
   }, []);
 
-  // Force refresh - useful if the service worker doesn't respond
-  const handleForceRefresh = useCallback(() => {
-    // Clear all caches and reload
-    if ('caches' in window) {
-      caches.keys().then((names) => {
-        names.forEach((name) => {
-          caches.delete(name);
-        });
-      });
-    }
-    // Unregister the service worker and reload
-    if (registrationRef.current) {
-      registrationRef.current.unregister().then(() => {
-        window.location.reload();
-      });
-    } else {
+  // Force refresh - clear caches, unregister SW, and reload
+  const handleForceRefresh = useCallback(async () => {
+    setIsUpdating(true);
+    
+    try {
+      // Clear all caches
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+      }
+      
+      // Unregister all service workers
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map(reg => reg.unregister()));
+      
+      // Force hard reload
+      window.location.href = window.location.href;
+    } catch (error) {
+      console.error('[PWA] Force refresh error:', error);
       window.location.reload();
     }
   }, []);
@@ -120,22 +140,27 @@ const PWAUpdatePrompt: React.FC = () => {
                 size="sm" 
                 onClick={handleUpdate}
                 className="flex-1"
+                disabled={isUpdating}
               >
-                <RefreshCw className="w-3 h-3 mr-1" />
-                {language === 'fr' ? 'Mettre à jour' : 'Update'}
+                <RefreshCw className={`w-3 h-3 mr-1 ${isUpdating ? 'animate-spin' : ''}`} />
+                {isUpdating 
+                  ? (language === 'fr' ? 'Mise à jour...' : 'Updating...') 
+                  : (language === 'fr' ? 'Mettre à jour' : 'Update')}
               </Button>
               <Button 
                 size="sm" 
                 variant="outline"
                 onClick={handleForceRefresh}
-                title={language === 'fr' ? 'Forcer le rafraîchissement' : 'Force refresh'}
+                title={language === 'fr' ? 'Forcer le rafraîchissement complet' : 'Force complete refresh'}
+                disabled={isUpdating}
               >
-                <RefreshCw className="w-3 h-3" />
+                <RefreshCw className={`w-3 h-3 ${isUpdating ? 'animate-spin' : ''}`} />
               </Button>
               <Button 
                 size="sm" 
                 variant="ghost"
                 onClick={handleDismiss}
+                disabled={isUpdating}
               >
                 <X className="w-4 h-4" />
               </Button>
