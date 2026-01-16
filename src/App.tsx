@@ -48,6 +48,7 @@ const PrivacyCenter = lazy(() => import(/* webpackChunkName: "privacy" */ "./pag
 const ResetPassword = lazy(() => import(/* webpackChunkName: "auth" */ "./pages/ResetPassword"));
 const VerifyLogin = lazy(() => import(/* webpackChunkName: "auth" */ "./pages/VerifyLogin"));
 const ConfirmEmail = lazy(() => import(/* webpackChunkName: "auth" */ "./pages/ConfirmEmail"));
+const MenuPage = lazy(() => import(/* webpackChunkName: "menu" */ "./pages/MenuPage"));
 
 const Help = lazy(() => import(/* webpackChunkName: "help" */ "./pages/Help"));
 const AIChatBot = lazy(() => import(/* webpackChunkName: "ai-chat" */ "@/components/AIChatBot"));
@@ -306,6 +307,7 @@ const AppContent = () => {
             <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
             <Route path="/privacy-center" element={<ProtectedRoute><Layout><PrivacyCenter /></Layout></ProtectedRoute>} />
+            <Route path="/menu" element={<ProtectedRoute><Layout><MenuPage /></Layout></ProtectedRoute>} />
             
             {/* ========== ADMIN ROUTES ========== */}
             <Route path="/app/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
