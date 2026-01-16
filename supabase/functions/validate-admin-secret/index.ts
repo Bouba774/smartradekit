@@ -2,11 +2,17 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders, handleCorsPreflightResponse } from "../_shared/cors.ts";
 
-// Configuration sécurisée - pas de secrets en clair
+// ============================================================
+// CONFIGURATION SÉCURISÉE - AUCUN SECRET EN CLAIR
+// ============================================================
 const MAX_ATTEMPTS = 3;
 const BLOCK_DURATION_MINUTES = 10;
 
-// Fonction pour hacher le secret côté serveur (SHA-256)
+// ============================================================
+// FONCTIONS UTILITAIRES DE SÉCURITÉ
+// ============================================================
+
+// Hash SHA-256 sécurisé
 async function hashSecret(secret: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(secret);
@@ -28,7 +34,6 @@ function extractDeviceInfo(req: Request): {
     || req.headers.get("x-real-ip")
     || "unknown";
   
-  // Extraction basique du navigateur et OS
   let browser = "Unknown";
   let os = "Unknown";
   
@@ -46,10 +51,22 @@ function extractDeviceInfo(req: Request): {
   return { ipAddress, userAgent, browser, os };
 }
 
+// Validation stricte du format d'entrée
+function validateSecretFormat(secret: unknown): secret is string {
+  return (
+    typeof secret === 'string' &&
+    secret.length >= 1 &&
+    secret.length <= 100 &&
+    !/[<>{}]/.test(secret) // Prévention XSS basique
+  );
+}
+
+// ============================================================
+// HANDLER PRINCIPAL
+// ============================================================
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
   
-  // CORS preflight
   if (req.method === "OPTIONS") {
     return handleCorsPreflightResponse(req);
   }
@@ -59,9 +76,9 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 1. Vérifier l'authentification JWT
+    // 1. AUTHENTIFICATION JWT OBLIGATOIRE
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return new Response(
         JSON.stringify({ error: "Non autorisé" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -78,12 +95,13 @@ serve(async (req) => {
       );
     }
 
-    // 2. Vérifier STRICTEMENT si l'utilisateur a le rôle admin
+    // 2. VÉRIFICATION STRICTE DU RÔLE ADMIN
     const { data: isAdminData, error: adminCheckError } = await supabaseAdmin.rpc("is_admin", {
       _user_id: user.id,
     });
 
     if (adminCheckError) {
+      console.error("[validate-admin-secret] Admin check error:", adminCheckError);
       return new Response(
         JSON.stringify({ error: "Erreur de vérification" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -91,29 +109,29 @@ serve(async (req) => {
     }
 
     if (!isAdminData) {
-      // Ne pas révéler que l'utilisateur n'est pas admin - message générique
+      // Message générique - ne pas révéler l'existence du mode admin
       return new Response(
         JSON.stringify({ error: "Accès refusé" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // 3. Extraire les informations de l'appareil pour l'audit
+    // 3. EXTRACTION INFORMATIONS APPAREIL POUR AUDIT
     const deviceInfo = extractDeviceInfo(req);
     
-    // 4. Extraire le secret de la requête
+    // 4. PARSING ET VALIDATION DU SECRET
     let secret: string;
     try {
       const body = await req.json();
-      secret = body.secret;
       
-      // Validation basique - éviter les injections
-      if (!secret || typeof secret !== 'string' || secret.length > 100) {
+      if (!validateSecretFormat(body.secret)) {
         return new Response(
           JSON.stringify({ success: false, message: "Format invalide" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+      
+      secret = body.secret.trim();
     } catch {
       return new Response(
         JSON.stringify({ error: "Requête invalide" }),
@@ -121,7 +139,7 @@ serve(async (req) => {
       );
     }
 
-    // 5. Vérifier si l'admin est bloqué (rate limiting)
+    // 5. RATE LIMITING - VÉRIFIER SI BLOQUÉ
     const { data: isBlocked } = await supabaseAdmin.rpc("is_admin_blocked", {
       p_admin_id: user.id,
     });
@@ -135,7 +153,7 @@ serve(async (req) => {
         success: false,
       });
       
-      // Message générique - ne pas révéler la durée du blocage
+      // Message générique - ne pas révéler la durée exacte
       return new Response(
         JSON.stringify({
           success: false,
@@ -146,21 +164,21 @@ serve(async (req) => {
       );
     }
 
-    // 6. Compter les échecs récents
+    // 6. COMPTER LES ÉCHECS RÉCENTS
     const { data: failureCount } = await supabaseAdmin.rpc("count_admin_failures", {
       p_admin_id: user.id,
     });
 
     const currentFailures = failureCount || 0;
 
-    // 7. VÉRIFIER LE SECRET VIA LA FONCTION SÉCURISÉE EN DB
-    // Le secret est hashé côté serveur et comparé au hash stocké
+    // 7. VÉRIFICATION DU SECRET VIA FONCTION SÉCURISÉE EN DB
     const { data: isValidSecret, error: verifyError } = await supabaseAdmin.rpc("verify_admin_secret", {
       p_admin_id: user.id,
       p_secret: secret,
     });
 
     if (verifyError) {
+      console.error("[validate-admin-secret] Verify error:", verifyError);
       return new Response(
         JSON.stringify({ error: "Erreur de vérification" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -168,7 +186,7 @@ serve(async (req) => {
     }
 
     if (isValidSecret) {
-      // 8a. SUCCÈS - Journaliser et réinitialiser
+      // 8a. SUCCÈS - Journaliser
       await supabaseAdmin.from("admin_login_attempts").insert({
         admin_id: user.id,
         ip_address: deviceInfo.ipAddress,
@@ -189,8 +207,16 @@ serve(async (req) => {
         },
       });
 
+      // Générer un token de session admin temporaire
+      const sessionToken = crypto.randomUUID();
+      const sessionExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+
       return new Response(
-        JSON.stringify({ success: true }),
+        JSON.stringify({ 
+          success: true,
+          sessionToken,
+          expiresAt: sessionExpiry.toISOString(),
+        }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     } else {
@@ -224,12 +250,11 @@ serve(async (req) => {
         },
       });
 
-      // Messages génériques - ne pas révéler trop d'informations
+      // Messages génériques - AUCUNE indication du nombre de tentatives
       return new Response(
         JSON.stringify({
           success: false,
           blocked: shouldBlock,
-          // Ne pas révéler le nombre exact de tentatives restantes
           message: shouldBlock
             ? "Accès temporairement bloqué"
             : "Validation échouée",
@@ -238,6 +263,7 @@ serve(async (req) => {
       );
     }
   } catch (error) {
+    console.error("[validate-admin-secret] Unexpected error:", error);
     const corsHeaders = getCorsHeaders(req);
     return new Response(
       JSON.stringify({ error: "Erreur interne" }),

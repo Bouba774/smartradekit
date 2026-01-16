@@ -6,8 +6,20 @@ import { useAdmin } from '@/contexts/AdminContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Shield, AlertTriangle, Lock, Loader2 } from 'lucide-react';
+import { Lock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+
+/**
+ * ADMIN SECRET VALIDATION PAGE
+ * ============================
+ * Page de validation du secret admin - Double authentification.
+ * 
+ * Sécurité:
+ * - Aucun indice visible sur le mot de passe attendu
+ * - Placeholder cryptique: "Nm cmp d dev d l'App"
+ * - 3 tentatives max avant blocage 10 min (géré côté serveur)
+ * - Aucune information sur le nombre de tentatives restantes
+ */
 
 const AdminSecretValidation: React.FC = () => {
   const navigate = useNavigate();
@@ -19,22 +31,20 @@ const AdminSecretValidation: React.FC = () => {
   const [secret, setSecret] = useState('');
   const [error, setError] = useState('');
   const [isBlocked, setIsBlocked] = useState(false);
-  const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
 
+  // Redirection si non authentifié
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
 
+  // Redirection si non admin (sans révéler l'existence du mode admin)
   useEffect(() => {
     if (!roleLoading && !isAdmin) {
       navigate('/dashboard');
     }
   }, [isAdmin, roleLoading, navigate]);
-
-  // Ne pas rediriger automatiquement si déjà vérifié - toujours demander le mot de passe
-  // L'utilisateur doit toujours entrer le mot de passe pour accéder au mode admin
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,15 +65,15 @@ const AdminSecretValidation: React.FC = () => {
     const result = await verifyAdminSecret(secret);
 
     if (result.success) {
-      toast.success(language === 'fr' ? 'Accès administrateur validé' : 'Admin access validated');
+      toast.success(language === 'fr' ? 'Accès validé' : 'Access validated');
       navigate('/app/admin/dashboard');
     } else {
       if (result.blocked) {
         setIsBlocked(true);
         toast.error(result.message);
       } else {
+        // Message générique - pas d'indication sur les tentatives restantes
         setError(result.message || (language === 'fr' ? 'Validation échouée' : 'Validation failed'));
-        setAttemptsRemaining(result.attemptsRemaining ?? null);
       }
       setSecret('');
     }
@@ -79,11 +89,11 @@ const AdminSecretValidation: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background effects - neutre sans indication visuelle */}
+      {/* Background neutre */}
       <div className="absolute inset-0 bg-gradient-to-br from-muted/5 via-background to-muted/5" />
 
       <div className="w-full max-w-md relative z-10">
-        {/* Simple lock icon - no text */}
+        {/* Icône simple - aucun texte indicatif */}
         <div className="text-center mb-8">
           <div className="flex justify-center">
             <div className="w-16 h-16 rounded-xl bg-muted/20 flex items-center justify-center border border-border">
@@ -92,27 +102,27 @@ const AdminSecretValidation: React.FC = () => {
           </div>
         </div>
 
-        {/* Validation Card */}
-        <div className="glass-card p-8 border-destructive/20">
+        {/* Formulaire de validation */}
+        <div className="glass-card p-8 border-muted">
           {isBlocked ? (
             <div className="text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-destructive/20 flex items-center justify-center mx-auto">
-                <AlertTriangle className="w-8 h-8 text-destructive" />
+              <div className="w-16 h-16 rounded-full bg-muted/20 flex items-center justify-center mx-auto">
+                <Lock className="w-8 h-8 text-muted-foreground" />
               </div>
-              <h2 className="text-lg font-semibold text-destructive">
-                {language === 'fr' ? 'Accès temporairement bloqué' : 'Access Temporarily Blocked'}
+              <h2 className="text-lg font-semibold text-muted-foreground">
+                {language === 'fr' ? 'Accès temporairement indisponible' : 'Access Temporarily Unavailable'}
               </h2>
               <p className="text-sm text-muted-foreground">
                 {language === 'fr' 
-                  ? 'Trop de tentatives échouées. Veuillez réessayer dans 10 minutes.' 
-                  : 'Too many failed attempts. Please try again in 10 minutes.'}
+                  ? 'Veuillez réessayer ultérieurement.' 
+                  : 'Please try again later.'}
               </p>
               <Button 
                 variant="outline" 
                 onClick={() => navigate('/dashboard')}
                 className="mt-4"
               >
-                {language === 'fr' ? 'Retour au tableau de bord' : 'Back to Dashboard'}
+                {language === 'fr' ? 'Retour' : 'Back'}
               </Button>
             </div>
           ) : (
@@ -125,18 +135,16 @@ const AdminSecretValidation: React.FC = () => {
                     value={secret}
                     onChange={(e) => setSecret(e.target.value)}
                     className={`pl-10 bg-secondary/50 border-border ${error ? 'border-destructive' : ''}`}
-                    placeholder="••••••••••••"
+                    placeholder="Nm cmp d dev d l'App"
                     autoComplete="off"
                     autoFocus
                   />
                 </div>
                 {error && (
-                  <p className="text-destructive text-xs flex items-center gap-1">
-                    <AlertTriangle className="w-3 h-3" />
+                  <p className="text-destructive text-xs">
                     {error}
                   </p>
                 )}
-                {/* Ne pas révéler le nombre de tentatives - sécurité */}
               </div>
 
               <Button
@@ -157,10 +165,7 @@ const AdminSecretValidation: React.FC = () => {
                 )}
               </Button>
 
-              <div className="text-center space-y-3">
-                <p className="text-xs text-muted-foreground font-mono">
-                  Nm cmp d dv lap
-                </p>
+              <div className="text-center">
                 <button
                   type="button"
                   onClick={() => navigate('/dashboard')}
