@@ -33,6 +33,7 @@ import {
   Crown,
   Shield,
   FileSearch,
+  ShieldAlert,
 } from 'lucide-react';
 import { APP_VERSION } from '@/lib/version';
 import { Badge } from '@/components/ui/badge';
@@ -57,6 +58,7 @@ const AdminSidebar: React.FC = () => {
     { path: '/app/admin/sessions', icon: ShieldCheck, label: language === 'fr' ? 'Sessions' : 'Sessions' },
     { path: '/app/admin/roles', icon: Crown, label: language === 'fr' ? 'Rôles' : 'Roles' },
     { path: '/app/admin/audit', icon: FileSearch, label: language === 'fr' ? 'Audit' : 'Audit' },
+    { path: '/app/admin/security', icon: ShieldAlert, label: language === 'fr' ? 'Sécurité' : 'Security' },
     { path: '/app/admin/profile', icon: User, label: t('profile') },
     { path: '/app/admin/settings', icon: Settings, label: t('settings') },
     { path: '/app/admin/about', icon: Info, label: t('about') },

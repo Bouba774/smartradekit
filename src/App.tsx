@@ -73,6 +73,7 @@ const AdminChallenges = lazy(() => import(/* webpackChunkName: "admin-pages" */ 
 const AdminSessions = lazy(() => import(/* webpackChunkName: "admin-pages" */ "./pages/admin/AdminSessions"));
 const AdminRolesPage = lazy(() => import(/* webpackChunkName: "admin-pages" */ "./pages/admin/AdminRolesPage"));
 const AdminAuditHistory = lazy(() => import(/* webpackChunkName: "admin-pages" */ "./pages/admin/AdminAuditHistory"));
+const AdminSecurityDashboard = lazy(() => import(/* webpackChunkName: "admin-pages" */ "./pages/admin/AdminSecurityDashboard"));
 const AdminProfile = lazy(() => import(/* webpackChunkName: "admin-pages" */ "./pages/admin/AdminProfile"));
 const AdminSettings = lazy(() => import(/* webpackChunkName: "admin-pages" */ "./pages/admin/AdminSettings"));
 const AdminAbout = lazy(() => import(/* webpackChunkName: "admin-pages" */ "./pages/admin/AdminAbout"));
@@ -326,6 +327,7 @@ const AppContent = () => {
               <Route path="sessions" element={<AdminSessions />} />
               <Route path="roles" element={<AdminRolesPage />} />
               <Route path="audit" element={<AdminAuditHistory />} />
+              <Route path="security" element={<AdminSecurityDashboard />} />
               <Route path="profile" element={<AdminProfile />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="about" element={<AdminAbout />} />
