@@ -9,6 +9,9 @@ verify_jwt = false
 [functions.admin-data-access]
 verify_jwt = false
 
+[functions.security-middleware]
+verify_jwt = false
+
 [functions.get-users-info]
 verify_jwt = false
 

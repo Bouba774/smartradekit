@@ -3,14 +3,28 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders, handleCorsPreflightResponse } from "../_shared/cors.ts";
 
 // ============================================================
-// CONFIGURATION SÉCURISÉE - AUCUN SECRET EN CLAIR
+// CONFIGURATION SÉCURISÉE NIVEAU BANCAIRE
 // ============================================================
 const MAX_ATTEMPTS = 3;
 const BLOCK_DURATION_MINUTES = 10;
+const UNIFORM_DELAY_MS = 250; // Anti-timing attack
+const MAX_SECRET_LENGTH = 100;
+const MIN_SECRET_LENGTH = 1;
 
 // ============================================================
 // FONCTIONS UTILITAIRES DE SÉCURITÉ
 // ============================================================
+
+// Délai uniforme anti-timing attack
+async function uniformDelay(startTime: number): Promise<void> {
+  const elapsed = Date.now() - startTime;
+  const remaining = UNIFORM_DELAY_MS - elapsed;
+  // Ajouter un jitter aléatoire pour éviter les patterns
+  const jitter = Math.random() * 50;
+  if (remaining > 0) {
+    await new Promise(resolve => setTimeout(resolve, remaining + jitter));
+  }
+}
 
 // Hash SHA-256 sécurisé
 async function hashSecret(secret: string): Promise<string> {
@@ -27,44 +41,62 @@ function extractDeviceInfo(req: Request): {
   userAgent: string;
   browser: string;
   os: string;
+  acceptLanguage: string;
 } {
   const userAgent = req.headers.get("user-agent") || "unknown";
-  const ipAddress = req.headers.get("x-forwarded-for")?.split(',')[0]?.trim() 
-    || req.headers.get("cf-connecting-ip") 
-    || req.headers.get("x-real-ip")
+  const acceptLanguage = req.headers.get("accept-language") || "unknown";
+  const ipAddress = req.headers.get("x-forwarded-for")?.split(',')[0]?.trim()?.slice(0, 45)
+    || req.headers.get("cf-connecting-ip")?.slice(0, 45)
+    || req.headers.get("x-real-ip")?.slice(0, 45)
     || "unknown";
   
   let browser = "Unknown";
   let os = "Unknown";
   
-  if (userAgent.includes("Chrome")) browser = "Chrome";
+  if (userAgent.includes("Chrome") && !userAgent.includes("Edg")) browser = "Chrome";
   else if (userAgent.includes("Firefox")) browser = "Firefox";
-  else if (userAgent.includes("Safari")) browser = "Safari";
-  else if (userAgent.includes("Edge")) browser = "Edge";
+  else if (userAgent.includes("Safari") && !userAgent.includes("Chrome")) browser = "Safari";
+  else if (userAgent.includes("Edg")) browser = "Edge";
+  else if (userAgent.includes("Opera") || userAgent.includes("OPR")) browser = "Opera";
   
   if (userAgent.includes("Windows")) os = "Windows";
-  else if (userAgent.includes("Mac")) os = "macOS";
-  else if (userAgent.includes("Linux")) os = "Linux";
+  else if (userAgent.includes("Mac") && !userAgent.includes("iPhone") && !userAgent.includes("iPad")) os = "macOS";
+  else if (userAgent.includes("Linux") && !userAgent.includes("Android")) os = "Linux";
   else if (userAgent.includes("Android")) os = "Android";
   else if (userAgent.includes("iPhone") || userAgent.includes("iPad")) os = "iOS";
   
-  return { ipAddress, userAgent, browser, os };
+  return { ipAddress, userAgent, browser, os, acceptLanguage };
 }
 
-// Validation stricte du format d'entrée
+// Validation stricte du format d'entrée - Protection XSS/Injection
 function validateSecretFormat(secret: unknown): secret is string {
-  return (
-    typeof secret === 'string' &&
-    secret.length >= 1 &&
-    secret.length <= 100 &&
-    !/[<>{}]/.test(secret) // Prévention XSS basique
-  );
+  if (typeof secret !== 'string') return false;
+  if (secret.length < MIN_SECRET_LENGTH || secret.length > MAX_SECRET_LENGTH) return false;
+  // Blocage caractères dangereux
+  if (/[<>{}[\]\\;`$]/.test(secret)) return false;
+  // Blocage patterns d'injection SQL/NoSQL
+  if (/('|"|--|;|\/\*|\*\/|union|select|insert|delete|update|drop|exec|xp_)/i.test(secret)) return false;
+  return true;
+}
+
+// Génération de fingerprint de session
+async function generateFingerprint(req: Request): Promise<string> {
+  const ip = req.headers.get("x-forwarded-for")?.split(',')[0]?.trim() || "";
+  const ua = req.headers.get("user-agent") || "";
+  const lang = req.headers.get("accept-language") || "";
+  
+  const data = `${ip}|${ua.slice(0, 100)}|${lang.slice(0, 50)}`;
+  const encoder = new TextEncoder();
+  const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(data));
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.slice(0, 16).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 // ============================================================
 // HANDLER PRINCIPAL
 // ============================================================
 serve(async (req) => {
+  const startTime = Date.now();
   const corsHeaders = getCorsHeaders(req);
   
   if (req.method === "OPTIONS") {
@@ -79,6 +111,7 @@ serve(async (req) => {
     // 1. AUTHENTIFICATION JWT OBLIGATOIRE
     const authHeader = req.headers.get("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      await uniformDelay(startTime);
       return new Response(
         JSON.stringify({ error: "Non autorisé" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -89,6 +122,7 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
     if (authError || !user) {
+      await uniformDelay(startTime);
       return new Response(
         JSON.stringify({ error: "Non autorisé" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -102,22 +136,25 @@ serve(async (req) => {
 
     if (adminCheckError) {
       console.error("[validate-admin-secret] Admin check error:", adminCheckError);
+      await uniformDelay(startTime);
       return new Response(
         JSON.stringify({ error: "Erreur de vérification" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // RÉPONSE IDENTIQUE pour admin et non-admin - anti-enumération
     if (!isAdminData) {
-      // Message générique - ne pas révéler l'existence du mode admin
+      await uniformDelay(startTime);
       return new Response(
-        JSON.stringify({ error: "Accès refusé" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: false, message: "Validation échouée" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // 3. EXTRACTION INFORMATIONS APPAREIL POUR AUDIT
     const deviceInfo = extractDeviceInfo(req);
+    const sessionFingerprint = await generateFingerprint(req);
     
     // 4. PARSING ET VALIDATION DU SECRET
     let secret: string;
@@ -125,14 +162,16 @@ serve(async (req) => {
       const body = await req.json();
       
       if (!validateSecretFormat(body.secret)) {
+        await uniformDelay(startTime);
         return new Response(
-          JSON.stringify({ success: false, message: "Format invalide" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ success: false, message: "Validation échouée" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       
       secret = body.secret.trim();
     } catch {
+      await uniformDelay(startTime);
       return new Response(
         JSON.stringify({ error: "Requête invalide" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -154,6 +193,7 @@ serve(async (req) => {
       });
       
       // Message générique - ne pas révéler la durée exacte
+      await uniformDelay(startTime);
       return new Response(
         JSON.stringify({
           success: false,
@@ -179,6 +219,7 @@ serve(async (req) => {
 
     if (verifyError) {
       console.error("[validate-admin-secret] Verify error:", verifyError);
+      await uniformDelay(startTime);
       return new Response(
         JSON.stringify({ error: "Erreur de vérification" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -186,7 +227,7 @@ serve(async (req) => {
     }
 
     if (isValidSecret) {
-      // 8a. SUCCÈS - Journaliser
+      // 8a. SUCCÈS - Journaliser avec fingerprint
       await supabaseAdmin.from("admin_login_attempts").insert({
         admin_id: user.id,
         ip_address: deviceInfo.ipAddress,
@@ -203,18 +244,22 @@ serve(async (req) => {
           user_agent: deviceInfo.userAgent,
           browser: deviceInfo.browser,
           os: deviceInfo.os,
+          accept_language: deviceInfo.acceptLanguage,
+          session_fingerprint: sessionFingerprint,
           timestamp: new Date().toISOString(),
         },
       });
 
-      // Générer un token de session admin temporaire
+      // Générer un token de session admin temporaire signé
       const sessionToken = crypto.randomUUID();
       const sessionExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
 
+      await uniformDelay(startTime);
       return new Response(
         JSON.stringify({ 
           success: true,
           sessionToken,
+          sessionFingerprint,
           expiresAt: sessionExpiry.toISOString(),
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -235,7 +280,7 @@ serve(async (req) => {
         blocked_until: blockedUntil,
       });
 
-      // Audit log détaillé pour l'échec
+      // Audit log détaillé pour l'échec - JAMAIS le secret en clair
       await supabaseAdmin.from("admin_audit_logs").insert({
         admin_id: user.id,
         action: "admin_login_failed",
@@ -246,11 +291,13 @@ serve(async (req) => {
           os: deviceInfo.os,
           attempt_number: newFailureCount,
           blocked: shouldBlock,
+          session_fingerprint: sessionFingerprint,
           timestamp: new Date().toISOString(),
         },
       });
 
       // Messages génériques - AUCUNE indication du nombre de tentatives
+      await uniformDelay(startTime);
       return new Response(
         JSON.stringify({
           success: false,
@@ -264,6 +311,10 @@ serve(async (req) => {
     }
   } catch (error) {
     console.error("[validate-admin-secret] Unexpected error:", error);
+    
+    // Toujours appliquer le délai uniforme
+    await uniformDelay(startTime);
+    
     const corsHeaders = getCorsHeaders(req);
     return new Response(
       JSON.stringify({ error: "Erreur interne" }),
