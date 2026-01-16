@@ -134,17 +134,6 @@ const BottomNavigation: React.FC = () => {
                   {item.label}
                 </span>
 
-                {/* Active indicator - animated dot */}
-                {active && (
-                  <div 
-                    className={cn(
-                      "absolute bottom-1 left-1/2 -translate-x-1/2",
-                      "w-1 h-1 rounded-full bg-primary",
-                      "animate-[scale-in_0.2s_ease-out]",
-                      "shadow-[0_0_6px_hsl(var(--primary)/0.6)]"
-                    )}
-                  />
-                )}
               </button>
             );
           })}

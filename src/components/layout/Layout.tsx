@@ -33,10 +33,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {!isMobile && <AppSidebar />}
         
         <SidebarInset className="flex-1 flex flex-col min-w-0 w-full overflow-x-hidden">
-          <Header />
+          {/* Header removed - no longer showing time/date/logo bar */}
           
           {/* Main content with bottom padding on mobile for bottom nav */}
-          <main className={`flex-1 pt-16 sm:pt-20 px-3 sm:px-4 md:px-6 relative z-10 overflow-x-hidden overflow-y-auto ${isMobile ? 'pb-24' : 'pb-4 sm:pb-6'}`}>
+          <main className={`flex-1 pt-2 sm:pt-4 px-3 sm:px-4 md:px-6 relative z-10 overflow-x-hidden overflow-y-auto ${isMobile ? 'pb-24' : 'pb-4 sm:pb-6'}`}>
             <PageTransition>
               <div className="w-full max-w-7xl mx-auto">
                 {children}
