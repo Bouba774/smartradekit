@@ -1,5 +1,4 @@
 import React from 'react';
-import Header from './Header';
 import AppSidebar from './AppSidebar';
 import Footer from './Footer';
 import NavigationProgress from '@/components/NavigationProgress';
@@ -8,6 +7,7 @@ import BottomNavigation from './BottomNavigation';
 import { useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAutoPrefetch } from '@/hooks/useDataPrefetch';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -17,7 +17,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const isDashboard = location.pathname === '/dashboard';
-  const isAuthPage = location.pathname === '/auth' || location.pathname === '/reset-password';
+  
+  // Auto-prefetch data for faster navigation
+  useAutoPrefetch();
 
   return (
     <SidebarProvider defaultOpen={false}>
