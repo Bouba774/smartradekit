@@ -9,14 +9,12 @@ import {
   Calculator, 
   Menu 
 } from 'lucide-react';
-import BottomMenuSheet from './BottomMenuSheet';
 import AddTradeSheet from './AddTradeSheet';
 
 const BottomNavigation: React.FC = () => {
   const { t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAddTradeOpen, setIsAddTradeOpen] = useState(false);
   const [tappedItem, setTappedItem] = useState<string | null>(null);
 
@@ -47,7 +45,7 @@ const BottomNavigation: React.FC = () => {
       ariaLabel: t('calculator')
     },
     { 
-      path: 'menu', 
+      path: '/menu', 
       icon: Menu, 
       label: t('menu'),
       ariaLabel: t('menu'),
@@ -58,7 +56,7 @@ const BottomNavigation: React.FC = () => {
   const handleNavClick = (item: typeof navItems[0]) => {
     // Enhanced haptic feedback - more pronounced vibration pattern
     if ('vibrate' in navigator) {
-      navigator.vibrate([15, 30, 15]); // Vibration pattern: vibrate, pause, vibrate
+      navigator.vibrate([15, 30, 15]);
     }
 
     // Trigger tap animation
@@ -67,15 +65,13 @@ const BottomNavigation: React.FC = () => {
 
     if (item.isCenter) {
       setIsAddTradeOpen(true);
-    } else if (item.isMenu) {
-      setIsMenuOpen(true);
     } else {
       navigate(item.path);
     }
   };
 
   const isActive = (path: string) => {
-    if (path === 'add' || path === 'menu') return false;
+    if (path === 'add') return false;
     return location.pathname === path;
   };
 
@@ -129,10 +125,11 @@ const BottomNavigation: React.FC = () => {
                   />
                 </div>
                 
-                {/* Label */}
+                {/* Label with ellipsis for long text */}
                 <span 
                   className={cn(
                     "text-[10px] font-medium leading-none transition-all duration-200",
+                    "max-w-[60px] truncate text-center",
                     active && "font-semibold"
                   )}
                 >
@@ -155,12 +152,6 @@ const BottomNavigation: React.FC = () => {
           })}
         </div>
       </nav>
-
-      {/* Menu Sheet */}
-      <BottomMenuSheet 
-        isOpen={isMenuOpen} 
-        onClose={() => setIsMenuOpen(false)} 
-      />
 
       {/* Add Trade Sheet */}
       <AddTradeSheet
