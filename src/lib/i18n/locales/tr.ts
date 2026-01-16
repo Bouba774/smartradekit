@@ -16,6 +16,10 @@ export const tr = {
   about: 'Hakkında',
   currencyConversion: 'Döviz Çevirisi',
   periodComparison: 'Karşılaştırma',
+  menu: 'Menü',
+  trading: 'Trading',
+  tools: 'Araçlar',
+  account: 'Hesap',
 
   // Common
   welcome: 'Hoş geldiniz',

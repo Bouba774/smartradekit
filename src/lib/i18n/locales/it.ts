@@ -16,6 +16,10 @@ export const it = {
   about: 'Info',
   currencyConversion: 'Conversione Valute',
   periodComparison: 'Confronto',
+  menu: 'Menu',
+  trading: 'Trading',
+  tools: 'Strumenti',
+  account: 'Account',
 
   // Common
   welcome: 'Benvenuto',

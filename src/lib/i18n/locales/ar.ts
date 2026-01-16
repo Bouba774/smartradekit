@@ -16,6 +16,10 @@ export const ar = {
   about: 'حول',
   currencyConversion: 'تحويل العملات',
   periodComparison: 'المقارنة',
+  menu: 'القائمة',
+  trading: 'التداول',
+  tools: 'الأدوات',
+  account: 'الحساب',
 
   // Common
   welcome: 'مرحباً',
