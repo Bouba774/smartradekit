@@ -9,13 +9,11 @@ import {
   Calculator, 
   Menu 
 } from 'lucide-react';
-import AddTradeSheet from './AddTradeSheet';
 
 const BottomNavigation: React.FC = () => {
   const { t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
-  const [isAddTradeOpen, setIsAddTradeOpen] = useState(false);
   const [tappedItem, setTappedItem] = useState<string | null>(null);
 
   const navItems = [
@@ -64,7 +62,7 @@ const BottomNavigation: React.FC = () => {
     setTimeout(() => setTappedItem(null), 200);
 
     if (item.isCenter) {
-      setIsAddTradeOpen(true);
+      navigate('/add-trade');
     } else {
       navigate(item.path);
     }
@@ -152,12 +150,6 @@ const BottomNavigation: React.FC = () => {
           })}
         </div>
       </nav>
-
-      {/* Add Trade Sheet */}
-      <AddTradeSheet
-        isOpen={isAddTradeOpen}
-        onClose={() => setIsAddTradeOpen(false)}
-      />
     </>
   );
 };
