@@ -856,4 +856,21 @@ export const en = {
   'chat.suggestions.analyzeStats': 'Analyze my stats',
   'chat.suggestions.dailyTips': 'Daily tips',
   'chat.suggestions.bestSetup': 'Best setup?',
+  
+  // Calculator Mode translations
+  modeEntry: 'Entry Mode',
+  modePips: 'Pips Mode',
+  modeEntryDesc: 'Classic input with entry price, stop loss, and take profit.',
+  modePipsDesc: 'Quick input by pips only. Risk ratio applied automatically.',
+  numberOfPips: 'Number of Pips',
+  pipsTooltip: 'Enter the number of pips you want to risk on this trade.',
+  riskRatioAuto: 'Automatic Risk Ratio',
+  riskRatioAutoDesc: 'The take profit will be calculated automatically based on this ratio.',
+  pipsModeFast: 'Fast mode activated - Enter only pips',
+  fillCapitalAndRisk: 'Please enter capital and risk percentage',
+  enterValidPips: 'Please enter a valid number of pips',
+  lotSizeCopied: 'Lot size copied to clipboard',
+  tipRR12: 'Aim for a minimum R:R of 1:2',
+  tipAlwaysSL: 'Always place a Stop Loss',
+  tipSpread: 'Take spread into account in your SL',
 };

@@ -14,9 +14,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { Calculator as CalcIcon, ArrowRight, AlertTriangle, CheckCircle, Send, Search, TrendingUp, TrendingDown, Star, Save } from 'lucide-react';
+import { Calculator as CalcIcon, ArrowRight, AlertTriangle, CheckCircle, Send, Search, TrendingUp, TrendingDown, Star, Save, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import CalculatorModeToggle, { CalculatorMode } from '@/components/calculator/CalculatorModeToggle';
+import EntryModeInputs from '@/components/calculator/EntryModeInputs';
+import PipsModeInputs from '@/components/calculator/PipsModeInputs';
 
 export const PENDING_TRADE_KEY = 'pending_trade_data';
 import { ASSET_CATEGORIES, PIP_VALUES, DECIMALS, getPipSize, getAssetCategory } from '@/data/assets';
@@ -28,6 +31,9 @@ const Calculator: React.FC = () => {
   const { settings, updateSetting, isLoaded: settingsLoaded } = useSettings();
   const navigate = useNavigate();
   const [assetSearch, setAssetSearch] = useState('');
+  
+  // Calculator mode state
+  const [mode, setMode] = useState<CalculatorMode>('entry');
 
   const [formData, setFormData] = useState({
     capital: '',
@@ -37,6 +43,9 @@ const Calculator: React.FC = () => {
     stopLoss: '',
     takeProfit: '',
     asset: 'EUR/USD',
+    // Pips mode fields
+    pips: '',
+    riskRatio: '1:2',
   });
 
   // Load saved defaults when settings are loaded
@@ -76,7 +85,8 @@ const Calculator: React.FC = () => {
     rrRatio: number;
     slValue: number;
     tpValue: number;
-    direction: 'buy' | 'sell';
+    direction: 'buy' | 'sell' | null;
+    mode: CalculatorMode;
   } | null>(null);
 
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -160,104 +170,176 @@ const Calculator: React.FC = () => {
     });
   };
 
+  // Get pip value for an asset
+  const getPipValue = (asset: string): number => {
+    const category = getAssetCategory(asset);
+    let pipValue = PIP_VALUES[asset] || 10;
+    
+    if (category.includes('Forex') && !asset.includes('JPY')) {
+      pipValue = 10;
+    } else if (asset.includes('JPY')) {
+      pipValue = 1000 / 100;
+    } else if (asset === 'XAU/USD') {
+      pipValue = 1;
+    } else if (asset === 'XAG/USD') {
+      pipValue = 50;
+    } else if (category.includes('Indices')) {
+      pipValue = 1;
+    } else if (category.includes('Crypto')) {
+      pipValue = 1;
+    }
+    
+    return pipValue;
+  };
+
+  // Parse risk ratio string (e.g., "1:2" -> 2)
+  const parseRiskRatio = (ratioStr: string): number => {
+    const parts = ratioStr.split(':');
+    if (parts.length === 2) {
+      return parseFloat(parts[1]) / parseFloat(parts[0]);
+    }
+    return 2; // Default to 1:2
+  };
+
   const calculateLot = () => {
     const capital = parseFloat(formData.capital);
     const riskPercent = parseFloat(formData.riskPercent);
-    const entryPrice = parseFloat(formData.entryPrice);
-    const stopLoss = parseFloat(formData.stopLoss);
-    const takeProfit = parseFloat(formData.takeProfit);
     const asset = formData.asset;
 
-    if (!capital || !riskPercent || !entryPrice || !stopLoss) {
-      toast.error(t('fillAllFields'));
+    if (!capital || !riskPercent) {
+      toast.error(t('fillCapitalAndRisk'));
       return;
     }
 
-    // Determine direction based on entry vs SL
-    const direction: 'buy' | 'sell' = entryPrice > stopLoss ? 'buy' : 'sell';
-    
-    // Get asset-specific values
+    const riskAmount = (capital * riskPercent) / 100;
+    const pipValue = getPipValue(asset);
     const pipSize = getPipSize(asset);
     const category = getAssetCategory(asset);
-    
-    // Calculate SL distance in pips/points
-    const slDistance = Math.abs(entryPrice - stopLoss);
-    const slPips = slDistance / pipSize;
-    
-    // Risk amount in currency
-    const riskAmount = (capital * riskPercent) / 100;
-    
-    // Get pip value for this asset (or default)
-    let pipValue = PIP_VALUES[asset] || 10;
-    
-    // Adjust pip value based on asset type
-    if (category.includes('Forex') && !asset.includes('JPY')) {
-      pipValue = 10; // Standard forex pip value per lot
-    } else if (asset.includes('JPY')) {
-      pipValue = 1000 / 100; // JPY pip value adjusted
-    } else if (asset === 'XAU/USD') {
-      pipValue = 1; // Gold: $1 per 0.01 movement per lot
-    } else if (asset === 'XAG/USD') {
-      pipValue = 50; // Silver
-    } else if (category.includes('Indices')) {
-      pipValue = 1; // Indices: typically $1 per point
-    } else if (category.includes('Crypto')) {
-      pipValue = 1; // Crypto: value depends on lot size
-    }
-    
-    // Lot size calculation: LotSize = RiskMoney / (SL_pips * pip_value)
-    const lotSize = riskAmount / (slPips * pipValue);
-    const lotSizeMini = lotSize * 10;
-    const lotSizeMicro = lotSize * 100;
-    
-    // TP calculations
-    let tpPips = 0;
-    let rrRatio = 0;
-    if (takeProfit) {
-      const tpDistance = Math.abs(takeProfit - entryPrice);
-      tpPips = tpDistance / pipSize;
-      rrRatio = tpPips / slPips;
-    }
 
-    const slValue = riskAmount;
-    const tpValue = riskAmount * rrRatio;
+    if (mode === 'pips') {
+      // Pips Mode calculation
+      const pips = parseFloat(formData.pips);
+      
+      if (!pips || pips <= 0) {
+        toast.error(t('enterValidPips'));
+        return;
+      }
 
-    // Generate warnings
-    const newWarnings: string[] = [];
-    if (riskPercent > 2) {
-      newWarnings.push(`⚠️ ${t('warningRisk2')}`);
-    }
-    if (riskPercent > 5) {
-      newWarnings.push(`🚨 ${t('warningRisk5')}`);
-    }
-    if (slPips < 5 && category.includes('Forex')) {
-      newWarnings.push(`⚠️ ${t('warningSLTight')}`);
-    }
-    if (slPips < 10 && category.includes('Forex')) {
-      newWarnings.push(`💡 ${t('warningSpread')}`);
-    }
-    if (rrRatio < 1 && rrRatio > 0) {
-      newWarnings.push(`⚠️ ${t('warningRRBad')}`);
-    }
-    if (lotSize > 10) {
-      newWarnings.push(`🚨 ${t('warningLotHigh')}`);
-    }
+      // Lot size = Risk Amount / (Pips * Pip Value)
+      const lotSize = riskAmount / (pips * pipValue);
+      const rrRatio = parseRiskRatio(formData.riskRatio);
+      const tpPips = pips * rrRatio;
+      const tpValue = riskAmount * rrRatio;
 
-    setWarnings(newWarnings);
-    setResults({
-      riskAmount: Math.round(riskAmount * 100) / 100,
-      slPips: Math.round(slPips * 10) / 10,
-      tpPips: Math.round(tpPips * 10) / 10,
-      lotSize: Math.round(lotSize * 100) / 100,
-      lotSizeMini: Math.round(lotSizeMini * 100) / 100,
-      lotSizeMicro: Math.round(lotSizeMicro * 100) / 100,
-      rrRatio: Math.round(rrRatio * 100) / 100,
-      slValue: Math.round(slValue * 100) / 100,
-      tpValue: Math.round(tpValue * 100) / 100,
-      direction,
-    });
+      // Generate warnings
+      const newWarnings: string[] = [];
+      if (riskPercent > 2) {
+        newWarnings.push(`⚠️ ${t('warningRisk2')}`);
+      }
+      if (riskPercent > 5) {
+        newWarnings.push(`🚨 ${t('warningRisk5')}`);
+      }
+      if (pips < 5 && category.includes('Forex')) {
+        newWarnings.push(`⚠️ ${t('warningSLTight')}`);
+      }
+      if (lotSize > 10) {
+        newWarnings.push(`🚨 ${t('warningLotHigh')}`);
+      }
+
+      setWarnings(newWarnings);
+      setResults({
+        riskAmount: Math.round(riskAmount * 100) / 100,
+        slPips: pips,
+        tpPips: Math.round(tpPips * 10) / 10,
+        lotSize: Math.round(lotSize * 100) / 100,
+        lotSizeMini: Math.round(lotSize * 10 * 100) / 100,
+        lotSizeMicro: Math.round(lotSize * 100 * 100) / 100,
+        rrRatio: rrRatio,
+        slValue: Math.round(riskAmount * 100) / 100,
+        tpValue: Math.round(tpValue * 100) / 100,
+        direction: null,
+        mode: 'pips',
+      });
+    } else {
+      // Entry Mode calculation (existing logic)
+      const entryPrice = parseFloat(formData.entryPrice);
+      const stopLoss = parseFloat(formData.stopLoss);
+      const takeProfit = parseFloat(formData.takeProfit);
+
+      if (!entryPrice || !stopLoss) {
+        toast.error(t('fillAllFields'));
+        return;
+      }
+
+      // Determine direction based on entry vs SL
+      const direction: 'buy' | 'sell' = entryPrice > stopLoss ? 'buy' : 'sell';
+      
+      // Calculate SL distance in pips/points
+      const slDistance = Math.abs(entryPrice - stopLoss);
+      const slPips = slDistance / pipSize;
+      
+      // Lot size calculation: LotSize = RiskMoney / (SL_pips * pip_value)
+      const lotSize = riskAmount / (slPips * pipValue);
+      const lotSizeMini = lotSize * 10;
+      const lotSizeMicro = lotSize * 100;
+      
+      // TP calculations
+      let tpPips = 0;
+      let rrRatio = 0;
+      if (takeProfit) {
+        const tpDistance = Math.abs(takeProfit - entryPrice);
+        tpPips = tpDistance / pipSize;
+        rrRatio = tpPips / slPips;
+      }
+
+      const slValue = riskAmount;
+      const tpValue = riskAmount * rrRatio;
+
+      // Generate warnings
+      const newWarnings: string[] = [];
+      if (riskPercent > 2) {
+        newWarnings.push(`⚠️ ${t('warningRisk2')}`);
+      }
+      if (riskPercent > 5) {
+        newWarnings.push(`🚨 ${t('warningRisk5')}`);
+      }
+      if (slPips < 5 && category.includes('Forex')) {
+        newWarnings.push(`⚠️ ${t('warningSLTight')}`);
+      }
+      if (slPips < 10 && category.includes('Forex')) {
+        newWarnings.push(`💡 ${t('warningSpread')}`);
+      }
+      if (rrRatio < 1 && rrRatio > 0) {
+        newWarnings.push(`⚠️ ${t('warningRRBad')}`);
+      }
+      if (lotSize > 10) {
+        newWarnings.push(`🚨 ${t('warningLotHigh')}`);
+      }
+
+      setWarnings(newWarnings);
+      setResults({
+        riskAmount: Math.round(riskAmount * 100) / 100,
+        slPips: Math.round(slPips * 10) / 10,
+        tpPips: Math.round(tpPips * 10) / 10,
+        lotSize: Math.round(lotSize * 100) / 100,
+        lotSizeMini: Math.round(lotSizeMini * 100) / 100,
+        lotSizeMicro: Math.round(lotSizeMicro * 100) / 100,
+        rrRatio: Math.round(rrRatio * 100) / 100,
+        slValue: Math.round(slValue * 100) / 100,
+        tpValue: Math.round(tpValue * 100) / 100,
+        direction,
+        mode: 'entry',
+      });
+    }
 
     toast.success(t('calculationDone'));
+  };
+
+  const copyLotSize = () => {
+    if (results) {
+      navigator.clipboard.writeText(results.lotSize.toString());
+      toast.success(t('lotSizeCopied'));
+    }
   };
 
   return (
@@ -296,6 +378,11 @@ const Calculator: React.FC = () => {
             <CalcIcon className="w-6 h-6 text-primary-foreground" />
           </div>
         </div>
+      </div>
+
+      {/* Mode Toggle */}
+      <div className="mb-6">
+        <CalculatorModeToggle mode={mode} onModeChange={setMode} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -450,55 +537,25 @@ const Calculator: React.FC = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>{t('entryPrice')}</Label>
-              <Input
-                type="text"
-                inputMode="decimal"
-                placeholder="1.08500"
-                value={formData.entryPrice}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9.,]/g, '').replace(',', '.');
-                  handleInputChange('entryPrice', value);
-                }}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  {t('stopLoss')}
-                  <span className="text-xs text-loss">({t('required')})</span>
-                </Label>
-                <Input
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="1.08000"
-                  value={formData.stopLoss}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^0-9.,]/g, '').replace(',', '.');
-                    handleInputChange('stopLoss', value);
-                  }}
-                  className="border-loss/30 focus:border-loss"
+            {/* Dynamic Mode-specific Inputs */}
+            <div className="pt-4 border-t border-border">
+              {mode === 'entry' ? (
+                <EntryModeInputs
+                  entryPrice={formData.entryPrice}
+                  stopLoss={formData.stopLoss}
+                  takeProfit={formData.takeProfit}
+                  onEntryPriceChange={(v) => handleInputChange('entryPrice', v)}
+                  onStopLossChange={(v) => handleInputChange('stopLoss', v)}
+                  onTakeProfitChange={(v) => handleInputChange('takeProfit', v)}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  {t('takeProfit')}
-                  <span className="text-xs text-muted-foreground">({t('optional')})</span>
-                </Label>
-                <Input
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="1.09500"
-                  value={formData.takeProfit}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^0-9.,]/g, '').replace(',', '.');
-                    handleInputChange('takeProfit', value);
-                  }}
-                  className="border-profit/30 focus:border-profit"
+              ) : (
+                <PipsModeInputs
+                  pips={formData.pips}
+                  riskRatio={formData.riskRatio}
+                  onPipsChange={(v) => handleInputChange('pips', v)}
+                  onRiskRatioChange={(v) => handleInputChange('riskRatio', v)}
                 />
-              </div>
+              )}
             </div>
           </div>
 
@@ -522,15 +579,27 @@ const Calculator: React.FC = () => {
                   <span className="flex items-center gap-1 text-sm text-profit">
                     <TrendingUp className="w-4 h-4" /> BUY
                   </span>
-                ) : (
+                ) : results.direction === 'sell' ? (
                   <span className="flex items-center gap-1 text-sm text-loss">
                     <TrendingDown className="w-4 h-4" /> SELL
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-sm text-primary">
+                    ({t('modePips')})
                   </span>
                 )}
               </h3>
 
               {/* Main Result - Lot Size */}
-              <div className="text-center p-6 rounded-xl bg-primary/10 border border-primary/30 mb-6">
+              <div className="text-center p-6 rounded-xl bg-primary/10 border border-primary/30 mb-6 relative">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={copyLotSize}
+                  className="absolute top-2 right-2 h-8 w-8 p-0"
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
                 <p className="text-sm text-muted-foreground uppercase tracking-wide mb-2">
                   {t('recommendedLotSize')}
                 </p>
@@ -596,30 +665,32 @@ const Calculator: React.FC = () => {
                 </div>
               )}
 
-              {/* Send to Trade */}
-              <Button
-                variant="outline"
-                className="w-full mt-6 gap-2 border-primary/50 hover:bg-primary/10"
-                onClick={() => {
-                  const pendingTradeData = {
-                    asset: formData.asset,
-                    entryPrice: formData.entryPrice,
-                    stopLoss: formData.stopLoss,
-                    takeProfit: formData.takeProfit,
-                    lotSize: results.lotSize.toString(),
-                    direction: results.direction,
-                    risk: formData.riskPercent,
-                    riskCash: formData.riskCash,
-                    capital: formData.capital,
-                  };
-                  localStorage.setItem(PENDING_TRADE_KEY, JSON.stringify(pendingTradeData));
-                  toast.success(t('dataSentToTrade'));
-                  navigate('/add-trade');
-                }}
-              >
-                <Send className="w-4 h-4" />
-                {t('sendToTrade')}
-              </Button>
+              {/* Send to Trade - only for Entry mode */}
+              {results.mode === 'entry' && (
+                <Button
+                  variant="outline"
+                  className="w-full mt-6 gap-2 border-primary/50 hover:bg-primary/10"
+                  onClick={() => {
+                    const pendingTradeData = {
+                      asset: formData.asset,
+                      entryPrice: formData.entryPrice,
+                      stopLoss: formData.stopLoss,
+                      takeProfit: formData.takeProfit,
+                      lotSize: results.lotSize.toString(),
+                      direction: results.direction,
+                      risk: formData.riskPercent,
+                      riskCash: formData.riskCash,
+                      capital: formData.capital,
+                    };
+                    localStorage.setItem(PENDING_TRADE_KEY, JSON.stringify(pendingTradeData));
+                    toast.success(t('dataSentToTrade'));
+                    navigate('/add-trade');
+                  }}
+                >
+                  <Send className="w-4 h-4" />
+                  {t('sendToTrade')}
+                </Button>
+              )}
             </div>
           )}
 
@@ -653,15 +724,15 @@ const Calculator: React.FC = () => {
               </li>
               <li className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-profit" />
-                Visez un R:R minimum de 1:2
+                {t('tipRR12')}
               </li>
               <li className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-profit" />
-                Toujours placer un Stop Loss
+                {t('tipAlwaysSL')}
               </li>
               <li className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-profit" />
-                Tenez compte du spread dans votre SL
+                {t('tipSpread')}
               </li>
             </ul>
           </div>

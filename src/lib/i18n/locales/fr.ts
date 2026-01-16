@@ -856,4 +856,21 @@ export const fr = {
   'chat.suggestions.analyzeStats': 'Analyse mes stats',
   'chat.suggestions.dailyTips': 'Conseils du jour',
   'chat.suggestions.bestSetup': 'Meilleur setup?',
+  
+  // Calculator Mode translations
+  modeEntry: 'Mode Entrée',
+  modePips: 'Mode Pips',
+  modeEntryDesc: 'Saisie classique avec prix d\'entrée, stop loss et take profit.',
+  modePipsDesc: 'Saisie rapide par pips uniquement. Ratio R:R appliqué automatiquement.',
+  numberOfPips: 'Nombre de Pips',
+  pipsTooltip: 'Entrez le nombre de pips que vous souhaitez risquer sur ce trade.',
+  riskRatioAuto: 'Ratio R:R Automatique',
+  riskRatioAutoDesc: 'Le take profit sera calculé automatiquement selon ce ratio.',
+  pipsModeFast: 'Mode rapide activé - Entrez uniquement les pips',
+  fillCapitalAndRisk: 'Veuillez entrer le capital et le pourcentage de risque',
+  enterValidPips: 'Veuillez entrer un nombre de pips valide',
+  lotSizeCopied: 'Taille de lot copiée dans le presse-papiers',
+  tipRR12: 'Visez un R:R minimum de 1:2',
+  tipAlwaysSL: 'Toujours placer un Stop Loss',
+  tipSpread: 'Tenez compte du spread dans votre SL',
 };
