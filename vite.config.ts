@@ -22,9 +22,7 @@ export default defineConfig(({ mode }) => ({
       includeAssets: [
         "favicon.jpg",
         "favicon.ico",
-        "assets/app-logo.jpg",
-        "videos/loading-animation.mp4",
-        "sounds/*.mp3"
+        "assets/app-logo.jpg"
       ],
       manifest: false, // We use our own manifest.json in public folder
       devOptions: {
@@ -32,7 +30,9 @@ export default defineConfig(({ mode }) => ({
         type: "module",
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,jpg,png,svg,woff,woff2,mp4,mp3,json}"],
+        // Avoid build failures on larger assets and keep precache focused on the app shell
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB
+        globPatterns: ["**/*.{js,css,html,ico,jpg,jpeg,png,svg,woff,woff2,json}"],
         // Clean up old caches on new service worker activation
         cleanupOutdatedCaches: true,
         // Take control of all clients immediately when new SW activates
@@ -66,14 +66,25 @@ export default defineConfig(({ mode }) => ({
               },
             },
           },
-          // Cache images
+          // Cache media (cached after first load)
           {
-            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
+            urlPattern: /\.(?:mp4)$/i,
             handler: "CacheFirst",
             options: {
-              cacheName: "images-cache",
+              cacheName: "video-cache",
               expiration: {
-                maxEntries: 100,
+                maxEntries: 20,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+              },
+            },
+          },
+          {
+            urlPattern: /\.(?:mp3)$/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "audio-cache",
+              expiration: {
+                maxEntries: 50,
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
               },
             },
