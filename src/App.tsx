@@ -15,6 +15,7 @@ import LockScreen from "@/components/LockScreen";
 import { usePinSecurity } from "@/hooks/usePinSecurity";
 import { toast } from "sonner";
 import PWAUpdatePrompt from "@/components/PWAUpdatePrompt";
+import PWAInstallBanner from "@/components/PWAInstallBanner";
 
 import { useSessionTracking } from "@/hooks/useSessionTracking";
 import ChunkErrorBoundary from "@/components/ChunkErrorBoundary";
@@ -49,6 +50,7 @@ const ResetPassword = lazy(() => import(/* webpackChunkName: "auth" */ "./pages/
 const VerifyLogin = lazy(() => import(/* webpackChunkName: "auth" */ "./pages/VerifyLogin"));
 const ConfirmEmail = lazy(() => import(/* webpackChunkName: "auth" */ "./pages/ConfirmEmail"));
 const MenuPage = lazy(() => import(/* webpackChunkName: "menu" */ "./pages/MenuPage"));
+const Install = lazy(() => import(/* webpackChunkName: "install" */ "./pages/Install"));
 const AIAssistant = lazy(() => import(/* webpackChunkName: "ai-assistant" */ "./pages/AIAssistant"));
 
 const Help = lazy(() => import(/* webpackChunkName: "help" */ "./pages/Help"));
@@ -289,6 +291,7 @@ const AppContent = () => {
             <Route path="/terms-of-use" element={<TermsOfUse />} />
             <Route path="/aide" element={<ProtectedRoute><Help /></ProtectedRoute>} />
             <Route path="/about" element={<About />} />
+            <Route path="/install" element={<Install />} />
             
             {/* Admin verification page */}
             <Route path="/admin-verify" element={<ProtectedRoute><AdminSecretValidation /></ProtectedRoute>} />
@@ -362,6 +365,7 @@ const App = () => {
                     <AppContent />
                     <CookieConsent />
                     <PWAUpdatePrompt />
+                    <PWAInstallBanner />
                   </BrowserRouter>
                 </TooltipProvider>
               </AdminProvider>

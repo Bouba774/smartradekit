@@ -19,21 +19,31 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.jpg", "assets/app-logo.jpg"],
-      manifest: false, // We use our own manifest.json
+      includeAssets: [
+        "favicon.jpg",
+        "favicon.ico",
+        "assets/app-logo.jpg",
+        "videos/loading-animation.mp4",
+        "sounds/*.mp3"
+      ],
+      manifest: false, // We use our own manifest.json in public folder
       devOptions: {
-        enabled: false, // Disable SW in development
+        enabled: true, // Enable SW in development for testing
+        type: "module",
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,jpg,png,svg,woff,woff2}"],
+        globPatterns: ["**/*.{js,css,html,ico,jpg,png,svg,woff,woff2,mp4,mp3,json}"],
         // Clean up old caches on new service worker activation
         cleanupOutdatedCaches: true,
         // Take control of all clients immediately when new SW activates
         clientsClaim: true,
+        skipWaiting: true,
         // Navigation fallback for SPA
         navigateFallback: 'index.html',
         navigateFallbackDenylist: [/^\/api/, /^\/supabase/],
+        // Cache static assets aggressively
         runtimeCaching: [
+          // Cache the app shell and static assets
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: "CacheFirst",
@@ -56,16 +66,45 @@ export default defineConfig(({ mode }) => ({
               },
             },
           },
+          // Cache images
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "images-cache",
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+              },
+            },
+          },
+          // Cache API calls with network-first strategy
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: "NetworkFirst",
             options: {
               cacheName: "api-cache",
               expiration: {
-                maxEntries: 50,
+                maxEntries: 100,
                 maxAgeSeconds: 60 * 5, // 5 minutes
               },
               networkTimeoutSeconds: 10,
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          // Cache AI gateway calls
+          {
+            urlPattern: /^https:\/\/ai\.gateway\.lovable\.dev\/.*/i,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "ai-cache",
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60, // 1 hour
+              },
+              networkTimeoutSeconds: 30,
             },
           },
         ],
