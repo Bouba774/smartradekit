@@ -6,6 +6,19 @@ import { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
+/**
+ * ADMIN CONTEXT - VERSION SÉCURISÉE
+ * ==================================
+ * Gestion du mode admin avec validation serveur obligatoire.
+ * 
+ * Sécurité:
+ * - Double authentification (email/password + secret)
+ * - Session admin avec expiration (30 min)
+ * - Validation serveur à chaque accès données
+ * - Audit logging de toutes les actions
+ * - Protection contre élévation de privilèges
+ */
+
 interface SelectedUser {
   id: string;
   email: string;
@@ -19,6 +32,10 @@ interface AdminContextType {
   isAdminVerified: boolean;
   isVerifying: boolean;
   verifyAdminSecret: (secret: string) => Promise<{ success: boolean; message?: string; blocked?: boolean; attemptsRemaining?: number }>;
+  
+  // Validation de session serveur
+  validateAdminSession: () => Promise<boolean>;
+  isSessionValid: boolean;
   
   // Utilisateur sélectionné pour consultation
   selectedUser: SelectedUser | null;
@@ -45,6 +62,7 @@ interface AdminContextType {
 // Session timeout: 30 minutes
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 const WARNING_BEFORE_EXPIRY_MS = 5 * 60 * 1000;
+const SESSION_CHECK_INTERVAL_MS = 60 * 1000; // Vérifier chaque minute
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
@@ -55,6 +73,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   
   const [isAdminVerified, setIsAdminVerified] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isSessionValid, setIsSessionValid] = useState(false);
   const [selectedUser, setSelectedUserState] = useState<SelectedUser | null>(null);
   const [allUsers, setAllUsers] = useState<SelectedUser[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
@@ -64,6 +83,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Timer refs
   const sessionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const sessionCheckRef = useRef<NodeJS.Timeout | null>(null);
   const hasWarnedRef = useRef(false);
 
   // Invalider les queries admin
@@ -90,7 +110,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const setSelectedUser = useCallback((user: SelectedUser | null) => {
     setSelectedUserState(user);
     if (user) {
-      // Invalider les anciennes données et refetch les nouvelles
       invalidateAdminQueries(user.id);
     }
   }, [invalidateAdminQueries]);
@@ -105,6 +124,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       clearTimeout(warningTimeoutRef.current);
       warningTimeoutRef.current = null;
     }
+    if (sessionCheckRef.current) {
+      clearInterval(sessionCheckRef.current);
+      sessionCheckRef.current = null;
+    }
     hasWarnedRef.current = false;
   }, []);
 
@@ -112,13 +135,49 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const handleSessionExpiry = useCallback(() => {
     clearTimers();
     setIsAdminVerified(false);
+    setIsSessionValid(false);
     setIsInAdminMode(false);
     setSelectedUser(null);
     setSessionExpiresAt(null);
     toast.error('Session admin expirée. Veuillez vous reconnecter.', {
       duration: 5000,
     });
-  }, [clearTimers]);
+  }, [clearTimers, setSelectedUser]);
+
+  // Validation de session côté serveur
+  const validateAdminSession = useCallback(async (): Promise<boolean> => {
+    if (!user || !isAdmin) {
+      setIsSessionValid(false);
+      return false;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-session-guard');
+
+      if (error) {
+        console.error('[AdminContext] Session validation error:', error);
+        setIsSessionValid(false);
+        return false;
+      }
+
+      if (data.valid) {
+        setIsSessionValid(true);
+        return true;
+      } else {
+        setIsSessionValid(false);
+        
+        if (data.sessionExpired || data.error === 'Session admin expirée') {
+          handleSessionExpiry();
+        }
+        
+        return false;
+      }
+    } catch (err) {
+      console.error('[AdminContext] Session check failed:', err);
+      setIsSessionValid(false);
+      return false;
+    }
+  }, [user, isAdmin, handleSessionExpiry]);
 
   // Start session timer
   const startSessionTimer = useCallback(() => {
@@ -131,7 +190,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     warningTimeoutRef.current = setTimeout(() => {
       if (!hasWarnedRef.current) {
         hasWarnedRef.current = true;
-        toast.warning('Votre session admin expire dans 5 minutes. Continuez à utiliser l\'interface pour la maintenir.', {
+        toast.warning('Votre session admin expire dans 5 minutes.', {
           duration: 10000,
         });
       }
@@ -141,7 +200,12 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     sessionTimeoutRef.current = setTimeout(() => {
       handleSessionExpiry();
     }, SESSION_TIMEOUT_MS);
-  }, [clearTimers, handleSessionExpiry]);
+
+    // Vérification périodique de la session côté serveur
+    sessionCheckRef.current = setInterval(() => {
+      validateAdminSession();
+    }, SESSION_CHECK_INTERVAL_MS);
+  }, [clearTimers, handleSessionExpiry, validateAdminSession]);
 
   // Reset session timer on activity
   const resetSessionTimer = useCallback(() => {
@@ -183,11 +247,12 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!user || !isAdmin) {
       clearTimers();
       setIsAdminVerified(false);
+      setIsSessionValid(false);
       setSelectedUser(null);
       setIsInAdminMode(false);
       setSessionExpiresAt(null);
     }
-  }, [user, isAdmin, clearTimers]);
+  }, [user, isAdmin, clearTimers, setSelectedUser]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -213,6 +278,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       if (data.success) {
         setIsAdminVerified(true);
+        setIsSessionValid(true);
         setIsInAdminMode(true);
         startSessionTimer();
         return { success: true };
@@ -225,7 +291,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         attemptsRemaining: data.attemptsRemaining,
       };
     } catch (err) {
-      console.error('Error verifying admin secret:', err);
+      console.error('[AdminContext] Error verifying admin secret:', err);
       return { success: false, message: 'Erreur de connexion' };
     } finally {
       setIsVerifying(false);
@@ -235,12 +301,16 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const refreshUsers = useCallback(async () => {
     if (!isAdminVerified) return;
 
+    // Valider la session avant de récupérer les utilisateurs
+    const sessionValid = await validateAdminSession();
+    if (!sessionValid) return;
+
     setIsLoadingUsers(true);
     try {
       const { data, error } = await supabase.functions.invoke('get-users-info');
       
       if (error) {
-        console.error('Error fetching users:', error);
+        console.error('[AdminContext] Error fetching users:', error);
         return;
       }
 
@@ -265,11 +335,11 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       setAllUsers(usersWithProfiles);
     } catch (err) {
-      console.error('Error refreshing users:', err);
+      console.error('[AdminContext] Error refreshing users:', err);
     } finally {
       setIsLoadingUsers(false);
     }
-  }, [isAdminVerified]);
+  }, [isAdminVerified, validateAdminSession]);
 
   const enterAdminMode = useCallback(() => {
     if (isAdminVerified) {
@@ -283,7 +353,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setIsInAdminMode(false);
     setSelectedUser(null);
     setSessionExpiresAt(null);
-  }, [clearTimers]);
+  }, [clearTimers, setSelectedUser]);
 
   const logAdminAction = useCallback(async (
     action: string,
@@ -301,7 +371,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         ip_address: null,
       }]);
     } catch (err) {
-      console.error('Error logging admin action:', err);
+      console.error('[AdminContext] Error logging admin action:', err);
     }
   }, [user, isAdminVerified]);
 
@@ -318,6 +388,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         isAdminVerified,
         isVerifying,
         verifyAdminSecret,
+        validateAdminSession,
+        isSessionValid,
         selectedUser,
         setSelectedUser,
         allUsers,

@@ -1,1 +1,70 @@
 project_id = "trkhpxxylnjxasigcxqj"
+
+[functions.validate-admin-secret]
+verify_jwt = false
+
+[functions.admin-session-guard]
+verify_jwt = false
+
+[functions.admin-data-access]
+verify_jwt = false
+
+[functions.get-users-info]
+verify_jwt = false
+
+[functions.ai-chat]
+verify_jwt = false
+
+[functions.validate-email]
+verify_jwt = false
+
+[functions.verify-turnstile]
+verify_jwt = false
+
+[functions.verify-recaptcha]
+verify_jwt = false
+
+[functions.gdpr-management]
+verify_jwt = false
+
+[functions.gdpr-cleanup]
+verify_jwt = false
+
+[functions.hash-pin]
+verify_jwt = false
+
+[functions.security-check]
+verify_jwt = false
+
+[functions.security-email]
+verify_jwt = false
+
+[functions.track-session]
+verify_jwt = false
+
+[functions.vpn-detection]
+verify_jwt = false
+
+[functions.auth-send-welcome]
+verify_jwt = false
+
+[functions.auth-send-login-confirmation]
+verify_jwt = false
+
+[functions.auth-verify-login]
+verify_jwt = false
+
+[functions.get-user-by-email]
+verify_jwt = false
+
+[functions.manage-user-ban]
+verify_jwt = false
+
+[functions.scrape-forex-factory]
+verify_jwt = false
+
+[functions.scrape-forex-news]
+verify_jwt = false
+
+[functions.validate-calculations]
+verify_jwt = false
