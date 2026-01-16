@@ -5,11 +5,13 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Header: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const { language } = useLanguage();
   const { toggleSidebar } = useSidebar();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -41,20 +43,22 @@ const Header: React.FC = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-primary/20 px-2 sm:px-4 py-2 sm:py-3">
       <div className="w-full flex items-center justify-between gap-2">
-        {/* Left side - Hamburger menu + Logo */}
+        {/* Left side - Hamburger menu (desktop only) + Logo */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          {/* Hamburger Menu Button */}
-          <button
-            onClick={toggleSidebar}
-            className={cn(
-              "w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 touch-target",
-              "bg-secondary/50 hover:bg-primary/20 active:bg-primary/30",
-              "border border-primary/20 hover:border-primary/40"
-            )}
-            aria-label="Toggle menu"
-          >
-            <Menu className="w-5 h-5 text-primary" />
-          </button>
+          {/* Hamburger Menu Button - Hidden on mobile (using bottom nav) */}
+          {!isMobile && (
+            <button
+              onClick={toggleSidebar}
+              className={cn(
+                "w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 touch-target",
+                "bg-secondary/50 hover:bg-primary/20 active:bg-primary/30",
+                "border border-primary/20 hover:border-primary/40"
+              )}
+              aria-label="Toggle menu"
+            >
+              <Menu className="w-5 h-5 text-primary" />
+            </button>
+          )}
           
           {/* Logo */}
           <img 

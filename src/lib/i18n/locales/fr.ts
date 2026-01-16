@@ -16,6 +16,10 @@ export const fr = {
   about: 'À Propos',
   currencyConversion: 'Conversion devises / cryptos',
   periodComparison: 'Comparaison',
+  menu: 'Menu',
+  trading: 'Trading',
+  tools: 'Outils',
+  account: 'Compte',
 
   // Common
   welcome: 'Bienvenue',
