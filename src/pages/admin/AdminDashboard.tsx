@@ -1,0 +1,435 @@
+import React from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useAdmin } from '@/contexts/AdminContext';
+import { useAdminTrades } from '@/hooks/useAdminTrades';
+import { useAdminProfile } from '@/hooks/useAdminProfile';
+import { useAdvancedStats } from '@/hooks/useAdvancedStats';
+import { useCurrency } from '@/hooks/useCurrency';
+import AdminPagePlaceholder from '@/components/admin/AdminPagePlaceholder';
+import StatCard from '@/components/ui/StatCard';
+import GaugeChart from '@/components/ui/GaugeChart';
+import ConfidentialValue from '@/components/ConfidentialValue';
+import { Badge } from '@/components/ui/badge';
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Target,
+  BarChart3,
+  Activity,
+  Clock,
+  ArrowUpDown,
+  Zap,
+  Timer,
+  Trophy,
+  AlertTriangle,
+  Layers,
+  Flame,
+  Award,
+  Eye,
+  Calendar,
+  Scale,
+  Loader2,
+} from 'lucide-react';
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  Radar,
+} from 'recharts';
+import { format, parseISO } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+const AdminDashboard: React.FC = () => {
+  const { t, language } = useLanguage();
+  const { selectedUser } = useAdmin();
+  const { trades, isLoading } = useAdminTrades();
+  const { profile } = useAdminProfile();
+  const stats = useAdvancedStats(trades);
+  const { formatAmount } = useCurrency();
+
+  // Generate equity curve data from trades - MUST be before any conditional returns
+  const equityData = React.useMemo(() => {
+    if (trades.length === 0) {
+      return [
+        { date: 'J1', value: 10000 },
+        { date: 'J2', value: 10000 },
+        { date: 'J3', value: 10000 },
+      ];
+    }
+    
+    const sortedTrades = [...trades].sort((a, b) => 
+      new Date(a.trade_date).getTime() - new Date(b.trade_date).getTime()
+    );
+    
+    let runningTotal = 10000;
+    return sortedTrades.slice(-15).map((trade) => {
+      runningTotal += trade.profit_loss || 0;
+      return {
+        date: format(parseISO(trade.trade_date), 'dd/MM', { locale: fr }),
+        value: runningTotal,
+      };
+    });
+  }, [trades]);
+
+  // Generate monthly data - MUST be before any conditional returns
+  const monthlyData = React.useMemo(() => {
+    if (trades.length === 0) {
+      return [
+        { month: 'Jan', pnl: 0, wins: 0, losses: 0 },
+        { month: 'Fév', pnl: 0, wins: 0, losses: 0 },
+        { month: 'Mar', pnl: 0, wins: 0, losses: 0 },
+      ];
+    }
+    const months: { [key: string]: { pnl: number; wins: number; losses: number } } = {};
+    trades.forEach(trade => {
+      const monthKey = format(parseISO(trade.trade_date), 'MMM', { locale: fr });
+      if (!months[monthKey]) {
+        months[monthKey] = { pnl: 0, wins: 0, losses: 0 };
+      }
+      months[monthKey].pnl += trade.profit_loss || 0;
+      if (trade.result === 'win') months[monthKey].wins++;
+      if (trade.result === 'loss') months[monthKey].losses++;
+    });
+    return Object.entries(months).map(([month, data]) => ({ month, ...data }));
+  }, [trades]);
+
+  // Early returns AFTER all hooks
+  if (!selectedUser) {
+    return <AdminPagePlaceholder pageName="tableau de bord" />;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // User profile info
+  const userNickname = profile?.nickname || selectedUser.nickname || 'Trader';
+  const userLevel = profile?.level || 1;
+
+  // Position distribution data
+  const positionData = [
+    { name: t('longPositions'), value: stats.buyPositions || 0.1, actualValue: stats.buyPositions, color: 'hsl(var(--profit))' },
+    { name: t('shortPositions'), value: stats.sellPositions || 0.1, actualValue: stats.sellPositions, color: 'hsl(var(--loss))' },
+  ];
+
+  // Results distribution
+  const resultsData = [
+    { name: t('winners'), value: stats.winningTrades || 0.1, actualValue: stats.winningTrades, color: 'hsl(var(--profit))' },
+    { name: t('losers'), value: stats.losingTrades || 0.1, actualValue: stats.losingTrades, color: 'hsl(var(--loss))' },
+    { name: t('breakeven'), value: stats.breakevenTrades || 0.1, actualValue: stats.breakevenTrades, color: 'hsl(var(--muted-foreground))' },
+  ];
+
+  // Radar chart data
+  const clamp = (val: number, min: number, max: number) => Math.min(Math.max(val, min), max);
+  const round1 = (val: number) => Math.round(val * 10) / 10;
+  
+  const radarData = [
+    { subject: t('winrate'), A: round1(clamp(stats.winrate, 0, 100)), fullMark: 100 },
+    { subject: t('profitFactor'), A: round1(clamp(stats.profitFactor * 25, 0, 100)), fullMark: 100 },
+    { subject: t('riskReward'), A: round1(clamp(stats.avgRiskReward * 25, 0, 100)), fullMark: 100 },
+    { subject: t('consistency'), A: stats.longestWinStreak > 0 ? round1(clamp(stats.longestWinStreak * 15, 0, 100)) : 0, fullMark: 100 },
+    { subject: t('riskManagement'), A: round1(clamp(100 - stats.maxDrawdownPercent, 0, 100)), fullMark: 100 },
+  ];
+
+  const SectionHeader = ({ icon: Icon, title, delay = 0 }: { icon: React.ElementType; title: string; delay?: number }) => (
+    <div 
+      className="flex items-center gap-2 mb-4 animate-fade-in" 
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <div className="p-2 rounded-lg bg-primary/20 border border-primary/30">
+        <Icon className="w-5 h-5 text-primary" />
+      </div>
+      <h2 className="font-display text-lg font-bold text-foreground">{title}</h2>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6 py-4 w-full max-w-full overflow-x-hidden">
+      {/* Admin View Header */}
+      <div className="glass-card p-4 sm:p-6 animate-fade-in bg-gradient-to-r from-orange-500/10 to-amber-500/10 border-orange-500/30">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <Eye className="w-5 h-5 text-orange-500" />
+              <Badge variant="outline" className="border-orange-500/50 text-orange-500">
+                {language === 'fr' ? 'Mode consultation' : 'View Mode'}
+              </Badge>
+            </div>
+            <h1 className="font-display text-lg sm:text-2xl md:text-3xl font-bold text-foreground truncate">
+              {language === 'fr' ? 'Tableau de bord de' : 'Dashboard of'} {userNickname}
+            </h1>
+            <p className="text-muted-foreground text-sm mt-1">{selectedUser.email}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg bg-primary/20 border border-primary/30">
+              <span className="text-xl sm:text-2xl">🏆</span>
+              <div>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{t('level')}</p>
+                <p className="font-display font-bold text-primary text-sm sm:text-base">{userLevel}</p>
+              </div>
+            </div>
+            {stats.currentStreak.count > 0 && (
+              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                stats.currentStreak.type === 'win' 
+                  ? 'bg-profit/20 border-profit/30' 
+                  : 'bg-loss/20 border-loss/30'
+              }`}>
+                <Flame className={`w-5 h-5 ${stats.currentStreak.type === 'win' ? 'text-profit' : 'text-loss'}`} />
+                <div>
+                  <p className="text-[10px] text-muted-foreground">{t('streak')}</p>
+                  <p className={`font-bold text-sm ${stats.currentStreak.type === 'win' ? 'text-profit' : 'text-loss'}`}>
+                    {stats.currentStreak.count} {stats.currentStreak.type === 'win' ? 'W' : 'L'}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* No data message */}
+      {trades.length === 0 && (
+        <div className="text-center py-4 px-2 bg-muted/30 rounded-lg border border-border/50 mb-4">
+          <p className="text-sm text-muted-foreground">
+            {language === 'fr' ? 'Aucun trade enregistré pour cet utilisateur' : 'No trades recorded for this user'}
+          </p>
+        </div>
+      )}
+
+      {/* Section: Statistiques Principales */}
+      <div>
+        <SectionHeader icon={Activity} title={t('mainStatistics')} delay={100} />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <StatCard title={t('totalTransactions')} value={stats.totalTrades} icon={Activity} delay={150} />
+          <StatCard title={t('winningTransactions')} value={stats.winningTrades} icon={TrendingUp} variant="profit" delay={200} />
+          <StatCard title={t('losingTransactions')} value={stats.losingTrades} icon={TrendingDown} variant="loss" delay={250} />
+          <StatCard title={t('victoryRate')} value={`${stats.winrate.toFixed(1)}%`} icon={Target} variant={stats.winrate >= 50 ? 'profit' : 'loss'} delay={300} />
+          <StatCard title={t('breakeven')} value={stats.breakevenTrades} icon={ArrowUpDown} variant="neutral" delay={350} />
+        </div>
+      </div>
+
+      {/* Section: Positions */}
+      <div>
+        <SectionHeader icon={ArrowUpDown} title={t('positions')} delay={400} />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatCard title={t('buyPositions')} value={stats.buyPositions} icon={TrendingUp} variant="profit" delay={450} />
+          <StatCard title={t('sellPositions')} value={stats.sellPositions} icon={TrendingDown} variant="loss" delay={500} />
+          <StatCard title={t('avgLotSize')} value={<ConfidentialValue>{stats.avgLotSize.toFixed(2)}</ConfidentialValue>} icon={Layers} delay={550} />
+          <StatCard title={t('totalLots')} value={<ConfidentialValue>{stats.totalLots.toFixed(2)}</ConfidentialValue>} icon={Layers} delay={600} />
+        </div>
+      </div>
+
+      {/* Section: Profits & Pertes */}
+      <div>
+        <SectionHeader icon={DollarSign} title={t('profitsAndLosses')} delay={650} />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <StatCard title={t('bestProfit')} value={<ConfidentialValue>{formatAmount(stats.bestProfit)}</ConfidentialValue>} icon={Trophy} variant="profit" delay={700} />
+          <StatCard title={t('worstLoss')} value={<ConfidentialValue>{formatAmount(stats.worstLoss)}</ConfidentialValue>} icon={AlertTriangle} variant="loss" delay={750} />
+          <StatCard title={t('avgProfitPerTrade')} value={<ConfidentialValue>{formatAmount(stats.avgProfitPerTrade)}</ConfidentialValue>} icon={TrendingUp} variant="profit" delay={800} />
+          <StatCard title={t('avgLossPerTrade')} value={<ConfidentialValue>{formatAmount(stats.avgLossPerTrade)}</ConfidentialValue>} icon={TrendingDown} variant="loss" delay={850} />
+          <StatCard title={t('totalProfit')} value={<ConfidentialValue>{formatAmount(stats.totalProfit)}</ConfidentialValue>} icon={DollarSign} variant="profit" delay={900} />
+          <StatCard title={t('totalLoss')} value={<ConfidentialValue>{formatAmount(stats.totalLoss)}</ConfidentialValue>} icon={DollarSign} variant="loss" delay={950} />
+        </div>
+      </div>
+
+      {/* Section: Indicateurs de Performance */}
+      <div>
+        <SectionHeader icon={Zap} title={t('performanceIndicators')} delay={1000} />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <StatCard title={t('netProfit')} value={<ConfidentialValue>{formatAmount(stats.netProfit)}</ConfidentialValue>} icon={DollarSign} variant={stats.netProfit >= 0 ? 'profit' : 'loss'} delay={1050} />
+          <StatCard title={t('profitFactorLabel')} value={stats.profitFactorDisplay} icon={Scale} variant={stats.profitFactor >= 1.5 ? 'profit' : stats.profitFactor >= 1 ? 'neutral' : 'loss'} delay={1100} />
+          <StatCard title={t('avgRiskReward')} value={stats.avgRiskRewardDisplay} icon={Scale} variant={stats.avgRiskReward >= 1.5 ? 'profit' : stats.avgRiskReward >= 1 ? 'neutral' : 'loss'} delay={1150} />
+          <StatCard title={t('avgTradeResult')} value={<ConfidentialValue>{formatAmount(stats.avgTradeResult)}</ConfidentialValue>} icon={BarChart3} variant={stats.avgTradeResult >= 0 ? 'profit' : 'loss'} delay={1200} />
+        </div>
+      </div>
+
+      {/* Section: Séries */}
+      <div>
+        <SectionHeader icon={Flame} title={t('streaks')} delay={1250} />
+        <div className="grid grid-cols-2 gap-3">
+          <StatCard title={t('maxWinStreak')} value={stats.longestWinStreak} icon={Award} variant="profit" delay={1300} />
+          <StatCard title={t('maxLossStreak')} value={stats.longestLossStreak} icon={AlertTriangle} variant="loss" delay={1350} />
+        </div>
+      </div>
+
+      {/* Section: Durée */}
+      <div>
+        <SectionHeader icon={Timer} title={t('tradeDuration')} delay={1400} />
+        <div className="grid grid-cols-2 gap-3">
+          <StatCard title={t('avgTradeDuration')} value={stats.avgTradeDuration} icon={Clock} delay={1450} />
+          <StatCard title={t('totalTimeInPosition')} value={stats.totalTimeInPosition} icon={Timer} delay={1500} />
+        </div>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Equity Curve */}
+        <div className="glass-card p-4 sm:p-6 animate-fade-in">
+          <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Activity className="w-5 h-5 text-primary" />
+            {t('equityCurve')}
+          </h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={equityData}>
+                <defs>
+                  <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} width={50} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                  }}
+                  formatter={(value: number) => [formatAmount(value), 'Capital']}
+                />
+                <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#equityGradient)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Monthly Performance */}
+        <div className="glass-card p-4 sm:p-6 animate-fade-in">
+          <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-primary" />
+            {t('monthlyPerformance')}
+          </h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} width={50} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                  }}
+                  formatter={(value: number) => [formatAmount(value), 'PnL']}
+                />
+                <Bar dataKey="pnl" radius={[4, 4, 0, 0]}>
+                  {monthlyData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.pnl >= 0 ? 'hsl(var(--profit))' : 'hsl(var(--loss))'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Position Distribution */}
+        <div className="glass-card p-4 sm:p-6 animate-fade-in">
+          <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
+            <ArrowUpDown className="w-5 h-5 text-primary" />
+            {t('positionDistribution')}
+          </h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={positionData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={5} dataKey="value">
+                  {positionData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                  }}
+                  formatter={(value: number, name: string, entry: { payload: { actualValue: number } }) => [entry.payload.actualValue, name]}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Results Distribution */}
+        <div className="glass-card p-4 sm:p-6 animate-fade-in">
+          <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Target className="w-5 h-5 text-primary" />
+            {t('resultsDistribution')}
+          </h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={resultsData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={5} dataKey="value">
+                  {resultsData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                  }}
+                  formatter={(value: number, name: string, entry: { payload: { actualValue: number } }) => [entry.payload.actualValue, name]}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Radar Performance */}
+      <div className="glass-card p-4 sm:p-6 animate-fade-in">
+        <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
+          <Target className="w-5 h-5 text-primary" />
+          {t('performanceRadar')}
+        </h3>
+        <div className="h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart data={radarData}>
+              <PolarGrid stroke="hsl(var(--border))" />
+              <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
+              <Radar name="Performance" dataKey="A" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.3} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '8px',
+                }}
+              />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Gauge Charts */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <GaugeChart label={t('winrate')} value={stats.winrate} max={100} displayValue={`${stats.winrate.toFixed(1)}%`} variant={stats.winrate >= 50 ? 'profit' : 'loss'} />
+        <GaugeChart label={t('profitFactorLabel')} value={stats.profitFactor} max={4} displayValue={stats.profitFactorDisplay} variant={stats.profitFactor >= 1.5 ? 'profit' : 'loss'} />
+        <GaugeChart label={t('maxDrawdown')} value={stats.maxDrawdownPercent} max={100} displayValue={`${stats.maxDrawdownPercent.toFixed(1)}%`} variant={stats.maxDrawdownPercent <= 20 ? 'profit' : 'loss'} />
+        <GaugeChart label={t('riskReward')} value={stats.avgRiskReward} max={4} displayValue={stats.avgRiskRewardDisplay} variant={stats.avgRiskReward >= 1 ? 'profit' : 'loss'} />
+      </div>
+    </div>
+  );
+};
+
+export default AdminDashboard;

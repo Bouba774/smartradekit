@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Smart Trade Tracker | Journal de Trading Professionnel</title>
+    <meta name="description" content="Smart Trade Tracker - Votre journal de trading professionnel avec analyses avancées, suivi de performance et insights automatiques. Créé par un trader pour les traders.">
+    <meta name="author" content="ALPHA FX" />
+    <meta name="keywords" content="trading, journal, forex, crypto, indices, analyse, performance, trader">
+    <meta name="theme-color" content="#0a1929">
+
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com https://api.mapbox.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.mapbox.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https: http:; connect-src 'self' https://sfdudueswogeusuofbbi.supabase.co https://*.supabase.co wss://*.supabase.co https://api.mapbox.com https://events.mapbox.com https://ip-api.com https://ipwho.is https://dns.google https://api.firecrawl.dev https://ai.gateway.lovable.dev https://challenges.cloudflare.com https://www.google.com; frame-src 'self' https://challenges.cloudflare.com https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests;">
+    
+    <!-- Additional Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="https://storage.googleapis.com/gpt-engineer-file-uploads/jAzB9tClQpYfk8I3M7cZqlw3s4F2/uploads/1768357815505-1768325583968.jpg">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/app-logo.jpg">
+    <link rel="apple-touch-icon" sizes="152x152" href="/assets/app-logo.jpg">
+    <link rel="apple-touch-icon" sizes="120x120" href="/assets/app-logo.jpg">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://smarttradetracker.app" />
+    
+    
+    <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/jAzB9tClQpYfk8I3M7cZqlw3s4F2/social-images/social-1768357821334-1768325583968.jpg">
+    <meta property="og:image:width" content="512">
+    <meta property="og:image:height" content="512">
+    <meta property="og:site_name" content="Smart Trade Tracker">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@SmartTradeTracker" />
+    
+    
+    <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/jAzB9tClQpYfk8I3M7cZqlw3s4F2/social-images/social-1768357821334-1768325583968.jpg">
+    
+    <link rel="canonical" href="https://smarttradetracker.app" />
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/src/main.tsx" as="script" crossorigin />
+    <link rel="dns-prefetch" href="https://sfdudueswogeusuofbbi.supabase.co" />
+    <link rel="preconnect" href="https://sfdudueswogeusuofbbi.supabase.co" crossorigin />
+    <meta property="og:title" content="Smart Trade Tracker | Journal de Trading Professionnel">
+  <meta name="twitter:title" content="Smart Trade Tracker | Journal de Trading Professionnel">
+  <meta property="og:description" content="Smart Trade Tracker - Votre journal de trading professionnel avec analyses avancées, suivi de performance et insights automatiques. Créé par un trader pour les traders.">
+  <meta name="twitter:description" content="Smart Trade Tracker - Votre journal de trading professionnel avec analyses avancées, suivi de performance et insights automatiques. Créé par un trader pour les traders.">
+</head>
+
+  <body>
+    <!-- Initial loading state with video -->
+    <div id="initial-loader" style="position: fixed; inset: 0; background: #000; z-index: 99999; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+      <video autoplay muted loop playsinline style="width: 120px; height: 120px; object-fit: contain; border-radius: 16px;">
+        <source src="/videos/loading-animation.mp4" type="video/mp4">
+      </video>
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Global function to hide loader - can be called multiple times safely
+      window.hideInitialLoader = function() {
+        var loader = document.getElementById('initial-loader');
+        if (loader && loader.style.display !== 'none') {
+          loader.style.opacity = '0';
+          loader.style.transition = 'opacity 0.3s ease-out';
+          setTimeout(function() { loader.style.display = 'none'; }, 300);
+        }
+      };
+      // Listen for app-ready event
+      window.addEventListener('app-ready', window.hideInitialLoader);
+      // Fallback: hide after 5 seconds max
+      setTimeout(window.hideInitialLoader, 5000);
+    </script>
+  </body>
+</html>

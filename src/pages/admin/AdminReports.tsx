@@ -1,0 +1,518 @@
+import React, { useState, useMemo } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useAdmin } from '@/contexts/AdminContext';
+import { useAdminTrades } from '@/hooks/useAdminTrades';
+import { useCurrency } from '@/hooks/useCurrency';
+import { useSessionAnalysis } from '@/hooks/useSessionAnalysis';
+import { useStrategyAnalysis } from '@/hooks/useStrategyAnalysis';
+import { useSelfSabotage } from '@/hooks/useSelfSabotage';
+import { useDisciplineScore } from '@/hooks/useDisciplineScore';
+import { usePerformanceHeatmap } from '@/hooks/usePerformanceHeatmap';
+import { useEmotionCorrelation } from '@/hooks/useEmotionCorrelation';
+import AdminPagePlaceholder from '@/components/admin/AdminPagePlaceholder';
+import { ConfidentialValue } from '@/components/ConfidentialValue';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import GaugeChart from '@/components/ui/GaugeChart';
+import { cn } from '@/lib/utils';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, addMonths, isWithinInterval, parseISO, getDay } from 'date-fns';
+import { fr, enUS } from 'date-fns/locale';
+import {
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, Radar,
+} from 'recharts';
+import {
+  FileText,
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  TrendingUp,
+  TrendingDown,
+  Target,
+  Award,
+  Loader2,
+  Globe,
+  BarChart3,
+  Shield,
+  Eye,
+} from 'lucide-react';
+
+type ViewMode = 'week' | 'month';
+
+const DAYS_FR = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+const DAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const SESSION_NAMES = {
+  london: { fr: 'Londres', en: 'London', color: 'hsl(var(--primary))' },
+  newYork: { fr: 'New York', en: 'New York', color: 'hsl(var(--profit))' },
+  asia: { fr: 'Asie', en: 'Asia', color: 'hsl(217, 91%, 60%)' },
+  overlap: { fr: 'Chevauche.', en: 'Overlap', color: 'hsl(280, 70%, 50%)' },
+};
+
+const AdminReports: React.FC = () => {
+  const { language, t } = useLanguage();
+  const { selectedUser } = useAdmin();
+  const { trades, isLoading } = useAdminTrades();
+  const { formatAmount } = useCurrency();
+  const locale = language === 'fr' ? fr : enUS;
+  
+  const [viewMode, setViewMode] = useState<ViewMode>('week');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [calendarOpen, setCalendarOpen] = useState(false);
+
+  const periodStart = viewMode === 'week' 
+    ? startOfWeek(selectedDate, { weekStartsOn: 1 })
+    : startOfMonth(selectedDate);
+  const periodEnd = viewMode === 'week'
+    ? endOfWeek(selectedDate, { weekStartsOn: 1 })
+    : endOfMonth(selectedDate);
+
+  const navigatePeriod = (direction: 'prev' | 'next') => {
+    if (viewMode === 'week') {
+      setSelectedDate(prev => {
+        const newDate = new Date(prev);
+        newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
+        return newDate;
+      });
+    } else {
+      setSelectedDate(prev => direction === 'next' ? addMonths(prev, 1) : subMonths(prev, 1));
+    }
+  };
+
+  const formatPeriod = () => {
+    if (viewMode === 'week') {
+      return `${format(periodStart, 'd MMM', { locale })} - ${format(periodEnd, 'd MMM yyyy', { locale })}`;
+    }
+    return format(selectedDate, 'MMMM yyyy', { locale });
+  };
+
+  // Filter trades for selected period
+  const periodTrades = useMemo(() => {
+    if (!trades) return [];
+    return trades.filter(trade => {
+      const tradeDate = parseISO(trade.trade_date);
+      return isWithinInterval(tradeDate, { start: periodStart, end: periodEnd });
+    });
+  }, [trades, periodStart, periodEnd]);
+
+  // Use analysis hooks
+  const sessionAnalysis = useSessionAnalysis(periodTrades, language);
+  const strategyAnalysis = useStrategyAnalysis(periodTrades);
+  const selfSabotage = useSelfSabotage(periodTrades, language);
+  const disciplineScore = useDisciplineScore(periodTrades);
+  const heatmap = usePerformanceHeatmap(periodTrades, language);
+  const emotionCorrelation = useEmotionCorrelation(periodTrades);
+
+  // Calculate basic statistics
+  const stats = useMemo(() => {
+    if (periodTrades.length === 0) {
+      return {
+        winrate: 0,
+        pnl: 0,
+        totalTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        bestSetup: '-',
+        bestAsset: '-',
+        dominantEmotion: '-',
+        bestDay: { day: '-', pnl: 0 },
+        worstDay: { day: '-', pnl: 0 },
+      };
+    }
+
+    const winningTrades = periodTrades.filter(t => t.result === 'win').length;
+    const losingTrades = periodTrades.filter(t => t.result === 'loss').length;
+    const winrate = periodTrades.length > 0 ? Math.round((winningTrades / periodTrades.length) * 100) : 0;
+    const pnl = periodTrades.reduce((sum, t) => sum + (t.profit_loss || 0), 0);
+
+    const days = language === 'fr' ? DAYS_FR : DAYS_EN;
+    const dayStats: Record<number, { pnl: number }> = {};
+    periodTrades.forEach(trade => {
+      const dayIndex = getDay(parseISO(trade.trade_date));
+      if (!dayStats[dayIndex]) dayStats[dayIndex] = { pnl: 0 };
+      dayStats[dayIndex].pnl += trade.profit_loss || 0;
+    });
+
+    let bestDay = { day: '-', pnl: 0 };
+    let worstDay = { day: '-', pnl: 0 };
+    Object.entries(dayStats).forEach(([dayIndex, data]) => {
+      if (data.pnl > bestDay.pnl) bestDay = { day: days[parseInt(dayIndex)], pnl: data.pnl };
+      if (data.pnl < worstDay.pnl) worstDay = { day: days[parseInt(dayIndex)], pnl: data.pnl };
+    });
+
+    const setupStats: Record<string, { wins: number; total: number }> = {};
+    periodTrades.forEach(trade => {
+      const setup = trade.setup || 'Other';
+      if (!setupStats[setup]) setupStats[setup] = { wins: 0, total: 0 };
+      setupStats[setup].total++;
+      if (trade.result === 'win') setupStats[setup].wins++;
+    });
+    let bestSetup = '-';
+    let bestSetupWinrate = 0;
+    Object.entries(setupStats).forEach(([setup, data]) => {
+      const wr = data.total > 0 ? data.wins / data.total : 0;
+      if (wr > bestSetupWinrate && data.total >= 2) {
+        bestSetupWinrate = wr;
+        bestSetup = setup;
+      }
+    });
+
+    const assetStats: Record<string, number> = {};
+    periodTrades.forEach(trade => {
+      if (!assetStats[trade.asset]) assetStats[trade.asset] = 0;
+      assetStats[trade.asset] += trade.profit_loss || 0;
+    });
+    let bestAsset = '-';
+    let bestAssetPnl = -Infinity;
+    Object.entries(assetStats).forEach(([asset, pnlVal]) => {
+      if (pnlVal > bestAssetPnl) {
+        bestAssetPnl = pnlVal;
+        bestAsset = asset;
+      }
+    });
+
+    const emotionCounts: Record<string, number> = {};
+    periodTrades.forEach(trade => {
+      const emotion = trade.emotions || 'Neutre';
+      emotionCounts[emotion] = (emotionCounts[emotion] || 0) + 1;
+    });
+    let dominantEmotion = '-';
+    let maxEmotionCount = 0;
+    Object.entries(emotionCounts).forEach(([emotion, count]) => {
+      if (count > maxEmotionCount) {
+        maxEmotionCount = count;
+        dominantEmotion = emotion;
+      }
+    });
+
+    return {
+      winrate,
+      pnl,
+      totalTrades: periodTrades.length,
+      winningTrades,
+      losingTrades,
+      bestSetup,
+      bestAsset,
+      dominantEmotion,
+      bestDay,
+      worstDay,
+    };
+  }, [periodTrades, language]);
+
+  // Daily PnL data
+  const dailyPnL = useMemo(() => {
+    const days = language === 'fr' ? DAYS_FR : DAYS_EN;
+    const dayData: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    
+    periodTrades.forEach(trade => {
+      const dayIndex = getDay(parseISO(trade.trade_date));
+      dayData[dayIndex] += trade.profit_loss || 0;
+    });
+
+    return [1, 2, 3, 4, 5, 6, 0].map(dayIndex => ({
+      day: days[dayIndex],
+      pnl: Math.round(dayData[dayIndex] * 100) / 100,
+    }));
+  }, [periodTrades, language]);
+
+  if (!selectedUser) {
+    return <AdminPagePlaceholder pageName="rapports" />;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const hasNoData = !trades || trades.length === 0;
+
+  return (
+    <div className="py-4 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Eye className="w-5 h-5 text-orange-500" />
+            <Badge variant="outline" className="border-orange-500/50 text-orange-500">
+              {language === 'fr' ? 'Mode consultation' : 'View Mode'}
+            </Badge>
+          </div>
+          <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
+            {language === 'fr' ? 'Rapports de' : 'Reports of'} {selectedUser.nickname}
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">{selectedUser.email}</p>
+        </div>
+        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500/20 to-amber-500/20 flex items-center justify-center border border-orange-500/30">
+          <FileText className="w-6 h-6 text-orange-500" />
+        </div>
+      </div>
+
+      {/* Period Selector */}
+      <div className="glass-card p-4 animate-fade-in">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2 p-1 rounded-lg bg-secondary/50">
+            <Button
+              variant={viewMode === 'week' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('week')}
+              className={cn(viewMode === 'week' && 'bg-primary text-primary-foreground')}
+            >
+              {t('week')}
+            </Button>
+            <Button
+              variant={viewMode === 'month' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('month')}
+              className={cn(viewMode === 'month' && 'bg-primary text-primary-foreground')}
+            >
+              {t('month')}
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={() => navigatePeriod('prev')}>
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="min-w-[200px] gap-2 font-display">
+                  <CalendarIcon className="w-4 h-4" />
+                  {formatPeriod()}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 bg-popover border-border" align="center">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => {
+                    if (date) {
+                      setSelectedDate(date);
+                      setCalendarOpen(false);
+                    }
+                  }}
+                  locale={locale}
+                />
+              </PopoverContent>
+            </Popover>
+            <Button variant="outline" size="icon" onClick={() => navigatePeriod('next')}>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {hasNoData ? (
+        <div className="glass-card p-12 text-center animate-fade-in">
+          <FileText className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+          <h3 className="text-xl font-display font-semibold text-foreground mb-2">
+            {language === 'fr' ? 'Aucune donnée' : 'No data'}
+          </h3>
+          <p className="text-muted-foreground">
+            {language === 'fr' ? 'Cet utilisateur n\'a pas encore de trades' : 'This user has no trades yet'}
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Key Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="glass-card p-4 animate-fade-in">
+              <div className="flex items-center gap-2 mb-2">
+                <Target className="w-4 h-4 text-primary" />
+                <span className="text-xs text-muted-foreground">Winrate</span>
+              </div>
+              <p className={cn("font-display text-2xl font-bold", stats.winrate >= 50 ? "text-profit" : "text-loss")}>
+                {stats.winrate}%
+              </p>
+            </div>
+            <div className="glass-card p-4 animate-fade-in" style={{ animationDelay: '50ms' }}>
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="w-4 h-4 text-profit" />
+                <span className="text-xs text-muted-foreground">PnL</span>
+              </div>
+              <p className={cn("font-display text-2xl font-bold", stats.pnl >= 0 ? "text-profit" : "text-loss")}>
+                <ConfidentialValue>{formatAmount(stats.pnl, true)}</ConfidentialValue>
+              </p>
+            </div>
+            <div className="glass-card p-4 animate-fade-in" style={{ animationDelay: '100ms' }}>
+              <div className="flex items-center gap-2 mb-2">
+                <Award className="w-4 h-4 text-primary" />
+                <span className="text-xs text-muted-foreground">Trades</span>
+              </div>
+              <p className="font-display text-2xl font-bold text-foreground">{stats.totalTrades}</p>
+              <p className="text-xs text-muted-foreground">
+                <span className="text-profit">{stats.winningTrades}W</span> / <span className="text-loss">{stats.losingTrades}L</span>
+              </p>
+            </div>
+            <div className="glass-card p-4 animate-fade-in" style={{ animationDelay: '150ms' }}>
+              <div className="flex items-center gap-2 mb-2">
+                <Shield className="w-4 h-4 text-primary" />
+                <span className="text-xs text-muted-foreground">{t('discipline')}</span>
+              </div>
+              <p className={cn(
+                "font-display text-2xl font-bold",
+                disciplineScore.overallScore >= 70 ? "text-profit" : disciplineScore.overallScore >= 50 ? "text-primary" : "text-loss"
+              )}>
+                {disciplineScore.overallScore}/100
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t('disciplineGrade')}: {disciplineScore.grade}
+              </p>
+            </div>
+          </div>
+
+          {/* Session Analysis */}
+          <div className="glass-card p-6 animate-fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Globe className="w-5 h-5 text-primary" />
+                <h3 className="font-display font-semibold text-foreground">{t('sessionAnalysis')}</h3>
+              </div>
+              {sessionAnalysis.bestSessionBadge && (
+                <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">
+                  {sessionAnalysis.bestSessionBadge}
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {sessionAnalysis.sessions.map(session => (
+                <div key={session.session} className="p-3 rounded-lg bg-secondary/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: SESSION_NAMES[session.session].color }} />
+                    <span className="text-sm font-medium text-foreground">
+                      {SESSION_NAMES[session.session][language as 'fr' | 'en']}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Winrate</span>
+                      <span className={cn(session.winRate >= 50 ? "text-profit" : "text-loss")}>{session.winRate}%</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">PnL</span>
+                      <span className={cn(session.pnl >= 0 ? "text-profit" : "text-loss")}><ConfidentialValue>{formatAmount(session.pnl, true)}</ConfidentialValue></span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Trades</span>
+                      <span className="text-foreground">{session.trades}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Strategy Analysis */}
+          <div className="glass-card p-6 animate-fade-in">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="w-5 h-5 text-primary" />
+              <h3 className="font-display font-semibold text-foreground">{t('strategyAnalysis')}</h3>
+            </div>
+            {strategyAnalysis.strategies.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2 px-2 text-muted-foreground font-medium">{language === 'fr' ? 'Stratégie' : 'Strategy'}</th>
+                      <th className="text-center py-2 px-2 text-muted-foreground font-medium">Trades</th>
+                      <th className="text-center py-2 px-2 text-muted-foreground font-medium">Winrate</th>
+                      <th className="text-center py-2 px-2 text-muted-foreground font-medium">PF</th>
+                      <th className="text-right py-2 px-2 text-muted-foreground font-medium">PnL</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {strategyAnalysis.strategies.slice(0, 6).map(strat => (
+                      <tr key={strat.strategy} className="border-b border-border/50 hover:bg-secondary/20">
+                        <td className="py-2 px-2 font-medium text-foreground">{strat.strategy}</td>
+                        <td className="py-2 px-2 text-center text-muted-foreground">{strat.trades}</td>
+                        <td className={cn("py-2 px-2 text-center", strat.winRate >= 50 ? "text-profit" : "text-loss")}>
+                          {strat.winRate}%
+                        </td>
+                        <td className={cn("py-2 px-2 text-center", strat.profitFactor >= 1 ? "text-profit" : "text-loss")}>
+                          {strat.profitFactor.toFixed(2)}
+                        </td>
+                        <td className={cn("py-2 px-2 text-right font-medium", strat.totalPnl >= 0 ? "text-profit" : "text-loss")}>
+                          <ConfidentialValue>{formatAmount(strat.totalPnl, true)}</ConfidentialValue>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-sm text-center py-4">
+                {language === 'fr' ? 'Aucune stratégie enregistrée' : 'No strategies recorded'}
+              </p>
+            )}
+          </div>
+
+          {/* Daily Performance */}
+          <div className="glass-card p-6 animate-fade-in">
+            <h3 className="font-display font-semibold text-foreground mb-4">
+              {language === 'fr' ? 'Performance par jour' : 'Daily Performance'}
+            </h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dailyPnL}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                    }}
+                    formatter={(value: number) => [formatAmount(value, true), 'PnL']}
+                  />
+                  <Bar dataKey="pnl" radius={[4, 4, 0, 0]}>
+                    {dailyPnL.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.pnl >= 0 ? 'hsl(var(--profit))' : 'hsl(var(--loss))'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Gauge Charts */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <GaugeChart
+              label={t('winrate')}
+              value={stats.winrate}
+              max={100}
+              displayValue={`${stats.winrate}%`}
+              variant={stats.winrate >= 50 ? 'profit' : 'loss'}
+            />
+            <GaugeChart
+              label={t('discipline')}
+              value={disciplineScore.overallScore}
+              max={100}
+              displayValue={`${disciplineScore.overallScore}`}
+              variant={disciplineScore.overallScore >= 70 ? 'profit' : 'loss'}
+            />
+            <GaugeChart
+              label={language === 'fr' ? 'Trades période' : 'Period trades'}
+              value={stats.totalTrades}
+              max={50}
+              displayValue={`${stats.totalTrades}`}
+              variant="primary"
+            />
+            <GaugeChart
+              label={t('bestSetup')}
+              value={strategyAnalysis.strategies.length > 0 ? strategyAnalysis.strategies[0]?.winRate || 0 : 0}
+              max={100}
+              displayValue={`${strategyAnalysis.strategies.length > 0 ? strategyAnalysis.strategies[0]?.winRate || 0 : 0}%`}
+              variant="profit"
+            />
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default AdminReports;
