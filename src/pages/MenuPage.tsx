@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
@@ -14,26 +14,19 @@ import {
   Info,
   MessageCircle,
 } from 'lucide-react';
-import AIChatBot from '@/components/AIChatBot';
 
 interface MenuSection {
   title: string;
   items: {
-    path?: string;
+    path: string;
     icon: React.ElementType;
     label: string;
-    action?: () => void;
   }[];
 }
 
 const MenuPage: React.FC = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
-
-  const handleOpenAIChat = () => {
-    setIsAIChatOpen(true);
-  };
 
   // Group menu items by sections
   // Note: Dashboard, Reports, Add Trade, Calculator are in bottom nav - excluded here
@@ -57,7 +50,7 @@ const MenuPage: React.FC = () => {
       items: [
         { path: '/currency-conversion', icon: ArrowRightLeft, label: t('currencyConversion') },
         { path: '/challenges', icon: Trophy, label: t('challenges') },
-        { icon: MessageCircle, label: t('aiAssistant'), action: handleOpenAIChat },
+        { path: '/ai-assistant', icon: MessageCircle, label: t('aiAssistant') },
       ],
     },
     {
@@ -70,17 +63,12 @@ const MenuPage: React.FC = () => {
     },
   ];
 
-  const handleItemClick = (item: MenuSection['items'][0]) => {
+  const handleItemClick = (path: string) => {
     // Haptic feedback if supported
     if ('vibrate' in navigator) {
       navigator.vibrate(10);
     }
-    
-    if (item.action) {
-      item.action();
-    } else if (item.path) {
-      navigate(item.path);
-    }
+    navigate(path);
   };
 
   return (
@@ -103,12 +91,12 @@ const MenuPage: React.FC = () => {
             
             {/* Section Items */}
             <div className="grid grid-cols-3 gap-2">
-              {section.items.map((item, index) => {
+              {section.items.map((item) => {
                 const Icon = item.icon;
                 return (
                   <button
-                    key={item.path || `action-${index}`}
-                    onClick={() => handleItemClick(item)}
+                    key={item.path}
+                    onClick={() => handleItemClick(item.path)}
                     className={cn(
                       "flex flex-col items-center justify-center gap-2",
                       "p-4 rounded-xl",
@@ -137,12 +125,6 @@ const MenuPage: React.FC = () => {
           </div>
         ))}
       </div>
-
-      {/* AI Chat Component - controlled externally */}
-      <AIChatBot 
-        isOpenExternal={isAIChatOpen} 
-        onCloseExternal={() => setIsAIChatOpen(false)} 
-      />
     </div>
   );
 };
