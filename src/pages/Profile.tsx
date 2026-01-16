@@ -461,21 +461,24 @@ const Profile: React.FC = () => {
               </span>
             </div>
             {user?.created_at && (
-              <button
-                onClick={() => {
-                  if (isAdmin) {
-                    triggerFeedback('click');
-                    navigate('/admin-verify');
-                  }
-                }}
-                className={`flex items-center justify-center gap-2 text-muted-foreground mt-2 ${isAdmin ? "cursor-pointer hover:text-primary transition-colors" : "cursor-default"}`}
-              >
-                <Calendar className="w-4 h-4" />
+              <div className="flex items-center justify-center gap-2 text-muted-foreground mt-2">
+                <button
+                  onClick={() => {
+                    if (isAdmin) {
+                      triggerFeedback('click');
+                      navigate('/admin-verify');
+                    }
+                  }}
+                  className="flex items-center justify-center"
+                  aria-label="Calendar"
+                >
+                  <Calendar className="w-4 h-4" />
+                </button>
                 <span className="text-sm">
                   {language === 'fr' ? 'Membre depuis le ' : 'Member since '}
                   {format(new Date(user.created_at), 'd MMM yyyy', { locale: language === 'fr' ? fr : enUS })}
                 </span>
-              </button>
+              </div>
             )}
           </div>
         </div>
