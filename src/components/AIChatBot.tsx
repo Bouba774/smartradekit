@@ -23,7 +23,12 @@ interface ChatMessage {
   content: string | MessageContent[];
 }
 
-const AIChatBot: React.FC = () => {
+interface AIChatBotProps {
+  isOpenExternal?: boolean;
+  onCloseExternal?: () => void;
+}
+
+const AIChatBot: React.FC<AIChatBotProps> = ({ isOpenExternal, onCloseExternal }) => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const location = useLocation();
@@ -42,6 +47,13 @@ const AIChatBot: React.FC = () => {
   } = useAIConversations();
 
   const [isOpen, setIsOpen] = useState(false);
+  
+  // Sync with external control
+  useEffect(() => {
+    if (isOpenExternal !== undefined) {
+      setIsOpen(isOpenExternal);
+    }
+  }, [isOpenExternal]);
   const [showHistory, setShowHistory] = useState(false);
   const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -212,6 +224,12 @@ const AIChatBot: React.FC = () => {
 
   const dateLocale = language === 'fr' ? fr : enUS;
 
+  // Handle close - notify external controller if present
+  const handleClose = () => {
+    setIsOpen(false);
+    onCloseExternal?.();
+  };
+
   // Don't show on landing page
   if (location.pathname === '/') {
     return null;
@@ -219,24 +237,11 @@ const AIChatBot: React.FC = () => {
 
   return (
     <>
-      {/* Floating Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          "fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg",
-          "bg-gradient-primary hover:scale-110 flex items-center justify-center",
-          "shadow-neon transition-all duration-300",
-          isOpen && "scale-0 opacity-0"
-        )}
-        aria-label="Open AI Chat"
-      >
-        <MessageCircle className="w-6 h-6 text-primary-foreground" />
-      </button>
 
       {/* Chat Window */}
       <div
         className={cn(
-          "fixed bottom-6 right-6 z-50 w-[400px] max-w-[calc(100vw-48px)] transform origin-bottom-right",
+          "fixed bottom-20 right-4 left-4 sm:left-auto sm:bottom-6 sm:right-6 z-50 sm:w-[400px] transform origin-bottom-right",
           "transition-all duration-500 ease-out",
           isOpen 
             ? "scale-100 opacity-100 translate-y-0" 
@@ -244,7 +249,7 @@ const AIChatBot: React.FC = () => {
         )}
       >
         <div className={cn(
-          "glass-card border border-primary/30 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[550px]",
+          "glass-card border border-primary/30 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[70vh] sm:h-[550px]",
           "transition-shadow duration-500",
           isOpen && "shadow-neon"
         )}>
@@ -302,7 +307,7 @@ const AIChatBot: React.FC = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setIsOpen(false)}
+                onClick={handleClose}
                 className="text-primary-foreground hover:bg-white/20"
               >
                 <X className="w-5 h-5" />
