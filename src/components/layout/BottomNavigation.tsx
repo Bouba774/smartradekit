@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
@@ -9,12 +9,14 @@ import {
   Calculator, 
   Menu 
 } from 'lucide-react';
+import { usePrefetchOnHover } from '@/hooks/useDataPrefetch';
 
 const BottomNavigation: React.FC = () => {
   const { t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
   const [tappedItem, setTappedItem] = useState<string | null>(null);
+  const { prefetchForRoute } = usePrefetchOnHover();
 
   const navItems = [
     { 
@@ -50,6 +52,13 @@ const BottomNavigation: React.FC = () => {
       isMenu: true
     },
   ];
+
+  // Prefetch data on touch start for instant loading
+  const handleTouchStart = useCallback((path: string) => {
+    if (path !== 'add') {
+      prefetchForRoute(path);
+    }
+  }, [prefetchForRoute]);
 
   const handleNavClick = (item: typeof navItems[0]) => {
     // Enhanced haptic feedback - more pronounced vibration pattern
@@ -95,6 +104,8 @@ const BottomNavigation: React.FC = () => {
               <button
                 key={item.path}
                 onClick={() => handleNavClick(item)}
+                onTouchStart={() => handleTouchStart(item.path)}
+                onMouseEnter={() => handleTouchStart(item.path)}
                 className={cn(
                   "relative flex flex-col items-center justify-center gap-1",
                   "flex-1 h-full py-2",
