@@ -2,6 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { APP_NAME, APP_VERSION } from '@/lib/version';
+import appLogo from '@/assets/app-logo.jpg';
 import {
   History,
   GitCompare,
@@ -73,10 +75,27 @@ const MenuPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
+      {/* Header with Logo and Version */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-xl border-b border-border">
-        <div className="flex items-center justify-center h-14 px-4">
-          <h1 className="text-lg font-semibold">{t('menu')}</h1>
+        <div className="flex items-center h-14 px-4">
+          {/* Logo and App Name */}
+          <div className="flex items-center gap-3">
+            <img 
+              src={appLogo} 
+              alt={APP_NAME}
+              className="w-10 h-10 rounded-xl object-cover border border-primary/30 shadow-lg"
+            />
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-foreground leading-tight">{APP_NAME}</span>
+              <span className="text-xs text-primary font-medium">V{APP_VERSION}</span>
+            </div>
+          </div>
+          
+          {/* Menu Title */}
+          <h1 className="text-lg font-semibold flex-1 text-center">{t('menu')}</h1>
+          
+          {/* Spacer for balance */}
+          <div className="w-[88px]"></div>
         </div>
       </div>
 
