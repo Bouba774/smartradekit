@@ -525,10 +525,6 @@ const Calculator: React.FC = () => {
                 <p className="text-sm text-muted-foreground mt-2">
                   {t('standardLots')}
                 </p>
-                <div className="flex justify-center gap-4 mt-4 text-sm">
-                  <span className="text-muted-foreground">{t('mini')}: <span className="text-foreground font-medium">{results.lotSizeMini}</span></span>
-                  <span className="text-muted-foreground">{t('micro')}: <span className="text-foreground font-medium">{results.lotSizeMicro}</span></span>
-                </div>
               </div>
 
               {/* Detailed Results */}
@@ -539,15 +535,17 @@ const Calculator: React.FC = () => {
                     {formatAmount(results.riskAmount, false, false)}
                   </p>
                 </div>
-                <div className="p-4 rounded-lg bg-secondary/50">
-                  <p className="text-xs text-muted-foreground">R:R Ratio</p>
-                  <p className={cn(
-                    "font-display text-xl font-bold",
-                    results.rrRatio >= 2 ? "text-profit" : results.rrRatio >= 1 ? "text-primary" : "text-loss"
-                  )}>
-                    1:{results.rrRatio}
-                  </p>
-                </div>
+                {results.rrRatio > 0 && (
+                  <div className="p-4 rounded-lg bg-secondary/50">
+                    <p className="text-xs text-muted-foreground">R:R Ratio</p>
+                    <p className={cn(
+                      "font-display text-xl font-bold",
+                      results.rrRatio >= 2 ? "text-profit" : results.rrRatio >= 1 ? "text-primary" : "text-loss"
+                    )}>
+                      1:{results.rrRatio}
+                    </p>
+                  </div>
+                )}
                 <div className="p-4 rounded-lg bg-loss/10 border border-loss/20">
                   <p className="text-xs text-muted-foreground">{t('slPoints')}</p>
                   <p className="font-display text-xl font-bold text-loss">{results.slPips} pips</p>
