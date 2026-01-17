@@ -2,15 +2,21 @@
   "name": "Smart Trade Tracker",
   "short_name": "TradeTracker",
   "description": "Votre journal de trading professionnel avec analyses avancées, suivi de performance et insights automatiques.",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#0a1929",
   "theme_color": "#0a1929",
   "orientation": "portrait-primary",
-  "id": "/",
+  "id": "smart-trade-tracker",
   "scope": "/",
+  "lang": "fr",
+  "dir": "ltr",
   "categories": ["finance", "productivity", "utilities"],
   "prefer_related_applications": false,
+  "display_override": ["standalone", "minimal-ui"],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
   "icons": [
     {
       "src": "/assets/app-logo.jpg",
@@ -58,7 +64,13 @@
       "src": "/assets/app-logo.jpg",
       "sizes": "512x512",
       "type": "image/jpeg",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/app-logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
     }
   ],
   "screenshots": [
@@ -68,6 +80,13 @@
       "type": "image/jpeg",
       "form_factor": "narrow",
       "label": "Smart Trade Tracker"
+    },
+    {
+      "src": "/assets/app-logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "Smart Trade Tracker Desktop"
     }
   ],
   "shortcuts": [
@@ -92,5 +111,10 @@
       "url": "/history",
       "icons": [{ "src": "/assets/app-logo.jpg", "sizes": "192x192" }]
     }
-  ]
+  ],
+  "related_applications": [],
+  "handle_links": "preferred",
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }
