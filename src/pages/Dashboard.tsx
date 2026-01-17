@@ -8,10 +8,12 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { useTradeFocus } from '@/hooks/useTradeFocus';
 import { APP_VERSION } from '@/lib/version';
 import { getAssetCategory } from '@/data/assets';
+import { mainStatsTooltips, timeTooltips, streaksTooltips, gaugeTooltips, advancedTooltips } from '@/data/helpTooltips';
 import StatCard from '@/components/ui/StatCard';
 import GaugeChart from '@/components/ui/GaugeChart';
 import TradeFocusMode from '@/components/TradeFocusMode';
 import ConfidentialValue from '@/components/ConfidentialValue';
+import HelpTooltip from '@/components/ui/HelpTooltip';
 import {
   TrendingUp,
   TrendingDown,
@@ -246,6 +248,7 @@ const Dashboard: React.FC = () => {
             value={stats.totalTrades}
             icon={Activity}
             delay={150}
+            tooltip={mainStatsTooltips.totalTrades}
           />
           <StatCard
             title={t('winningTransactions')}
@@ -253,6 +256,7 @@ const Dashboard: React.FC = () => {
             icon={TrendingUp}
             variant="profit"
             delay={200}
+            tooltip={mainStatsTooltips.winningTrades}
           />
           <StatCard
             title={t('losingTransactions')}
@@ -260,6 +264,7 @@ const Dashboard: React.FC = () => {
             icon={TrendingDown}
             variant="loss"
             delay={250}
+            tooltip={mainStatsTooltips.losingTrades}
           />
           <StatCard
             title={t('victoryRate')}
@@ -267,6 +272,7 @@ const Dashboard: React.FC = () => {
             icon={Target}
             variant={stats.winrate >= 50 ? 'profit' : 'loss'}
             delay={300}
+            tooltip={mainStatsTooltips.winrate}
           />
           <StatCard
             title={t('breakeven')}
@@ -274,6 +280,7 @@ const Dashboard: React.FC = () => {
             icon={ArrowUpDown}
             variant="neutral"
             delay={350}
+            tooltip={mainStatsTooltips.breakeven}
           />
         </div>
       </div>
@@ -288,6 +295,7 @@ const Dashboard: React.FC = () => {
             icon={TrendingUp}
             variant="profit"
             delay={450}
+            tooltip={mainStatsTooltips.buyPositions}
           />
           <StatCard
             title={t('sellPositions')}
@@ -295,18 +303,21 @@ const Dashboard: React.FC = () => {
             icon={TrendingDown}
             variant="loss"
             delay={500}
+            tooltip={mainStatsTooltips.sellPositions}
           />
           <StatCard
             title={t('avgLotSize')}
             value={<ConfidentialValue>{stats.avgLotSize.toFixed(2)}</ConfidentialValue>}
             icon={Layers}
             delay={550}
+            tooltip={mainStatsTooltips.avgLotSize}
           />
           <StatCard
             title={t('totalLots')}
             value={<ConfidentialValue>{stats.totalLots.toFixed(2)}</ConfidentialValue>}
             icon={Layers}
             delay={600}
+            tooltip={mainStatsTooltips.totalLots}
           />
         </div>
       </div>
@@ -321,6 +332,7 @@ const Dashboard: React.FC = () => {
             icon={Trophy}
             variant="profit"
             delay={700}
+            tooltip={mainStatsTooltips.bestProfit}
           />
           <StatCard
             title={t('worstLoss')}
@@ -328,6 +340,7 @@ const Dashboard: React.FC = () => {
             icon={AlertTriangle}
             variant="loss"
             delay={750}
+            tooltip={mainStatsTooltips.worstLoss}
           />
           <StatCard
             title={t('avgProfitPerTrade')}
@@ -335,6 +348,7 @@ const Dashboard: React.FC = () => {
             icon={TrendingUp}
             variant="profit"
             delay={800}
+            tooltip={mainStatsTooltips.avgProfitPerTrade}
           />
           <StatCard
             title={t('avgLossPerTrade')}
@@ -342,6 +356,7 @@ const Dashboard: React.FC = () => {
             icon={TrendingDown}
             variant="loss"
             delay={850}
+            tooltip={mainStatsTooltips.avgLossPerTrade}
           />
           <StatCard
             title={t('totalProfit')}
@@ -349,6 +364,7 @@ const Dashboard: React.FC = () => {
             icon={DollarSign}
             variant="profit"
             delay={900}
+            tooltip={mainStatsTooltips.totalProfit}
           />
           <StatCard
             title={t('totalLoss')}
@@ -356,6 +372,7 @@ const Dashboard: React.FC = () => {
             icon={DollarSign}
             variant="loss"
             delay={950}
+            tooltip="Somme totale de toutes les pertes enregistrées."
           />
         </div>
       </div>
@@ -370,6 +387,7 @@ const Dashboard: React.FC = () => {
             icon={DollarSign}
             variant={stats.netProfit >= 0 ? 'profit' : 'loss'}
             delay={1050}
+            tooltip={mainStatsTooltips.netProfit}
           />
           <StatCard
             title={t('profitFactorLabel')}
@@ -377,6 +395,7 @@ const Dashboard: React.FC = () => {
             icon={Scale}
             variant={stats.profitFactor >= 1.5 ? 'profit' : stats.profitFactor >= 1 ? 'neutral' : 'loss'}
             delay={1100}
+            tooltip={mainStatsTooltips.profitFactor}
           />
           <StatCard
             title={t('avgRiskReward')}
@@ -384,6 +403,7 @@ const Dashboard: React.FC = () => {
             icon={Scale}
             variant={stats.avgRiskReward >= 1.5 ? 'profit' : stats.avgRiskReward >= 1 ? 'neutral' : 'loss'}
             delay={1150}
+            tooltip={mainStatsTooltips.avgRR}
           />
           <StatCard
             title={t('avgTradeResult')}
@@ -391,6 +411,7 @@ const Dashboard: React.FC = () => {
             icon={BarChart3}
             variant={stats.avgTradeResult >= 0 ? 'profit' : 'loss'}
             delay={1200}
+            tooltip={mainStatsTooltips.avgTradeResult}
           />
         </div>
       </div>
@@ -405,6 +426,7 @@ const Dashboard: React.FC = () => {
             icon={Award}
             variant="profit"
             delay={1300}
+            tooltip={streaksTooltips.maxWinStreak}
           />
           <StatCard
             title={t('maxLossStreak')}
@@ -412,6 +434,7 @@ const Dashboard: React.FC = () => {
             icon={AlertTriangle}
             variant="loss"
             delay={1350}
+            tooltip={streaksTooltips.maxLossStreak}
           />
         </div>
       </div>
@@ -425,12 +448,14 @@ const Dashboard: React.FC = () => {
             value={stats.avgTradeDuration}
             icon={Clock}
             delay={1450}
+            tooltip={timeTooltips.avgTimeInPosition}
           />
           <StatCard
             title={t('totalTimeInPosition')}
             value={stats.totalTimeInPosition}
             icon={Timer}
             delay={1500}
+            tooltip={timeTooltips.totalTimeInPosition}
           />
         </div>
       </div>
@@ -705,36 +730,42 @@ const Dashboard: React.FC = () => {
             displayValue={`${round1(clamp(stats.winrate, 0, 100))}`}
             label={t('winrate')}
             variant={stats.winrate >= 60 ? 'profit' : stats.winrate >= 40 ? 'primary' : 'loss'}
+            tooltip={gaugeTooltips.winrateGauge}
           />
           <GaugeChart
             value={stats.profitFactor * 25}
             displayValue={stats.profitFactorDisplay}
             label={t('profitFactor')}
             variant={stats.profitFactor >= 1.5 ? 'profit' : stats.profitFactor >= 1 ? 'primary' : 'loss'}
+            tooltip={gaugeTooltips.profitFactorGauge}
           />
           <GaugeChart
             value={stats.avgRiskReward * 25}
             displayValue={stats.avgRiskRewardDisplay}
             label={t('avgRiskReward')}
             variant={stats.avgRiskReward >= 1.5 ? 'profit' : stats.avgRiskReward >= 1 ? 'primary' : 'loss'}
+            tooltip="Ratio risque/rendement moyen réellement obtenu sur vos trades."
           />
           <GaugeChart
             value={stats.expectancy >= 0 ? stats.expectancy * 10 : 0}
             displayValue={`${stats.expectancy >= 0 ? round1(stats.expectancy) : 0}`}
             label={t('expectancy')}
             variant={stats.expectancy > 0 ? 'profit' : 'loss'}
+            tooltip={gaugeTooltips.expectancyGauge}
           />
           <GaugeChart
             value={100 - stats.maxDrawdownPercent}
             displayValue={`${round1(clamp(100 - stats.maxDrawdownPercent, 0, 100))}`}
             label={t('securityIndicator')}
             variant={stats.maxDrawdownPercent <= 10 ? 'profit' : stats.maxDrawdownPercent <= 20 ? 'primary' : 'loss'}
+            tooltip="Score de sécurité basé sur votre drawdown maximum. Plus ce score est élevé, meilleure est votre gestion du risque."
           />
           <GaugeChart
             value={stats.longestWinStreak * 15}
             displayValue={`${stats.longestWinStreak}`}
             label={t('consistency')}
             variant="primary"
+            tooltip={advancedTooltips.consistency}
           />
         </div>
       </div>

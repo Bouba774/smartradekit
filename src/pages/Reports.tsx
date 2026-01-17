@@ -16,6 +16,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import AIDailySummaryCard from '@/components/AIDailySummaryCard';
 import SessionSettingsCard from '@/components/SessionSettingsCard';
+import HelpTooltip from '@/components/ui/HelpTooltip';
+import { mainStatsTooltips, reportsTooltips, psychologyTooltips } from '@/data/helpTooltips';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, addMonths, isWithinInterval, parseISO, getDay } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import {
@@ -345,6 +347,7 @@ const Reports: React.FC = () => {
               <div className="flex items-center gap-2 mb-2">
                 <Target className="w-4 h-4 text-primary" />
                 <span className="text-xs text-muted-foreground">Winrate</span>
+                <HelpTooltip text={mainStatsTooltips.winrate} />
               </div>
               <p className={cn("font-display text-2xl font-bold", stats.winrate >= 50 ? "text-profit" : "text-loss")}>
                 {stats.winrate}%
@@ -354,6 +357,7 @@ const Reports: React.FC = () => {
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="w-4 h-4 text-profit" />
                 <span className="text-xs text-muted-foreground">PnL</span>
+                <HelpTooltip text={reportsTooltips.pnlTotal} />
               </div>
               <p className={cn("font-display text-2xl font-bold", stats.pnl >= 0 ? "text-profit" : "text-loss")}>
                 <ConfidentialValue>{formatAmount(stats.pnl, true)}</ConfidentialValue>
@@ -363,6 +367,7 @@ const Reports: React.FC = () => {
               <div className="flex items-center gap-2 mb-2">
                 <Award className="w-4 h-4 text-primary" />
                 <span className="text-xs text-muted-foreground">Trades</span>
+                <HelpTooltip text={mainStatsTooltips.totalTrades} />
               </div>
               <p className="font-display text-2xl font-bold text-foreground">{stats.totalTrades}</p>
               <p className="text-xs text-muted-foreground">
@@ -373,6 +378,7 @@ const Reports: React.FC = () => {
               <div className="flex items-center gap-2 mb-2">
                 <Shield className="w-4 h-4 text-primary" />
                 <span className="text-xs text-muted-foreground">{t('discipline')}</span>
+                <HelpTooltip text={psychologyTooltips.discipline} />
               </div>
               <p className={cn(
                 "font-display text-2xl font-bold",

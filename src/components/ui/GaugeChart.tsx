@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
+import HelpTooltip from '@/components/ui/HelpTooltip';
 
 interface GaugeChartProps {
   value: number;
@@ -9,6 +10,7 @@ interface GaugeChartProps {
   size?: 'sm' | 'md' | 'lg';
   variant?: 'primary' | 'profit' | 'loss';
   className?: string;
+  tooltip?: string;
 }
 
 // Utility: Clamp value between min and max
@@ -29,6 +31,7 @@ const GaugeChart: React.FC<GaugeChartProps> = ({
   size = 'md',
   variant = 'primary',
   className,
+  tooltip,
 }) => {
   // Clamp and round the percentage for visual display
   const safeValue = Number.isFinite(value) ? value : 0;
@@ -124,9 +127,12 @@ const GaugeChart: React.FC<GaugeChartProps> = ({
         </div>
       </div>
       
-      <p className="text-xs text-muted-foreground mt-2 font-medium uppercase tracking-wide">
-        {label}
-      </p>
+      <div className="flex items-center gap-1 mt-2">
+        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+          {label}
+        </p>
+        {tooltip && <HelpTooltip text={tooltip} size="sm" />}
+      </div>
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
+import HelpTooltip from '@/components/ui/HelpTooltip';
 
 interface StatCardProps {
   title: string;
@@ -11,6 +12,7 @@ interface StatCardProps {
   variant?: 'default' | 'profit' | 'loss' | 'neutral';
   className?: string;
   delay?: number;
+  tooltip?: string;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
@@ -22,6 +24,7 @@ const StatCard: React.FC<StatCardProps> = ({
   variant = 'default',
   className,
   delay = 0,
+  tooltip,
 }) => {
   const variantStyles = {
     default: '',
@@ -47,9 +50,12 @@ const StatCard: React.FC<StatCardProps> = ({
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-start justify-between mb-3">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
-          {title}
-        </p>
+        <div className="flex items-center gap-1.5">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+            {title}
+          </p>
+          {tooltip && <HelpTooltip text={tooltip} size="sm" />}
+        </div>
         {Icon && (
           <Icon className={cn(
             "w-4 h-4",

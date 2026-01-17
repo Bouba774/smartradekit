@@ -18,6 +18,8 @@ import { Calculator as CalcIcon, AlertTriangle, Send, Search, TrendingUp, Trendi
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import EntryModeInputs from '@/components/calculator/EntryModeInputs';
+import HelpTooltip from '@/components/ui/HelpTooltip';
+import { calculatorTooltips } from '@/data/helpTooltips';
 
 export const PENDING_TRADE_KEY = 'pending_trade_data';
 import { ASSET_CATEGORIES, PIP_VALUES, DECIMALS, getPipSize, getAssetCategory } from '@/data/assets';
@@ -322,7 +324,10 @@ const Calculator: React.FC = () => {
           <div className="space-y-4">
             {/* Asset Selector with integrated search */}
             <div className="space-y-2">
-              <Label>{t('asset')}</Label>
+              <div className="flex items-center gap-1.5">
+                <Label>{t('asset')}</Label>
+                <HelpTooltip text={calculatorTooltips.asset} />
+              </div>
               <Select value={formData.asset} onValueChange={(v) => {
                 handleInputChange('asset', v);
                 setAssetSearch('');
@@ -416,7 +421,10 @@ const Calculator: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>{t('capital')} ({getCurrencySymbol()})</Label>
+                <div className="flex items-center gap-1.5">
+                  <Label>{t('capital')} ({getCurrencySymbol()})</Label>
+                  <HelpTooltip text={calculatorTooltips.capital} />
+                </div>
                 <Input
                   type="text"
                   inputMode="decimal"
@@ -429,7 +437,10 @@ const Calculator: React.FC = () => {
                 />
               </div>
               <div className="space-y-2 col-span-2">
-                <Label>{t('risk')}</Label>
+                <div className="flex items-center gap-1.5">
+                  <Label>{t('risk')}</Label>
+                  <HelpTooltip text={calculatorTooltips.riskPercent} />
+                </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="relative">
                     <Input
