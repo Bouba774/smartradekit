@@ -7,9 +7,14 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { type SupportedLanguage, type MultilingualTooltip } from '@/data/helpTooltips';
 
 interface HelpTooltipProps {
-  text: string;
+  /** Static text string for simple tooltips */
+  text?: string;
+  /** Multilingual tooltip object for translated tooltips */
+  tooltip?: MultilingualTooltip;
   side?: 'top' | 'right' | 'bottom' | 'left';
   align?: 'start' | 'center' | 'end';
   className?: string;
@@ -19,13 +24,28 @@ interface HelpTooltipProps {
 
 const HelpTooltip: React.FC<HelpTooltipProps> = ({
   text,
+  tooltip,
   side = 'top',
   align = 'center',
   className,
   iconClassName,
   size = 'sm',
 }) => {
-  if (!text) return null;
+  const { language } = useLanguage();
+  
+  // Get the tooltip text based on language
+  const getTooltipText = (): string => {
+    if (text) return text;
+    if (tooltip) {
+      const lang = language as SupportedLanguage;
+      return tooltip[lang] || tooltip.fr || '';
+    }
+    return '';
+  };
+
+  const tooltipText = getTooltipText();
+  
+  if (!tooltipText) return null;
 
   const sizeClasses = {
     sm: 'w-3.5 h-3.5',
@@ -63,7 +83,7 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({
           )}
           sideOffset={5}
         >
-          <p>{text}</p>
+          <p>{tooltipText}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
