@@ -32,6 +32,8 @@ import {
   Loader2,
   Trash2,
   Star,
+  Clock,
+  AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ASSET_CATEGORIES } from '@/data/assets';
@@ -214,6 +216,54 @@ const AddTrade: React.FC = () => {
     }
     return { filteredAssets: result, filteredFavorites: favs };
   }, [assetSearch, favorites]);
+
+  // Calculate estimated duration in real-time
+  const estimatedDuration = useMemo(() => {
+    if (!exitDate) return null;
+    
+    // Build entry datetime
+    const entryDateTime = new Date(date);
+    if (entryTime) {
+      const [hours, minutes] = entryTime.split(':').map(Number);
+      if (!isNaN(hours) && !isNaN(minutes)) {
+        entryDateTime.setHours(hours, minutes, 0, 0);
+      }
+    }
+    
+    // Build exit datetime
+    const exitDateTime = new Date(exitDate);
+    if (exitTime) {
+      const [hours, minutes] = exitTime.split(':').map(Number);
+      if (!isNaN(hours) && !isNaN(minutes)) {
+        exitDateTime.setHours(hours, minutes, 0, 0);
+      }
+    }
+    
+    const durationMs = exitDateTime.getTime() - entryDateTime.getTime();
+    const durationSeconds = Math.floor(durationMs / 1000);
+    
+    // Check if exit is before entry (invalid)
+    if (durationSeconds < 0) {
+      return { isValid: false, formatted: '', seconds: durationSeconds };
+    }
+    
+    // Format duration
+    const days = Math.floor(durationSeconds / (60 * 60 * 24));
+    const hours = Math.floor((durationSeconds % (60 * 60 * 24)) / (60 * 60));
+    const mins = Math.floor((durationSeconds % (60 * 60)) / 60);
+    
+    const parts: string[] = [];
+    if (days > 0) parts.push(`${days}j`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (mins > 0) parts.push(`${mins}m`);
+    
+    return { 
+      isValid: true, 
+      formatted: parts.length > 0 ? parts.join(' ') : '< 1m',
+      seconds: durationSeconds 
+    };
+  }, [date, entryTime, exitDate, exitTime]);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -351,6 +401,16 @@ const AddTrade: React.FC = () => {
     const validation = validateTradeForm(validationData);
     if (!validation.success) {
       validation.errors.forEach(error => toast.error(error));
+      return;
+    }
+
+    // Validate exit date/time is not before entry date/time
+    if (estimatedDuration && !estimatedDuration.isValid) {
+      toast.error(
+        language === 'fr' 
+          ? 'La date/heure de sortie ne peut pas être antérieure à la date/heure d\'entrée' 
+          : 'Exit date/time cannot be before entry date/time'
+      );
       return;
     }
 
@@ -767,7 +827,40 @@ const AddTrade: React.FC = () => {
           </div>
 
           {/* Exit Section */}
-          <div className="space-y-4 p-4 bg-secondary/30 rounded-lg border border-border">
+          <div className={cn(
+            "space-y-4 p-4 rounded-lg border",
+            estimatedDuration && !estimatedDuration.isValid 
+              ? "bg-loss/10 border-loss/50" 
+              : "bg-secondary/30 border-border"
+          )}>
+            {/* Duration Indicator */}
+            {estimatedDuration && (
+              <div className={cn(
+                "flex items-center gap-2 p-3 rounded-lg text-sm font-medium",
+                estimatedDuration.isValid 
+                  ? "bg-primary/10 text-primary border border-primary/20" 
+                  : "bg-loss/20 text-loss border border-loss/30"
+              )}>
+                {estimatedDuration.isValid ? (
+                  <>
+                    <Clock className="w-4 h-4" />
+                    <span>
+                      {language === 'fr' ? 'Durée estimée :' : 'Estimated duration:'} {estimatedDuration.formatted}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>
+                      {language === 'fr' 
+                        ? 'Erreur : La sortie est antérieure à l\'entrée' 
+                        : 'Error: Exit is before entry'}
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{language === 'fr' ? 'Date de Sortie' : 'Exit Date'}</Label>
@@ -777,7 +870,8 @@ const AddTrade: React.FC = () => {
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !exitDate && "text-muted-foreground"
+                        !exitDate && "text-muted-foreground",
+                        estimatedDuration && !estimatedDuration.isValid && "border-loss text-loss"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -801,7 +895,10 @@ const AddTrade: React.FC = () => {
                   type="time" 
                   value={exitTime}
                   onChange={(e) => setExitTime(e.target.value)}
-                  className="w-full"
+                  className={cn(
+                    "w-full",
+                    estimatedDuration && !estimatedDuration.isValid && "border-loss text-loss"
+                  )}
                 />
               </div>
             </div>
