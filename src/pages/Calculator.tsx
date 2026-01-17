@@ -14,12 +14,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { Calculator as CalcIcon, ArrowRight, AlertTriangle, CheckCircle, Send, Search, TrendingUp, TrendingDown, Star, Save, Copy } from 'lucide-react';
+import { Calculator as CalcIcon, AlertTriangle, Send, Search, TrendingUp, TrendingDown, Star, Save, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import CalculatorModeToggle, { CalculatorMode } from '@/components/calculator/CalculatorModeToggle';
 import EntryModeInputs from '@/components/calculator/EntryModeInputs';
-import PipsModeInputs from '@/components/calculator/PipsModeInputs';
 
 export const PENDING_TRADE_KEY = 'pending_trade_data';
 import { ASSET_CATEGORIES, PIP_VALUES, DECIMALS, getPipSize, getAssetCategory } from '@/data/assets';
@@ -31,9 +29,6 @@ const Calculator: React.FC = () => {
   const { settings, updateSetting, isLoaded: settingsLoaded } = useSettings();
   const navigate = useNavigate();
   const [assetSearch, setAssetSearch] = useState('');
-  
-  // Calculator mode state
-  const [mode, setMode] = useState<CalculatorMode>('entry');
 
   const [formData, setFormData] = useState({
     capital: '',
@@ -43,9 +38,6 @@ const Calculator: React.FC = () => {
     stopLoss: '',
     takeProfit: '',
     asset: 'EUR/USD',
-    // Pips mode fields
-    pips: '',
-    riskRatio: '1:2',
   });
 
   // Load saved defaults when settings are loaded
@@ -86,7 +78,6 @@ const Calculator: React.FC = () => {
     slValue: number;
     tpValue: number;
     direction: 'buy' | 'sell' | null;
-    mode: CalculatorMode;
   } | null>(null);
 
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -192,15 +183,6 @@ const Calculator: React.FC = () => {
     return pipValue;
   };
 
-  // Parse risk ratio string (e.g., "1:2" -> 2)
-  const parseRiskRatio = (ratioStr: string): number => {
-    const parts = ratioStr.split(':');
-    if (parts.length === 2) {
-      return parseFloat(parts[1]) / parseFloat(parts[0]);
-    }
-    return 2; // Default to 1:2
-  };
-
   const calculateLot = () => {
     const capital = parseFloat(formData.capital);
     const riskPercent = parseFloat(formData.riskPercent);
@@ -216,84 +198,38 @@ const Calculator: React.FC = () => {
     const pipSize = getPipSize(asset);
     const category = getAssetCategory(asset);
 
-    if (mode === 'pips') {
-      // Pips Mode calculation
-      const pips = parseFloat(formData.pips);
-      
-      if (!pips || pips <= 0) {
-        toast.error(t('enterValidPips'));
-        return;
-      }
+    const entryPrice = parseFloat(formData.entryPrice);
+    const stopLoss = parseFloat(formData.stopLoss);
+    const takeProfit = parseFloat(formData.takeProfit);
 
-      // Lot size = Risk Amount / (Pips * Pip Value)
-      const lotSize = riskAmount / (pips * pipValue);
-      const rrRatio = parseRiskRatio(formData.riskRatio);
-      const tpPips = pips * rrRatio;
-      const tpValue = riskAmount * rrRatio;
+    if (!entryPrice || !stopLoss) {
+      toast.error(t('fillAllFields'));
+      return;
+    }
 
-      // Generate warnings
-      const newWarnings: string[] = [];
-      if (riskPercent > 2) {
-        newWarnings.push(`⚠️ ${t('warningRisk2')}`);
-      }
-      if (riskPercent > 5) {
-        newWarnings.push(`🚨 ${t('warningRisk5')}`);
-      }
-      if (pips < 5 && category.includes('Forex')) {
-        newWarnings.push(`⚠️ ${t('warningSLTight')}`);
-      }
-      if (lotSize > 10) {
-        newWarnings.push(`🚨 ${t('warningLotHigh')}`);
-      }
+    // Determine direction based on entry vs SL
+    const direction: 'buy' | 'sell' = entryPrice > stopLoss ? 'buy' : 'sell';
+    
+    // Calculate SL distance in pips/points
+    const slDistance = Math.abs(entryPrice - stopLoss);
+    const slPips = slDistance / pipSize;
+    
+    // Lot size calculation: LotSize = RiskMoney / (SL_pips * pip_value)
+    const lotSize = riskAmount / (slPips * pipValue);
+    const lotSizeMini = lotSize * 10;
+    const lotSizeMicro = lotSize * 100;
+    
+    // TP calculations
+    let tpPips = 0;
+    let rrRatio = 0;
+    if (takeProfit) {
+      const tpDistance = Math.abs(takeProfit - entryPrice);
+      tpPips = tpDistance / pipSize;
+      rrRatio = tpPips / slPips;
+    }
 
-      setWarnings(newWarnings);
-      setResults({
-        riskAmount: Math.round(riskAmount * 100) / 100,
-        slPips: pips,
-        tpPips: Math.round(tpPips * 10) / 10,
-        lotSize: Math.round(lotSize * 100) / 100,
-        lotSizeMini: Math.round(lotSize * 10 * 100) / 100,
-        lotSizeMicro: Math.round(lotSize * 100 * 100) / 100,
-        rrRatio: rrRatio,
-        slValue: Math.round(riskAmount * 100) / 100,
-        tpValue: Math.round(tpValue * 100) / 100,
-        direction: null,
-        mode: 'pips',
-      });
-    } else {
-      // Entry Mode calculation (existing logic)
-      const entryPrice = parseFloat(formData.entryPrice);
-      const stopLoss = parseFloat(formData.stopLoss);
-      const takeProfit = parseFloat(formData.takeProfit);
-
-      if (!entryPrice || !stopLoss) {
-        toast.error(t('fillAllFields'));
-        return;
-      }
-
-      // Determine direction based on entry vs SL
-      const direction: 'buy' | 'sell' = entryPrice > stopLoss ? 'buy' : 'sell';
-      
-      // Calculate SL distance in pips/points
-      const slDistance = Math.abs(entryPrice - stopLoss);
-      const slPips = slDistance / pipSize;
-      
-      // Lot size calculation: LotSize = RiskMoney / (SL_pips * pip_value)
-      const lotSize = riskAmount / (slPips * pipValue);
-      const lotSizeMini = lotSize * 10;
-      const lotSizeMicro = lotSize * 100;
-      
-      // TP calculations
-      let tpPips = 0;
-      let rrRatio = 0;
-      if (takeProfit) {
-        const tpDistance = Math.abs(takeProfit - entryPrice);
-        tpPips = tpDistance / pipSize;
-        rrRatio = tpPips / slPips;
-      }
-
-      const slValue = riskAmount;
-      const tpValue = riskAmount * rrRatio;
+    const slValue = riskAmount;
+    const tpValue = riskAmount * rrRatio;
 
       // Generate warnings
       const newWarnings: string[] = [];
@@ -316,21 +252,19 @@ const Calculator: React.FC = () => {
         newWarnings.push(`🚨 ${t('warningLotHigh')}`);
       }
 
-      setWarnings(newWarnings);
-      setResults({
-        riskAmount: Math.round(riskAmount * 100) / 100,
-        slPips: Math.round(slPips * 10) / 10,
-        tpPips: Math.round(tpPips * 10) / 10,
-        lotSize: Math.round(lotSize * 100) / 100,
-        lotSizeMini: Math.round(lotSizeMini * 100) / 100,
-        lotSizeMicro: Math.round(lotSizeMicro * 100) / 100,
-        rrRatio: Math.round(rrRatio * 100) / 100,
-        slValue: Math.round(slValue * 100) / 100,
-        tpValue: Math.round(tpValue * 100) / 100,
-        direction,
-        mode: 'entry',
-      });
-    }
+    setWarnings(newWarnings);
+    setResults({
+      riskAmount: Math.round(riskAmount * 100) / 100,
+      slPips: Math.round(slPips * 10) / 10,
+      tpPips: Math.round(tpPips * 10) / 10,
+      lotSize: Math.round(lotSize * 100) / 100,
+      lotSizeMini: Math.round(lotSizeMini * 100) / 100,
+      lotSizeMicro: Math.round(lotSizeMicro * 100) / 100,
+      rrRatio: Math.round(rrRatio * 100) / 100,
+      slValue: Math.round(slValue * 100) / 100,
+      tpValue: Math.round(tpValue * 100) / 100,
+      direction,
+    });
 
     toast.success(t('calculationDone'));
   };
@@ -378,11 +312,6 @@ const Calculator: React.FC = () => {
             <CalcIcon className="w-6 h-6 text-primary-foreground" />
           </div>
         </div>
-      </div>
-
-      {/* Mode Toggle */}
-      <div className="mb-6">
-        <CalculatorModeToggle mode={mode} onModeChange={setMode} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -539,23 +468,14 @@ const Calculator: React.FC = () => {
 
             {/* Dynamic Mode-specific Inputs */}
             <div className="pt-4 border-t border-border">
-              {mode === 'entry' ? (
-                <EntryModeInputs
-                  entryPrice={formData.entryPrice}
-                  stopLoss={formData.stopLoss}
-                  takeProfit={formData.takeProfit}
-                  onEntryPriceChange={(v) => handleInputChange('entryPrice', v)}
-                  onStopLossChange={(v) => handleInputChange('stopLoss', v)}
-                  onTakeProfitChange={(v) => handleInputChange('takeProfit', v)}
-                />
-              ) : (
-                <PipsModeInputs
-                  pips={formData.pips}
-                  riskRatio={formData.riskRatio}
-                  onPipsChange={(v) => handleInputChange('pips', v)}
-                  onRiskRatioChange={(v) => handleInputChange('riskRatio', v)}
-                />
-              )}
+              <EntryModeInputs
+                entryPrice={formData.entryPrice}
+                stopLoss={formData.stopLoss}
+                takeProfit={formData.takeProfit}
+                onEntryPriceChange={(v) => handleInputChange('entryPrice', v)}
+                onStopLossChange={(v) => handleInputChange('stopLoss', v)}
+                onTakeProfitChange={(v) => handleInputChange('takeProfit', v)}
+              />
             </div>
           </div>
 
@@ -583,11 +503,7 @@ const Calculator: React.FC = () => {
                   <span className="flex items-center gap-1 text-sm text-loss">
                     <TrendingDown className="w-4 h-4" /> SELL
                   </span>
-                ) : (
-                  <span className="flex items-center gap-1 text-sm text-primary">
-                    ({t('modePips')})
-                  </span>
-                )}
+                ) : null}
               </h3>
 
               {/* Main Result - Lot Size */}
@@ -665,32 +581,30 @@ const Calculator: React.FC = () => {
                 </div>
               )}
 
-              {/* Send to Trade - only for Entry mode */}
-              {results.mode === 'entry' && (
-                <Button
-                  variant="outline"
-                  className="w-full mt-6 gap-2 border-primary/50 hover:bg-primary/10"
-                  onClick={() => {
-                    const pendingTradeData = {
-                      asset: formData.asset,
-                      entryPrice: formData.entryPrice,
-                      stopLoss: formData.stopLoss,
-                      takeProfit: formData.takeProfit,
-                      lotSize: results.lotSize.toString(),
-                      direction: results.direction,
-                      risk: formData.riskPercent,
-                      riskCash: formData.riskCash,
-                      capital: formData.capital,
-                    };
-                    localStorage.setItem(PENDING_TRADE_KEY, JSON.stringify(pendingTradeData));
-                    toast.success(t('dataSentToTrade'));
-                    navigate('/add-trade');
-                  }}
-                >
-                  <Send className="w-4 h-4" />
-                  {t('sendToTrade')}
-                </Button>
-              )}
+              {/* Send to Trade */}
+              <Button
+                variant="outline"
+                className="w-full mt-6 gap-2 border-primary/50 hover:bg-primary/10"
+                onClick={() => {
+                  const pendingTradeData = {
+                    asset: formData.asset,
+                    entryPrice: formData.entryPrice,
+                    stopLoss: formData.stopLoss,
+                    takeProfit: formData.takeProfit,
+                    lotSize: results.lotSize.toString(),
+                    direction: results.direction,
+                    risk: formData.riskPercent,
+                    riskCash: formData.riskCash,
+                    capital: formData.capital,
+                  };
+                  localStorage.setItem(PENDING_TRADE_KEY, JSON.stringify(pendingTradeData));
+                  toast.success(t('dataSentToTrade'));
+                  navigate('/add-trade');
+                }}
+              >
+                <Send className="w-4 h-4" />
+                {t('sendToTrade')}
+              </Button>
             </div>
           )}
 
@@ -711,31 +625,6 @@ const Calculator: React.FC = () => {
             </div>
           )}
 
-          {/* Tips */}
-          <div className="glass-card p-4 border-profit/30 animate-fade-in" style={{ animationDelay: '100ms' }}>
-            <div className="flex items-center gap-2 mb-3">
-              <CheckCircle className="w-5 h-5 text-profit" />
-              <h4 className="font-semibold text-profit">{t('bestPractices')}</h4>
-            </div>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-profit" />
-                {t('tipNeverRisk2')}
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-profit" />
-                {t('tipRR12')}
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-profit" />
-                {t('tipAlwaysSL')}
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-profit" />
-                {t('tipSpread')}
-              </li>
-            </ul>
-          </div>
         </div>
       </div>
     </div>
