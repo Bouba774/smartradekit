@@ -97,6 +97,7 @@ const AddTrade: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [date, setDate] = useState<Date>(new Date());
+  const [entryTime, setEntryTime] = useState(() => format(new Date(), 'HH:mm'));
   const [exitDate, setExitDate] = useState<Date | undefined>();
   const [exitTime, setExitTime] = useState('');
   const [direction, setDirection] = useState<'buy' | 'sell'>('buy');
@@ -295,6 +296,10 @@ const AddTrade: React.FC = () => {
     setCustomAsset('');
     setCustomSetup('');
     setCustomTimeframe('');
+    setDate(new Date());
+    setEntryTime(format(new Date(), 'HH:mm'));
+    setExitDate(undefined);
+    setExitTime('');
     toast.success(language === 'fr' ? 'Formulaire réinitialisé' : 'Form cleared');
   };
 
@@ -370,6 +375,16 @@ const AddTrade: React.FC = () => {
         result = 'pending';
       }
 
+      // Build the complete entry datetime from date + entryTime
+      const entryDateTime = new Date(date);
+      if (entryTime) {
+        const [hours, minutes] = entryTime.split(':').map(Number);
+        if (!isNaN(hours) && !isNaN(minutes)) {
+          entryDateTime.setHours(hours, minutes, 0, 0);
+        }
+      }
+      const tradeDateISO = entryDateTime.toISOString();
+
       // Calculate exit timestamp and duration
       let exitTimestamp: string | null = null;
       let durationSeconds: number | null = null;
@@ -378,10 +393,13 @@ const AddTrade: React.FC = () => {
         const exitDateTime = new Date(exitDate);
         if (exitTime) {
           const [hours, minutes] = exitTime.split(':').map(Number);
-          exitDateTime.setHours(hours, minutes, 0, 0);
+          if (!isNaN(hours) && !isNaN(minutes)) {
+            exitDateTime.setHours(hours, minutes, 0, 0);
+          }
         }
         exitTimestamp = exitDateTime.toISOString();
-        durationSeconds = Math.floor((exitDateTime.getTime() - date.getTime()) / 1000);
+        // Calculate duration based on actual entry datetime (not just date)
+        durationSeconds = Math.floor((exitDateTime.getTime() - entryDateTime.getTime()) / 1000);
         if (durationSeconds < 0) durationSeconds = null;
       }
 
@@ -418,7 +436,7 @@ const AddTrade: React.FC = () => {
         images: uploadedMedia.images.length > 0 ? uploadedMedia.images : null,
         videos: uploadedMedia.videos.length > 0 ? uploadedMedia.videos : null,
         audios: uploadedMedia.audios.length > 0 ? uploadedMedia.audios : null,
-        trade_date: date.toISOString(),
+        trade_date: tradeDateISO,
         exit_timestamp: exitTimestamp,
         exit_method: exitTimestamp ? exitMethod : null,
         duration_seconds: durationSeconds,
@@ -454,6 +472,7 @@ const AddTrade: React.FC = () => {
       setCustomSetup('');
       setCustomTimeframe('');
       setDate(new Date());
+      setEntryTime(format(new Date(), 'HH:mm'));
       setExitDate(undefined);
       setExitTime('');
       setExitMethod('manual');
@@ -559,7 +578,11 @@ const AddTrade: React.FC = () => {
             {/* Time */}
             <div className="space-y-2">
               <Label>{t('hour')}</Label>
-              <Input type="time" defaultValue={format(new Date(), 'HH:mm')} />
+              <Input 
+                type="time" 
+                value={entryTime}
+                onChange={(e) => setEntryTime(e.target.value)}
+              />
             </div>
           </div>
         </div>

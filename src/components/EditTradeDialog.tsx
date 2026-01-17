@@ -66,6 +66,7 @@ const EditTradeDialog: React.FC<EditTradeDialogProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [date, setDate] = useState<Date>(new Date());
+  const [entryTime, setEntryTime] = useState('');
   const [direction, setDirection] = useState<'long' | 'short'>('long');
   const [exitMethod, setExitMethod] = useState<'sl' | 'tp' | 'manual'>('manual');
   
@@ -91,7 +92,10 @@ const EditTradeDialog: React.FC<EditTradeDialogProps> = ({
   // Initialize form when trade changes
   useEffect(() => {
     if (trade) {
-      setDate(parseISO(trade.trade_date));
+      const tradeDate = parseISO(trade.trade_date);
+      setDate(tradeDate);
+      // Extract time from the trade_date ISO string
+      setEntryTime(format(tradeDate, 'HH:mm'));
       setDirection(trade.direction as 'long' | 'short');
       setExitMethod((trade.exit_method as 'sl' | 'tp' | 'manual') || 'manual');
       
@@ -218,6 +222,16 @@ const EditTradeDialog: React.FC<EditTradeDialogProps> = ({
         ...uploadedMedia.audios
       ];
 
+      // Build the complete entry datetime from date + entryTime
+      const entryDateTime = new Date(date);
+      if (entryTime) {
+        const [hours, minutes] = entryTime.split(':').map(Number);
+        if (!isNaN(hours) && !isNaN(minutes)) {
+          entryDateTime.setHours(hours, minutes, 0, 0);
+        }
+      }
+      const tradeDateISO = entryDateTime.toISOString();
+
       await onSave(trade.id, {
         asset: formData.asset,
         direction,
@@ -231,7 +245,7 @@ const EditTradeDialog: React.FC<EditTradeDialogProps> = ({
         profit_loss: pnl,
         notes: formData.notes ? sanitizeText(formData.notes) : null,
         emotions: formData.emotion || null,
-        trade_date: date.toISOString(),
+        trade_date: tradeDateISO,
         exit_method: finalExitPrice ? exitMethod : null,
         timeframe: formData.timeframe || null,
         images: finalImages.length > 0 ? finalImages : null,
@@ -285,6 +299,16 @@ const EditTradeDialog: React.FC<EditTradeDialogProps> = ({
                   />
                 </PopoverContent>
               </Popover>
+            </div>
+
+            {/* Entry Time */}
+            <div className="space-y-2">
+              <Label>{t('hour')}</Label>
+              <Input 
+                type="time" 
+                value={entryTime}
+                onChange={(e) => setEntryTime(e.target.value)}
+              />
             </div>
 
             <div className="space-y-2">
