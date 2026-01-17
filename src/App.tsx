@@ -16,12 +16,13 @@ import { usePinSecurity } from "@/hooks/usePinSecurity";
 import { toast } from "sonner";
 import PWAUpdatePrompt from "@/components/PWAUpdatePrompt";
 import PWAInstallBanner from "@/components/PWAInstallBanner";
+import OfflineScreen from "@/components/OfflineScreen";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 
 import { useSessionTracking } from "@/hooks/useSessionTracking";
 import ChunkErrorBoundary from "@/components/ChunkErrorBoundary";
 import { usePrefetchOnAuth } from "@/hooks/useRoutePrefetch";
 import PageSkeleton from "@/components/ui/PageSkeleton";
-
 // Critical pages loaded immediately
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
@@ -350,6 +351,24 @@ const AppContent = () => {
   );
 };
 
+// Wrapper to use hooks inside BrowserRouter
+const AppWrapper = () => {
+  const { isOnline } = useNetworkStatus();
+
+  if (!isOnline) {
+    return <OfflineScreen />;
+  }
+
+  return (
+    <>
+      <AppContent />
+      <CookieConsent />
+      <PWAUpdatePrompt />
+      <PWAInstallBanner />
+    </>
+  );
+};
+
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
@@ -362,10 +381,7 @@ const App = () => {
                   <Toaster />
                   <Sonner />
                   <BrowserRouter>
-                    <AppContent />
-                    <CookieConsent />
-                    <PWAUpdatePrompt />
-                    <PWAInstallBanner />
+                    <AppWrapper />
                   </BrowserRouter>
                 </TooltipProvider>
               </AdminProvider>
