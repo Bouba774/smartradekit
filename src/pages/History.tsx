@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTrades, Trade } from '@/hooks/useTrades';
 import { useCurrency } from '@/hooks/useCurrency';
+import { historyTooltips } from '@/data/helpTooltips';
+import HelpTooltip from '@/components/ui/HelpTooltip';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -224,19 +226,28 @@ const History: React.FC = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <div className="glass-card p-3 sm:p-4 text-center animate-fade-in overflow-hidden">
-          <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide truncate">{t('totalGains')}</p>
+          <div className="flex items-center justify-center gap-1">
+            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide truncate">{t('totalGains')}</p>
+            <HelpTooltip tooltip={historyTooltips.totalGains} size="sm" />
+          </div>
           <p className="font-display text-sm sm:text-xl font-bold profit-text truncate">
             <ConfidentialValue>{formatAmount(totalGains)}</ConfidentialValue>
           </p>
         </div>
         <div className="glass-card p-3 sm:p-4 text-center animate-fade-in overflow-hidden" style={{ animationDelay: '50ms' }}>
-          <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide truncate">{t('totalLosses')}</p>
+          <div className="flex items-center justify-center gap-1">
+            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide truncate">{t('totalLosses')}</p>
+            <HelpTooltip tooltip={historyTooltips.totalLosses} size="sm" />
+          </div>
           <p className="font-display text-sm sm:text-xl font-bold loss-text truncate">
             <ConfidentialValue>{formatAmount(totalLosses)}</ConfidentialValue>
           </p>
         </div>
         <div className="glass-card p-3 sm:p-4 text-center animate-fade-in overflow-hidden" style={{ animationDelay: '100ms' }}>
-          <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide truncate">{t('breakeven')}</p>
+          <div className="flex items-center justify-center gap-1">
+            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide truncate">{t('breakeven')}</p>
+            <HelpTooltip tooltip={historyTooltips.breakeven} size="sm" />
+          </div>
           <p className="font-display text-sm sm:text-xl font-bold text-muted-foreground">{totalBreakeven}</p>
         </div>
       </div>

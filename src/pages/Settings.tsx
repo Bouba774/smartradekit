@@ -6,6 +6,8 @@ import { useTradeFocus } from '@/hooks/useTradeFocus';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useSettings, AppSettings } from '@/hooks/useSettings';
+import { settingsTooltips } from '@/data/helpTooltips';
+import HelpTooltip from '@/components/ui/HelpTooltip';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -220,6 +222,7 @@ const Settings: React.FC = () => {
               <Label className="flex items-center gap-2 text-muted-foreground">
                 <Moon className="w-4 h-4" />
                 {t('displayMode')}
+                <HelpTooltip tooltip={settingsTooltips.theme} size="sm" />
               </Label>
               <div className="grid grid-cols-2 gap-3">
                 {themes.map((themeItem) => {
@@ -251,6 +254,7 @@ const Settings: React.FC = () => {
               <Label className="flex items-center gap-2 text-muted-foreground">
                 <Palette className="w-4 h-4" />
                 {t('primaryColor')}
+                <HelpTooltip tooltip={settingsTooltips.primaryColor} size="sm" />
               </Label>
               <div className="flex flex-wrap gap-2">
                 {colors.map((color) => (
@@ -275,6 +279,7 @@ const Settings: React.FC = () => {
               <Label className="flex items-center gap-2 text-muted-foreground">
                 <Type className="w-4 h-4" />
                 {t('fontSize')}
+                <HelpTooltip tooltip={settingsTooltips.fontSize} size="sm" />
               </Label>
               <div className="grid grid-cols-3 gap-2">
                 {fontSizes.map((size) => (
@@ -321,6 +326,7 @@ const Settings: React.FC = () => {
               <Label className="flex items-center gap-2 text-muted-foreground">
                 <Coins className="w-4 h-4" />
                 {language === 'fr' ? 'Devise Principale' : 'Main Currency'}
+                <HelpTooltip tooltip={settingsTooltips.currency} size="sm" />
               </Label>
               <Select 
                 value={settings.currency} 
@@ -349,6 +355,7 @@ const Settings: React.FC = () => {
               <Label className="flex items-center gap-2 text-muted-foreground">
                 <Languages className="w-4 h-4" />
                 {t('language')}
+                <HelpTooltip tooltip={settingsTooltips.language} size="sm" />
               </Label>
               <Popover open={languageOpen} onOpenChange={setLanguageOpen}>
                 <PopoverTrigger asChild>
@@ -428,6 +435,7 @@ const Settings: React.FC = () => {
                 <Label htmlFor="vibration" className="text-foreground text-sm">
                   {t('vibration')}
                 </Label>
+                <HelpTooltip tooltip={settingsTooltips.vibration} size="sm" />
               </div>
               <Switch
                 id="vibration"
@@ -443,6 +451,7 @@ const Settings: React.FC = () => {
                 <Label htmlFor="sounds" className="text-foreground text-sm">
                   {t('sounds')}
                 </Label>
+                <HelpTooltip tooltip={settingsTooltips.sounds} size="sm" />
               </div>
               <Switch
                 id="sounds"
@@ -458,6 +467,7 @@ const Settings: React.FC = () => {
                 <Label htmlFor="animations" className="text-foreground text-sm">
                   {t('animations')}
                 </Label>
+                <HelpTooltip tooltip={settingsTooltips.animations} size="sm" />
               </div>
               <Switch
                 id="animations"
@@ -484,9 +494,12 @@ const Settings: React.FC = () => {
             {/* Enable Toggle */}
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-foreground text-sm">
-                  {language === 'fr' ? 'Activer le mode focus' : 'Enable focus mode'}
-                </Label>
+                <div className="flex items-center gap-2">
+                  <Label className="text-foreground text-sm">
+                    {language === 'fr' ? 'Activer le mode focus' : 'Enable focus mode'}
+                  </Label>
+                  <HelpTooltip tooltip={settingsTooltips.focusMode} size="sm" />
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {language === 'fr' 
                     ? 'Cache les statistiques et montre uniquement votre plan' 
