@@ -40,6 +40,8 @@ import { ASSET_CATEGORIES } from '@/data/assets';
 import { useFavoriteAssets } from '@/hooks/useFavoriteAssets';
 import { validateTradeForm, sanitizeText } from '@/lib/tradeValidation';
 import { PENDING_TRADE_KEY } from './Calculator';
+import HelpTooltip from '@/components/ui/HelpTooltip';
+import { tradeFormTooltips } from '@/data/helpTooltips';
 
 const TIMEFRAMES = ['M1', 'M5', 'M15', 'M30', 'M45', 'H1', 'H2', 'H3', 'H4', 'D1', 'W1', 'MN'];
 
@@ -578,7 +580,10 @@ const AddTrade: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Date Picker */}
             <div className="space-y-2">
-              <Label>{t('dateTime')}</Label>
+              <div className="flex items-center gap-1.5">
+                <Label>{t('dateTime')}</Label>
+                <HelpTooltip tooltip={tradeFormTooltips.dateTime} size="sm" />
+              </div>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -606,7 +611,10 @@ const AddTrade: React.FC = () => {
 
             {/* Direction */}
             <div className="space-y-2">
-              <Label>{t('direction')}</Label>
+              <div className="flex items-center gap-1.5">
+                <Label>{t('direction')}</Label>
+                <HelpTooltip tooltip={tradeFormTooltips.direction} size="sm" />
+              </div>
               <div className="flex gap-2">
                 <Button
                   type="button"
@@ -654,7 +662,10 @@ const AddTrade: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Asset Select with integrated search */}
             <div className="space-y-2">
-              <Label>{t('asset')}</Label>
+              <div className="flex items-center gap-1.5">
+                <Label>{t('asset')}</Label>
+                <HelpTooltip tooltip={tradeFormTooltips.instrument} size="sm" />
+              </div>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -783,7 +794,10 @@ const AddTrade: React.FC = () => {
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label>{t('entryPrice')}</Label>
+              <div className="flex items-center gap-1.5">
+                <Label>{t('entryPrice')}</Label>
+                <HelpTooltip tooltip={tradeFormTooltips.entryPrice} size="sm" />
+              </div>
               <Input
                 type="number"
                 step="any"
@@ -793,7 +807,10 @@ const AddTrade: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('stopLoss')}</Label>
+              <div className="flex items-center gap-1.5">
+                <Label>{t('stopLoss')}</Label>
+                <HelpTooltip tooltip={tradeFormTooltips.stopLoss} size="sm" />
+              </div>
               <Input
                 type="number"
                 step="any"
@@ -804,7 +821,10 @@ const AddTrade: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('takeProfit')}</Label>
+              <div className="flex items-center gap-1.5">
+                <Label>{t('takeProfit')}</Label>
+                <HelpTooltip tooltip={tradeFormTooltips.takeProfit} size="sm" />
+              </div>
               <Input
                 type="number"
                 step="any"
@@ -815,7 +835,10 @@ const AddTrade: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('lotSize')}</Label>
+              <div className="flex items-center gap-1.5">
+                <Label>{t('lotSize')}</Label>
+                <HelpTooltip tooltip={tradeFormTooltips.lotSize} size="sm" />
+              </div>
               <Input
                 type="number"
                 step="0.01"
@@ -958,7 +981,10 @@ const AddTrade: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('risk')}</Label>
+              <div className="flex items-center gap-1.5">
+                <Label>{t('risk')}</Label>
+                <HelpTooltip tooltip={tradeFormTooltips.riskPercent} size="sm" />
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="relative">
                   <Input
@@ -989,7 +1015,10 @@ const AddTrade: React.FC = () => {
           {/* PnL & Setup Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>{t('pnl')} ({getCurrencySymbol()})</Label>
+              <div className="flex items-center gap-1.5">
+                <Label>{t('pnl')} ({getCurrencySymbol()})</Label>
+                <HelpTooltip tooltip={tradeFormTooltips.pnl} size="sm" />
+              </div>
               <Input
                 type="number"
                 step="0.01"

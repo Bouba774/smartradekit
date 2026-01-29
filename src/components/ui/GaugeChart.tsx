@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import HelpTooltip from '@/components/ui/HelpTooltip';
+import { MultilingualTooltip } from '@/data/helpTooltips';
 
 interface GaugeChartProps {
   value: number;
@@ -10,7 +11,7 @@ interface GaugeChartProps {
   size?: 'sm' | 'md' | 'lg';
   variant?: 'primary' | 'profit' | 'loss';
   className?: string;
-  tooltip?: string;
+  tooltip?: string | MultilingualTooltip;
 }
 
 // Utility: Clamp value between min and max
@@ -131,7 +132,11 @@ const GaugeChart: React.FC<GaugeChartProps> = ({
         <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
           {label}
         </p>
-        {tooltip && <HelpTooltip text={tooltip} size="sm" />}
+        {tooltip && (
+          typeof tooltip === 'string' 
+            ? <HelpTooltip text={tooltip} size="sm" />
+            : <HelpTooltip tooltip={tooltip} size="sm" />
+        )}
       </div>
     </div>
   );

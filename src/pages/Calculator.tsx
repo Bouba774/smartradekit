@@ -326,7 +326,7 @@ const Calculator: React.FC = () => {
             <div className="space-y-2">
               <div className="flex items-center gap-1.5">
                 <Label>{t('asset')}</Label>
-                <HelpTooltip text={calculatorTooltips.asset} />
+                <HelpTooltip tooltip={calculatorTooltips.asset} />
               </div>
               <Select value={formData.asset} onValueChange={(v) => {
                 handleInputChange('asset', v);
@@ -423,7 +423,7 @@ const Calculator: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex items-center gap-1.5">
                   <Label>{t('capital')} ({getCurrencySymbol()})</Label>
-                  <HelpTooltip text={calculatorTooltips.capital} />
+                  <HelpTooltip tooltip={calculatorTooltips.capital} />
                 </div>
                 <Input
                   type="text"
@@ -439,7 +439,7 @@ const Calculator: React.FC = () => {
               <div className="space-y-2 col-span-2">
                 <div className="flex items-center gap-1.5">
                   <Label>{t('risk')}</Label>
-                  <HelpTooltip text={calculatorTooltips.riskPercent} />
+                  <HelpTooltip tooltip={calculatorTooltips.riskPercent} />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="relative">

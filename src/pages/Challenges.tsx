@@ -43,6 +43,8 @@ import {
   Gift,
   ChevronRight,
 } from 'lucide-react';
+import HelpTooltip from '@/components/ui/HelpTooltip';
+import { challengeTooltips } from '@/data/helpTooltips';
 
 const iconMap: { [key: string]: React.ElementType } = {
   Trophy,
@@ -224,9 +226,12 @@ const Challenges: React.FC = () => {
             <h2 className="font-display text-lg sm:text-xl md:text-2xl font-bold text-foreground break-words">
               {language === 'fr' ? currentLevel.title : currentLevel.titleEn}
             </h2>
-            <p className="text-muted-foreground text-xs sm:text-sm mb-3">
-              {totalPoints} {t('points')} • {completedCount}/{totalChallenges} {t('challengesCompleted')}
-            </p>
+            <div className="flex items-center gap-1.5 mb-3">
+              <p className="text-muted-foreground text-xs sm:text-sm">
+                {totalPoints} {t('points')} • {completedCount}/{totalChallenges} {t('challengesCompleted')}
+              </p>
+              <HelpTooltip tooltip={challengeTooltips.totalPoints} size="sm" />
+            </div>
             
             {nextLevel && (
               <div className="space-y-2 w-full">
@@ -252,6 +257,7 @@ const Challenges: React.FC = () => {
             <div className="flex items-center gap-2 justify-center">
               <Flame className="w-5 h-5 text-orange-400" />
               <span className="font-display text-2xl font-bold text-foreground">{disciplineStreak}</span>
+              <HelpTooltip tooltip={challengeTooltips.disciplineStreak} size="sm" />
             </div>
             <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
               {language === 'fr' ? 'Jours Discipline' : 'Discipline Days'}
@@ -267,6 +273,7 @@ const Challenges: React.FC = () => {
           <h3 className="font-display font-semibold text-foreground text-sm sm:text-base">
             {language === 'fr' ? 'Coffres de Récompense' : 'Reward Chests'}
           </h3>
+          <HelpTooltip tooltip={challengeTooltips.rewardChest} size="sm" />
         </div>
         
         <div className="flex items-center gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-thin">
