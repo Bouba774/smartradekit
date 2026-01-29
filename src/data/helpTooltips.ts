@@ -1058,6 +1058,110 @@ export const challengeTooltips: Record<string, MultilingualTooltip> = {
   },
 };
 
+// === HISTORIQUE ===
+export const historyTooltips: Record<string, MultilingualTooltip> = {
+  totalGains: {
+    fr: "Somme totale de tous les trades gagnants sur la période filtrée.",
+    en: "Total sum of all winning trades in the filtered period.",
+    es: "Suma total de todas las operaciones ganadoras en el período filtrado.",
+    de: "Gesamtsumme aller Gewinn-Trades im gefilterten Zeitraum.",
+    it: "Somma totale di tutti i trade vincenti nel periodo filtrato.",
+    pt: "Soma total de todas as operações vencedoras no período filtrado.",
+    ar: "مجموع جميع الصفقات الرابحة في الفترة المحددة.",
+    tr: "Filtrelenen dönemde tüm kazanan işlemlerin toplamı."
+  },
+  totalLosses: {
+    fr: "Somme totale de tous les trades perdants sur la période filtrée.",
+    en: "Total sum of all losing trades in the filtered period.",
+    es: "Suma total de todas las operaciones perdedoras en el período filtrado.",
+    de: "Gesamtsumme aller Verlust-Trades im gefilterten Zeitraum.",
+    it: "Somma totale di tutti i trade perdenti nel periodo filtrato.",
+    pt: "Soma total de todas as operações perdedoras no período filtrado.",
+    ar: "مجموع جميع الصفقات الخاسرة في الفترة المحددة.",
+    tr: "Filtrelenen dönemde tüm kaybeden işlemlerin toplamı."
+  },
+  breakeven: {
+    fr: "Trades clôturés sans gain ni perte.",
+    en: "Trades closed with no profit or loss.",
+    es: "Operaciones cerradas sin ganancia ni pérdida.",
+    de: "Trades ohne Gewinn oder Verlust geschlossen.",
+    it: "Trade chiusi senza profitto né perdita.",
+    pt: "Operações fechadas sem lucro nem perda.",
+    ar: "صفقات مغلقة بدون ربح أو خسارة.",
+    tr: "Kâr veya zarar olmadan kapanan işlemler."
+  },
+  periodFilter: {
+    fr: "Filtrez les trades par période (jour, semaine, mois, année ou personnalisé).",
+    en: "Filter trades by period (day, week, month, year, or custom).",
+    es: "Filtre las operaciones por período (día, semana, mes, año o personalizado).",
+    de: "Trades nach Zeitraum filtern (Tag, Woche, Monat, Jahr oder benutzerdefiniert).",
+    it: "Filtra i trade per periodo (giorno, settimana, mese, anno o personalizzato).",
+    pt: "Filtre as operações por período (dia, semana, mês, ano ou personalizado).",
+    ar: "تصفية الصفقات حسب الفترة (يوم، أسبوع، شهر، سنة أو مخصص).",
+    tr: "İşlemleri döneme göre filtreleyin (gün, hafta, ay, yıl veya özel)."
+  },
+  directionFilter: {
+    fr: "Filtrez par type de position (Long/Buy ou Short/Sell).",
+    en: "Filter by position type (Long/Buy or Short/Sell).",
+    es: "Filtre por tipo de posición (Long/Buy o Short/Sell).",
+    de: "Nach Positionstyp filtern (Long/Buy oder Short/Sell).",
+    it: "Filtra per tipo di posizione (Long/Buy o Short/Sell).",
+    pt: "Filtre por tipo de posição (Long/Buy ou Short/Sell).",
+    ar: "تصفية حسب نوع الصفقة (Long/Buy أو Short/Sell).",
+    tr: "Pozisyon türüne göre filtreleyin (Long/Buy veya Short/Sell)."
+  },
+  resultFilter: {
+    fr: "Filtrez par résultat du trade (gain, perte, breakeven).",
+    en: "Filter by trade result (win, loss, breakeven).",
+    es: "Filtre por resultado de la operación (ganancia, pérdida, breakeven).",
+    de: "Nach Trade-Ergebnis filtern (Gewinn, Verlust, Breakeven).",
+    it: "Filtra per risultato del trade (vincita, perdita, breakeven).",
+    pt: "Filtre por resultado da operação (ganho, perda, breakeven).",
+    ar: "تصفية حسب نتيجة الصفقة (ربح، خسارة، تعادل).",
+    tr: "İşlem sonucuna göre filtreleyin (kazanç, kayıp, başabaş)."
+  },
+  assetFilter: {
+    fr: "Filtrez par instrument tradé (paire forex, crypto, indice, etc.).",
+    en: "Filter by traded instrument (forex pair, crypto, index, etc.).",
+    es: "Filtre por instrumento negociado (par forex, cripto, índice, etc.).",
+    de: "Nach gehandeltem Instrument filtern (Forex-Paar, Krypto, Index, etc.).",
+    it: "Filtra per strumento negoziato (coppia forex, crypto, indice, ecc.).",
+    pt: "Filtre por instrumento negociado (par forex, crypto, índice, etc.).",
+    ar: "تصفية حسب الأصل المتداول (زوج فوركس، عملة رقمية، مؤشر، إلخ).",
+    tr: "İşlem yapılan enstrümana göre filtreleyin (forex çifti, kripto, endeks, vb.)."
+  },
+  setupFilter: {
+    fr: "Filtrez par stratégie ou setup utilisé.",
+    en: "Filter by strategy or setup used.",
+    es: "Filtre por estrategia o configuración utilizada.",
+    de: "Nach verwendeter Strategie oder Setup filtern.",
+    it: "Filtra per strategia o setup utilizzato.",
+    pt: "Filtre por estratégia ou configuração usada.",
+    ar: "تصفية حسب الاستراتيجية أو الإعداد المستخدم.",
+    tr: "Kullanılan strateji veya kuruluma göre filtreleyin."
+  },
+  sortBy: {
+    fr: "Triez les trades par date, P&L, actif ou setup.",
+    en: "Sort trades by date, P&L, asset, or setup.",
+    es: "Ordene las operaciones por fecha, P&L, activo o configuración.",
+    de: "Trades nach Datum, P&L, Asset oder Setup sortieren.",
+    it: "Ordina i trade per data, P&L, asset o setup.",
+    pt: "Ordene as operações por data, P&L, ativo ou configuração.",
+    ar: "رتب الصفقات حسب التاريخ، الربح/الخسارة، الأصل أو الإعداد.",
+    tr: "İşlemleri tarih, P&L, varlık veya kuruluma göre sıralayın."
+  },
+  monthlyCalendar: {
+    fr: "Calendrier affichant les performances quotidiennes du mois.",
+    en: "Calendar showing daily performances for the month.",
+    es: "Calendario que muestra el rendimiento diario del mes.",
+    de: "Kalender mit täglichen Leistungen des Monats.",
+    it: "Calendario che mostra le prestazioni giornaliere del mese.",
+    pt: "Calendário mostrando o desempenho diário do mês.",
+    ar: "تقويم يعرض الأداء اليومي للشهر.",
+    tr: "Ayın günlük performanslarını gösteren takvim."
+  },
+};
+
 // === JOURNAL ===
 export const journalTooltips: Record<string, MultilingualTooltip> = {
   dailyObjective: {
@@ -1122,6 +1226,204 @@ export const journalTooltips: Record<string, MultilingualTooltip> = {
   },
 };
 
+// === PARAMÈTRES ===
+export const settingsTooltips: Record<string, MultilingualTooltip> = {
+  language: {
+    fr: "Langue de l'interface de l'application.",
+    en: "Application interface language.",
+    es: "Idioma de la interfaz de la aplicación.",
+    de: "Sprache der Anwendungsoberfläche.",
+    it: "Lingua dell'interfaccia dell'applicazione.",
+    pt: "Idioma da interface do aplicativo.",
+    ar: "لغة واجهة التطبيق.",
+    tr: "Uygulama arayüz dili."
+  },
+  theme: {
+    fr: "Thème visuel de l'application (clair ou sombre).",
+    en: "Visual theme of the application (light or dark).",
+    es: "Tema visual de la aplicación (claro u oscuro).",
+    de: "Visuelles Thema der Anwendung (hell oder dunkel).",
+    it: "Tema visivo dell'applicazione (chiaro o scuro).",
+    pt: "Tema visual do aplicativo (claro ou escuro).",
+    ar: "المظهر المرئي للتطبيق (فاتح أو داكن).",
+    tr: "Uygulamanın görsel teması (açık veya koyu)."
+  },
+  primaryColor: {
+    fr: "Couleur principale utilisée dans l'interface.",
+    en: "Primary color used in the interface.",
+    es: "Color principal utilizado en la interfaz.",
+    de: "Hauptfarbe, die in der Oberfläche verwendet wird.",
+    it: "Colore principale utilizzato nell'interfaccia.",
+    pt: "Cor principal usada na interface.",
+    ar: "اللون الرئيسي المستخدم في الواجهة.",
+    tr: "Arayüzde kullanılan ana renk."
+  },
+  currency: {
+    fr: "Devise utilisée pour afficher les montants.",
+    en: "Currency used to display amounts.",
+    es: "Moneda utilizada para mostrar los importes.",
+    de: "Währung zur Anzeige der Beträge.",
+    it: "Valuta utilizzata per visualizzare gli importi.",
+    pt: "Moeda usada para exibir os valores.",
+    ar: "العملة المستخدمة لعرض المبالغ.",
+    tr: "Tutarları göstermek için kullanılan para birimi."
+  },
+  fontSize: {
+    fr: "Taille du texte dans l'interface.",
+    en: "Text size in the interface.",
+    es: "Tamaño del texto en la interfaz.",
+    de: "Textgröße in der Oberfläche.",
+    it: "Dimensione del testo nell'interfaccia.",
+    pt: "Tamanho do texto na interface.",
+    ar: "حجم النص في الواجهة.",
+    tr: "Arayüzdeki metin boyutu."
+  },
+  sounds: {
+    fr: "Activer ou désactiver les sons de l'application.",
+    en: "Enable or disable application sounds.",
+    es: "Activar o desactivar los sonidos de la aplicación.",
+    de: "Anwendungsgeräusche aktivieren oder deaktivieren.",
+    it: "Attiva o disattiva i suoni dell'applicazione.",
+    pt: "Ativar ou desativar os sons do aplicativo.",
+    ar: "تفعيل أو تعطيل أصوات التطبيق.",
+    tr: "Uygulama seslerini etkinleştirin veya devre dışı bırakın."
+  },
+  vibration: {
+    fr: "Activer ou désactiver la vibration tactile.",
+    en: "Enable or disable haptic vibration.",
+    es: "Activar o desactivar la vibración háptica.",
+    de: "Haptische Vibration aktivieren oder deaktivieren.",
+    it: "Attiva o disattiva la vibrazione aptica.",
+    pt: "Ativar ou desativar a vibração tátil.",
+    ar: "تفعيل أو تعطيل الاهتزاز اللمسي.",
+    tr: "Dokunsal titreşimi etkinleştirin veya devre dışı bırakın."
+  },
+  animations: {
+    fr: "Activer ou désactiver les animations de l'interface.",
+    en: "Enable or disable interface animations.",
+    es: "Activar o desactivar las animaciones de la interfaz.",
+    de: "Schnittstellenanimationen aktivieren oder deaktivieren.",
+    it: "Attiva o disattiva le animazioni dell'interfaccia.",
+    pt: "Ativar ou desativar as animações da interface.",
+    ar: "تفعيل أو تعطيل رسوم الواجهة المتحركة.",
+    tr: "Arayüz animasyonlarını etkinleştirin veya devre dışı bırakın."
+  },
+  defaultCapital: {
+    fr: "Capital par défaut utilisé dans le calculateur de risque.",
+    en: "Default capital used in the risk calculator.",
+    es: "Capital predeterminado utilizado en la calculadora de riesgo.",
+    de: "Standardkapital im Risikorechner.",
+    it: "Capitale predefinito utilizzato nel calcolatore di rischio.",
+    pt: "Capital padrão usado na calculadora de risco.",
+    ar: "رأس المال الافتراضي المستخدم في حاسبة المخاطر.",
+    tr: "Risk hesaplayıcısında kullanılan varsayılan sermaye."
+  },
+  defaultRiskPercent: {
+    fr: "Pourcentage de risque par défaut par trade.",
+    en: "Default risk percentage per trade.",
+    es: "Porcentaje de riesgo predeterminado por operación.",
+    de: "Standard-Risikoprozentsatz pro Trade.",
+    it: "Percentuale di rischio predefinita per trade.",
+    pt: "Porcentagem de risco padrão por operação.",
+    ar: "نسبة المخاطرة الافتراضية لكل صفقة.",
+    tr: "İşlem başına varsayılan risk yüzdesi."
+  },
+  pinSecurity: {
+    fr: "Code PIN pour protéger l'accès à l'application.",
+    en: "PIN code to protect application access.",
+    es: "Código PIN para proteger el acceso a la aplicación.",
+    de: "PIN-Code zum Schutz des Anwendungszugriffs.",
+    it: "Codice PIN per proteggere l'accesso all'applicazione.",
+    pt: "Código PIN para proteger o acesso ao aplicativo.",
+    ar: "رمز PIN لحماية الوصول إلى التطبيق.",
+    tr: "Uygulama erişimini korumak için PIN kodu."
+  },
+  confidentialMode: {
+    fr: "Masquer les montants sensibles dans l'interface.",
+    en: "Hide sensitive amounts in the interface.",
+    es: "Ocultar los importes sensibles en la interfaz.",
+    de: "Sensible Beträge in der Oberfläche ausblenden.",
+    it: "Nascondi gli importi sensibili nell'interfaccia.",
+    pt: "Ocultar valores sensíveis na interface.",
+    ar: "إخفاء المبالغ الحساسة في الواجهة.",
+    tr: "Arayüzde hassas tutarları gizleyin."
+  },
+  focusMode: {
+    fr: "Mode de concentration pour suivre votre plan de trading sans distractions.",
+    en: "Focus mode to follow your trading plan without distractions.",
+    es: "Modo de enfoque para seguir su plan de trading sin distracciones.",
+    de: "Fokus-Modus, um Ihrem Handelsplan ohne Ablenkungen zu folgen.",
+    it: "Modalità focus per seguire il tuo piano di trading senza distrazioni.",
+    pt: "Modo de foco para seguir seu plano de trading sem distrações.",
+    ar: "وضع التركيز لاتباع خطة التداول بدون تشتت.",
+    tr: "Dikkat dağıtmadan işlem planınızı takip etmek için odak modu."
+  },
+};
+
+// === PROFIL ===
+export const profileTooltips: Record<string, MultilingualTooltip> = {
+  nickname: {
+    fr: "Votre nom d'affichage dans l'application.",
+    en: "Your display name in the application.",
+    es: "Su nombre para mostrar en la aplicación.",
+    de: "Ihr Anzeigename in der Anwendung.",
+    it: "Il tuo nome visualizzato nell'applicazione.",
+    pt: "Seu nome de exibição no aplicativo.",
+    ar: "اسم العرض الخاص بك في التطبيق.",
+    tr: "Uygulamadaki görünen adınız."
+  },
+  level: {
+    fr: "Votre niveau actuel dans le système de progression.",
+    en: "Your current level in the progression system.",
+    es: "Su nivel actual en el sistema de progresión.",
+    de: "Ihr aktuelles Level im Fortschrittssystem.",
+    it: "Il tuo livello attuale nel sistema di progressione.",
+    pt: "Seu nível atual no sistema de progressão.",
+    ar: "مستواك الحالي في نظام التقدم.",
+    tr: "İlerleme sistemindeki mevcut seviyeniz."
+  },
+  tradingStyle: {
+    fr: "Votre style de trading principal (scalping, day trading, swing, position).",
+    en: "Your main trading style (scalping, day trading, swing, position).",
+    es: "Su estilo de trading principal (scalping, day trading, swing, posición).",
+    de: "Ihr Haupt-Handelsstil (Scalping, Daytrading, Swing, Position).",
+    it: "Il tuo stile di trading principale (scalping, day trading, swing, position).",
+    pt: "Seu estilo de trading principal (scalping, day trading, swing, posição).",
+    ar: "أسلوب التداول الرئيسي الخاص بك (سكالبينج، تداول يومي، سوينج، بوزيشن).",
+    tr: "Ana işlem tarzınız (scalping, günlük, swing, pozisyon)."
+  },
+  exportData: {
+    fr: "Télécharger toutes vos données de trading au format souhaité.",
+    en: "Download all your trading data in the desired format.",
+    es: "Descargue todos sus datos de trading en el formato deseado.",
+    de: "Laden Sie alle Ihre Handelsdaten im gewünschten Format herunter.",
+    it: "Scarica tutti i tuoi dati di trading nel formato desiderato.",
+    pt: "Baixe todos os seus dados de trading no formato desejado.",
+    ar: "تحميل جميع بيانات التداول الخاصة بك بالتنسيق المطلوب.",
+    tr: "Tüm işlem verilerinizi istenen formatta indirin."
+  },
+  deleteData: {
+    fr: "Supprimer définitivement toutes vos données de trading.",
+    en: "Permanently delete all your trading data.",
+    es: "Eliminar permanentemente todos sus datos de trading.",
+    de: "Alle Ihre Handelsdaten dauerhaft löschen.",
+    it: "Elimina definitivamente tutti i tuoi dati di trading.",
+    pt: "Excluir permanentemente todos os seus dados de trading.",
+    ar: "حذف جميع بيانات التداول الخاصة بك نهائياً.",
+    tr: "Tüm işlem verilerinizi kalıcı olarak silin."
+  },
+  deleteAccount: {
+    fr: "Supprimer définitivement votre compte et toutes les données associées.",
+    en: "Permanently delete your account and all associated data.",
+    es: "Eliminar permanentemente su cuenta y todos los datos asociados.",
+    de: "Ihr Konto und alle zugehörigen Daten dauerhaft löschen.",
+    it: "Elimina definitivamente il tuo account e tutti i dati associati.",
+    pt: "Excluir permanentemente sua conta e todos os dados associados.",
+    ar: "حذف حسابك وجميع البيانات المرتبطة به نهائياً.",
+    tr: "Hesabınızı ve tüm ilişkili verileri kalıcı olarak silin."
+  },
+};
+
 // Helper function to get tooltip by key and language
 export const getTooltip = (category: string, key: string, language: SupportedLanguage = 'fr'): string => {
   const tooltipCategories: Record<string, Record<string, MultilingualTooltip>> = {
@@ -1136,7 +1438,10 @@ export const getTooltip = (category: string, key: string, language: SupportedLan
     advanced: advancedTooltips,
     gauge: gaugeTooltips,
     challenge: challengeTooltips,
+    history: historyTooltips,
     journal: journalTooltips,
+    settings: settingsTooltips,
+    profile: profileTooltips,
   };
 
   const tooltip = tooltipCategories[category]?.[key];
