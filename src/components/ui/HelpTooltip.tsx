@@ -59,6 +59,14 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({
         <TooltipTrigger asChild>
           <button
             type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
             className={cn(
               "inline-flex items-center justify-center rounded-full",
               "text-muted-foreground hover:text-primary focus:text-primary",
