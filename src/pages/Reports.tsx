@@ -347,7 +347,7 @@ const Reports: React.FC = () => {
               <div className="flex items-center gap-2 mb-2">
                 <Target className="w-4 h-4 text-primary" />
                 <span className="text-xs text-muted-foreground">Winrate</span>
-                <HelpTooltip text={mainStatsTooltips.winrate} />
+                <HelpTooltip tooltip={mainStatsTooltips.winrate} />
               </div>
               <p className={cn("font-display text-2xl font-bold", stats.winrate >= 50 ? "text-profit" : "text-loss")}>
                 {stats.winrate}%
@@ -357,7 +357,7 @@ const Reports: React.FC = () => {
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="w-4 h-4 text-profit" />
                 <span className="text-xs text-muted-foreground">PnL</span>
-                <HelpTooltip text={reportsTooltips.pnlTotal} />
+                <HelpTooltip tooltip={reportsTooltips.pnlTotal} />
               </div>
               <p className={cn("font-display text-2xl font-bold", stats.pnl >= 0 ? "text-profit" : "text-loss")}>
                 <ConfidentialValue>{formatAmount(stats.pnl, true)}</ConfidentialValue>
@@ -367,7 +367,7 @@ const Reports: React.FC = () => {
               <div className="flex items-center gap-2 mb-2">
                 <Award className="w-4 h-4 text-primary" />
                 <span className="text-xs text-muted-foreground">Trades</span>
-                <HelpTooltip text={mainStatsTooltips.totalTrades} />
+                <HelpTooltip tooltip={mainStatsTooltips.totalTrades} />
               </div>
               <p className="font-display text-2xl font-bold text-foreground">{stats.totalTrades}</p>
               <p className="text-xs text-muted-foreground">
@@ -378,7 +378,7 @@ const Reports: React.FC = () => {
               <div className="flex items-center gap-2 mb-2">
                 <Shield className="w-4 h-4 text-primary" />
                 <span className="text-xs text-muted-foreground">{t('discipline')}</span>
-                <HelpTooltip text={psychologyTooltips.discipline} />
+                <HelpTooltip tooltip={psychologyTooltips.discipline} />
               </div>
               <p className={cn(
                 "font-display text-2xl font-bold",

@@ -30,6 +30,8 @@ import {
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import HelpTooltip from '@/components/ui/HelpTooltip';
+import { comparisonTooltips, mainStatsTooltips } from '@/data/helpTooltips';
 
 type ViewMode = 'week' | 'month';
 
@@ -337,7 +339,8 @@ const PeriodComparison: React.FC = () => {
     valueB, 
     formatValue = (v: number) => v.toString(),
     higherIsBetter = true,
-    icon: Icon 
+    icon: Icon,
+    tooltip
   }: { 
     label: string; 
     valueA: number; 
@@ -345,6 +348,7 @@ const PeriodComparison: React.FC = () => {
     formatValue?: (v: number) => string;
     higherIsBetter?: boolean;
     icon: React.ElementType;
+    tooltip?: typeof comparisonTooltips[keyof typeof comparisonTooltips];
   }) => {
     const diff = getDiff(valueA, valueB, higherIsBetter);
     const isImproved = diff > 0;
@@ -355,6 +359,7 @@ const PeriodComparison: React.FC = () => {
         <div className="flex items-center gap-2 mb-3">
           <Icon className="w-4 h-4 text-primary" />
           <span className="text-sm text-muted-foreground">{label}</span>
+          {tooltip && <HelpTooltip tooltip={tooltip} size="sm" />}
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -542,6 +547,7 @@ const PeriodComparison: React.FC = () => {
               valueA={statsA.totalTrades}
               valueB={statsB.totalTrades}
               icon={Award}
+              tooltip={comparisonTooltips.totalTransactions}
             />
             <StatComparisonCard
               label={t('winrate')}
@@ -549,6 +555,7 @@ const PeriodComparison: React.FC = () => {
               valueB={statsB.winrate}
               formatValue={(v) => `${v}%`}
               icon={Target}
+              tooltip={comparisonTooltips.winrateComparison}
             />
             <StatComparisonCard
               label="PnL"
@@ -556,6 +563,7 @@ const PeriodComparison: React.FC = () => {
               valueB={statsB.pnl}
               formatValue={(v) => formatAmount(v, true)}
               icon={statsA.pnl >= statsB.pnl ? TrendingUp : TrendingDown}
+              tooltip={comparisonTooltips.pnlComparison}
             />
             <StatComparisonCard
               label={t('avgProfit')}
@@ -578,6 +586,7 @@ const PeriodComparison: React.FC = () => {
               valueB={statsB.disciplineScore}
               formatValue={(v) => `${v}/100`}
               icon={Target}
+              tooltip={comparisonTooltips.disciplineComparison}
             />
           </div>
 

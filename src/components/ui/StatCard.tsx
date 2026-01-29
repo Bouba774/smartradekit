@@ -2,6 +2,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
 import HelpTooltip from '@/components/ui/HelpTooltip';
+import { MultilingualTooltip } from '@/data/helpTooltips';
 
 interface StatCardProps {
   title: string;
@@ -12,7 +13,7 @@ interface StatCardProps {
   variant?: 'default' | 'profit' | 'loss' | 'neutral';
   className?: string;
   delay?: number;
-  tooltip?: string;
+  tooltip?: string | MultilingualTooltip;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
@@ -54,7 +55,11 @@ const StatCard: React.FC<StatCardProps> = ({
           <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
             {title}
           </p>
-          {tooltip && <HelpTooltip text={tooltip} size="sm" />}
+          {tooltip && (
+            typeof tooltip === 'string' 
+              ? <HelpTooltip text={tooltip} size="sm" />
+              : <HelpTooltip tooltip={tooltip} size="sm" />
+          )}
         </div>
         {Icon && (
           <Icon className={cn(

@@ -30,6 +30,8 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import HelpTooltip from '@/components/ui/HelpTooltip';
+import { journalTooltips } from '@/data/helpTooltips';
 
 interface ChecklistItem {
   id: string;
@@ -254,9 +256,12 @@ const Journal: React.FC = () => {
                 <CheckCircle2 className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h3 className="font-display font-semibold text-foreground">
-                  {language === 'fr' ? 'Check-list Pré-Marché' : 'Pre-Market Checklist'}
-                </h3>
+                <div className="flex items-center gap-1.5">
+                  <h3 className="font-display font-semibold text-foreground">
+                    {language === 'fr' ? 'Check-list Pré-Marché' : 'Pre-Market Checklist'}
+                  </h3>
+                  <HelpTooltip tooltip={journalTooltips.checklist} size="sm" />
+                </div>
                 <p className="text-xs text-muted-foreground">{completedItems}/{checklist.length} {language === 'fr' ? 'complété' : 'completed'}</p>
               </div>
             </div>
@@ -385,9 +390,12 @@ const Journal: React.FC = () => {
             <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
               <Target className="w-5 h-5 text-primary" />
             </div>
-            <h3 className="font-display font-semibold text-foreground">
-              {language === 'fr' ? 'Objectifs du Jour' : "Today's Objectives"}
-            </h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="font-display font-semibold text-foreground">
+                {language === 'fr' ? 'Objectifs du Jour' : "Today's Objectives"}
+              </h3>
+              <HelpTooltip tooltip={journalTooltips.dailyObjective} size="sm" />
+            </div>
           </div>
           <Textarea
             placeholder={language === 'fr' 
@@ -405,9 +413,12 @@ const Journal: React.FC = () => {
             <div className="w-10 h-10 rounded-lg bg-profit/20 flex items-center justify-center">
               <Lightbulb className="w-5 h-5 text-profit" />
             </div>
-            <h3 className="font-display font-semibold text-foreground">
-              {language === 'fr' ? 'Leçons Apprises' : 'Lessons Learned'}
-            </h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="font-display font-semibold text-foreground">
+                {language === 'fr' ? 'Leçons Apprises' : 'Lessons Learned'}
+              </h3>
+              <HelpTooltip tooltip={journalTooltips.lessons} size="sm" />
+            </div>
           </div>
           <Textarea
             placeholder={language === 'fr'
@@ -425,9 +436,12 @@ const Journal: React.FC = () => {
             <div className="w-10 h-10 rounded-lg bg-loss/20 flex items-center justify-center">
               <AlertTriangle className="w-5 h-5 text-loss" />
             </div>
-            <h3 className="font-display font-semibold text-foreground">
-              {language === 'fr' ? 'Erreurs Récurrentes' : 'Common Mistakes'}
-            </h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="font-display font-semibold text-foreground">
+                {language === 'fr' ? 'Erreurs Récurrentes' : 'Common Mistakes'}
+              </h3>
+              <HelpTooltip tooltip={journalTooltips.mistakes} size="sm" />
+            </div>
           </div>
           <Textarea
             placeholder={language === 'fr'
@@ -445,9 +459,12 @@ const Journal: React.FC = () => {
             <div className="w-10 h-10 rounded-lg bg-profit/20 flex items-center justify-center">
               <Award className="w-5 h-5 text-profit" />
             </div>
-            <h3 className="font-display font-semibold text-foreground">
-              {language === 'fr' ? 'Points Forts' : 'Strengths'}
-            </h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="font-display font-semibold text-foreground">
+                {language === 'fr' ? 'Points Forts' : 'Strengths'}
+              </h3>
+              <HelpTooltip tooltip={journalTooltips.strengths} size="sm" />
+            </div>
           </div>
           <Textarea
             placeholder={language === 'fr'
@@ -465,9 +482,12 @@ const Journal: React.FC = () => {
             <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
               <Star className="w-5 h-5 text-primary" />
             </div>
-            <h3 className="font-display font-semibold text-foreground">
-              {language === 'fr' ? 'Évaluation de la Journée' : 'Day Rating'}
-            </h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="font-display font-semibold text-foreground">
+                {language === 'fr' ? 'Évaluation de la Journée' : 'Day Rating'}
+              </h3>
+              <HelpTooltip tooltip={journalTooltips.dailyRating} size="sm" />
+            </div>
           </div>
           
           <div className="flex items-center justify-center gap-2 py-4">
