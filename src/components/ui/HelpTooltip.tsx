@@ -1,14 +1,8 @@
 import React from 'react';
-import { Info } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { type SupportedLanguage, type MultilingualTooltip } from '@/data/helpTooltips';
+import TooltipInfo from '@/components/ui/TooltipInfo';
 
 interface HelpTooltipProps {
   /** Static text string for simple tooltips */
@@ -53,48 +47,18 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({
     lg: 'w-5 h-5',
   };
 
+  // Keep props (side/align) for compatibility, but TooltipInfo auto-positions.
+  // preferredSide is mapped from the old API.
   return (
-    <TooltipProvider delayDuration={300}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            className={cn(
-              "inline-flex items-center justify-center rounded-full",
-              "text-muted-foreground hover:text-primary focus:text-primary",
-              "transition-colors duration-200",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-              "touch-manipulation",
-              className
-            )}
-            aria-label="Aide"
-          >
-            <Info className={cn(sizeClasses[size], iconClassName)} />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent
-          side={side}
-          align={align}
-          className={cn(
-            "max-w-[280px] text-sm leading-relaxed",
-            "bg-popover text-popover-foreground",
-            "border border-border shadow-lg",
-            "z-[100]"
-          )}
-          sideOffset={5}
-        >
-          <p>{tooltipText}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <TooltipInfo
+      preferredSide={side === 'top' || side === 'bottom' ? side : undefined}
+      content={<span>{tooltipText}</span>}
+      ariaLabel="Aide"
+      size={size}
+      className={cn(className)}
+      iconClassName={cn(iconClassName)}
+      withArrow
+    />
   );
 };
 
