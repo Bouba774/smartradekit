@@ -61,14 +61,6 @@ const StatCard: React.FC<StatCardProps> = ({
               : <HelpTooltip tooltip={tooltip} size="sm" />
           )}
         </div>
-        {Icon && (
-          <Icon className={cn(
-            "w-4 h-4",
-            variant === 'profit' && 'text-profit',
-            variant === 'loss' && 'text-loss',
-            variant === 'default' && 'text-primary'
-          )} />
-        )}
       </div>
       
       <div className="flex items-end justify-between">
