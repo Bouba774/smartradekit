@@ -15,6 +15,9 @@
     
     --popover: 230 25% 10%;
     --popover-foreground: 210 40% 98%;
+
+    /* Tooltip specific (requested: dark = #1A1A1A) */
+    --tooltip-bg: 0 0% 10%;
     
     /* Neon Blue Primary */
     --primary: 190 100% 50%;
@@ -85,6 +88,9 @@
     
     --popover: 0 0% 100%;
     --popover-foreground: 230 25% 10%;
+
+    /* Tooltip specific (requested: light = #FFFFFF) */
+    --tooltip-bg: 0 0% 100%;
     
     --primary: 200 100% 45%;
     --primary-foreground: 0 0% 100%;
@@ -269,6 +275,13 @@ body:not(.landing-page) * {
   animation-delay: 0s !important;
   transition-duration: 0s !important;
   transition-delay: 0s !important;
+}
+
+/* Allow lightweight tooltip micro-interactions (fade + slide) even when global
+ * animations are disabled across the app.
+ */
+body:not(.landing-page) .tooltip-info {
+  transition: opacity 100ms ease-out, transform 100ms ease-out !important;
 }
 
 /* Preserve loader spin animation */
