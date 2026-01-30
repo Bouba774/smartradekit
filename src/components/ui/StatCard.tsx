@@ -28,10 +28,10 @@ const StatCard: React.FC<StatCardProps> = ({
   tooltip,
 }) => {
   const variantStyles = {
-    default: '',
-    profit: '',
-    loss: '',
-    neutral: '',
+    default: 'border-l-2 border-l-primary/40',
+    profit: 'border-l-2 border-l-profit/50',
+    loss: 'border-l-2 border-l-loss/50',
+    neutral: 'border-l-2 border-l-muted-foreground/30',
   };
 
   const valueStyles = {
