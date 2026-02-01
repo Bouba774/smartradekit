@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChallenges } from '@/hooks/useChallenges';
@@ -6,6 +6,8 @@ import { useTrades } from '@/hooks/useTrades';
 import { useAdvancedStats } from '@/hooks/useAdvancedStats';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useTradeFocus } from '@/hooks/useTradeFocus';
+import { useInitialCapital } from '@/hooks/useInitialCapital';
+import { useSettings } from '@/hooks/useSettings';
 import { APP_VERSION } from '@/lib/version';
 import { getAssetCategory } from '@/data/assets';
 import { mainStatsTooltips, timeTooltips, streaksTooltips, gaugeTooltips, advancedTooltips } from '@/data/helpTooltips';
@@ -14,6 +16,7 @@ import GaugeChart from '@/components/ui/GaugeChart';
 import TradeFocusMode from '@/components/TradeFocusMode';
 import ConfidentialValue from '@/components/ConfidentialValue';
 import HelpTooltip from '@/components/ui/HelpTooltip';
+import InitialCapitalPrompt from '@/components/InitialCapitalPrompt';
 import {
   TrendingUp,
   TrendingDown,
@@ -35,6 +38,8 @@ import {
   Award,
   Focus,
   PieChart as PieChartIcon,
+  Wallet,
+  Info,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -68,8 +73,20 @@ const Dashboard: React.FC = () => {
   const { currentLevel } = useChallenges();
   const { trades, isLoading } = useTrades();
   const stats = useAdvancedStats(trades);
-  const { formatAmount } = useCurrency();
+  const { formatAmount, currency } = useCurrency();
   const { isEnabled: focusEnabled, toggle: toggleFocus } = useTradeFocus();
+  const { capitalInfo, showPrompt, dismissPrompt } = useInitialCapital();
+  const { settings } = useSettings();
+  
+  // State for capital prompt dialog
+  const [capitalPromptOpen, setCapitalPromptOpen] = useState(showPrompt);
+  
+  // Sync prompt state
+  React.useEffect(() => {
+    if (showPrompt) {
+      setCapitalPromptOpen(true);
+    }
+  }, [showPrompt]);
 
   // Render Trade Focus Mode if enabled
   if (focusEnabled) {
@@ -81,13 +98,16 @@ const Dashboard: React.FC = () => {
   const userLevel = profile?.level || 1;
   const levelTitle = language === 'fr' ? currentLevel.title : currentLevel.titleEn;
 
+  // Get initial capital for equity curve
+  const initialCapital = capitalInfo.capitalDefined && capitalInfo.capital ? capitalInfo.capital : 10000;
+
   // Generate equity curve data from trades (with default empty chart data)
   const equityData = React.useMemo(() => {
     if (trades.length === 0) {
       return [
-        { date: 'J1', value: 10000 },
-        { date: 'J2', value: 10000 },
-        { date: 'J3', value: 10000 },
+        { date: 'J1', value: initialCapital },
+        { date: 'J2', value: initialCapital },
+        { date: 'J3', value: initialCapital },
       ];
     }
     
@@ -95,7 +115,7 @@ const Dashboard: React.FC = () => {
       new Date(a.trade_date).getTime() - new Date(b.trade_date).getTime()
     );
     
-    let runningTotal = 10000; // Starting capital
+    let runningTotal = initialCapital;
     return sortedTrades.slice(-15).map((trade) => {
       runningTotal += trade.profit_loss || 0;
       return {
@@ -103,7 +123,7 @@ const Dashboard: React.FC = () => {
         value: runningTotal,
       };
     });
-  }, [trades]);
+  }, [trades, initialCapital]);
 
   // Generate monthly data (with default empty data)
   const monthlyData = React.useMemo(() => {
@@ -229,12 +249,42 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6 py-4 w-full max-w-full overflow-x-hidden">
+      {/* Initial Capital Prompt Dialog */}
+      <InitialCapitalPrompt
+        open={capitalPromptOpen}
+        onOpenChange={setCapitalPromptOpen}
+        onDismiss={dismissPrompt}
+      />
+
       {/* Welcome Message */}
       <div className="glass-card p-4 sm:p-6 animate-fade-in bg-gradient-to-r from-primary/10 to-profit/10 border-primary/30">
         <h1 className="font-display text-lg sm:text-2xl md:text-3xl font-bold text-foreground truncate">
           {t('welcome')} {userNickname} 👋
         </h1>
       </div>
+
+      {/* Capital not defined notice */}
+      {!capitalInfo.capitalDefined && trades.length > 0 && (
+        <div 
+          className="glass-card p-4 flex items-center gap-3 border-yellow-500/30 bg-yellow-500/5 cursor-pointer hover:border-yellow-500/50 transition-colors animate-fade-in"
+          onClick={() => setCapitalPromptOpen(true)}
+        >
+          <Wallet className="w-5 h-5 text-yellow-500 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-foreground">
+              {language === 'fr' 
+                ? 'Définissez votre capital pour des statistiques plus précises' 
+                : 'Set your capital for more accurate statistics'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {language === 'fr' 
+                ? 'Courbe d\'équité, drawdown, ROI...' 
+                : 'Equity curve, drawdown, ROI...'}
+            </p>
+          </div>
+          <Info className="w-4 h-4 text-muted-foreground shrink-0" />
+        </div>
+      )}
 
       {/* No data message */}
       {trades.length === 0 && <NoDataMessage />}
