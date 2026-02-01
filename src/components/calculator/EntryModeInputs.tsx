@@ -181,23 +181,6 @@ const EntryModeInputs: React.FC<EntryModeInputsProps> = ({
         </div>
       </div>
 
-      {/* Info sur l'actif */}
-      {assetConfig && (
-        <div className="p-3 rounded-lg bg-secondary/50 text-xs text-muted-foreground space-y-1">
-          <div className="flex justify-between">
-            <span>{language === 'fr' ? 'Taille pip' : 'Pip size'}:</span>
-            <span className="font-mono">{assetConfig.pipSize}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>{language === 'fr' ? 'Taille contrat' : 'Contract size'}:</span>
-            <span className="font-mono">{assetConfig.contractSize.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>{language === 'fr' ? 'Lot min/step' : 'Min lot/step'}:</span>
-            <span className="font-mono">{assetConfig.minLot} / {assetConfig.lotStep}</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
