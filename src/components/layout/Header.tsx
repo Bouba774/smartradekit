@@ -62,7 +62,7 @@ const Header: React.FC = () => {
           
           {/* Logo */}
           <img 
-            src="/assets/app-logo.jpg" 
+            src="/assets/app-logo.png" 
             alt="Smart Trade Tracker" 
             className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg shrink-0 object-cover animate-logo-glow"
           />

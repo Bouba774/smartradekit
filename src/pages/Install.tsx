@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Download, Smartphone, Share, Plus, CheckCircle2, Wifi, WifiOff, Zap, Shield } from "lucide-react";
-import appLogo from "@/assets/app-logo.jpg";
+import appLogo from "@/assets/app-logo.png";
 
 const translations = {
   en: {

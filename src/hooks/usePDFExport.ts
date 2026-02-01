@@ -34,7 +34,7 @@ export interface PDFExportOptions {
 // Convert image to base64 for PDF embedding
 const getLogoBase64 = async (): Promise<string | null> => {
   try {
-    const response = await fetch('/assets/app-logo.jpg');
+    const response = await fetch('/assets/app-logo.png');
     const blob = await response.blob();
     return new Promise((resolve) => {
       const reader = new FileReader();
