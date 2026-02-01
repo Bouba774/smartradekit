@@ -1,8 +1,9 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useFavoriteAssets } from '@/hooks/useFavoriteAssets';
 import { useSettings } from '@/hooks/useSettings';
+import { useExchangeRates } from '@/hooks/useExchangeRates';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,21 +15,38 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { Calculator as CalcIcon, AlertTriangle, Send, Search, TrendingUp, TrendingDown, Star, Save, Copy } from 'lucide-react';
+import { Calculator as CalcIcon, Send, Search, Star, Save, RefreshCw, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import EntryModeInputs from '@/components/calculator/EntryModeInputs';
+import AccountCurrencySelector from '@/components/calculator/AccountCurrencySelector';
+import CalculationResults from '@/components/calculator/CalculationResults';
 import HelpTooltip from '@/components/ui/HelpTooltip';
 import { calculatorTooltips } from '@/data/helpTooltips';
 
+import { 
+  ASSET_CONFIGS, 
+  getAssetConfig, 
+  isAssetSupported,
+  getAllSupportedSymbols,
+  AssetConfig
+} from '@/lib/calculator/assetConfigs';
+import { 
+  calculateLotSize, 
+  CalculationInput, 
+  CalculationResult,
+  SUPPORTED_ACCOUNT_CURRENCIES 
+} from '@/lib/calculator/calculationEngine';
+import { ASSET_CATEGORIES } from '@/data/assets';
+
 export const PENDING_TRADE_KEY = 'pending_trade_data';
-import { ASSET_CATEGORIES, PIP_VALUES, DECIMALS, getPipSize, getAssetCategory } from '@/data/assets';
 
 const Calculator: React.FC = () => {
   const { t, language } = useLanguage();
   const { formatAmount, getCurrencySymbol, currency } = useCurrency();
   const { favorites, toggleFavorite, isFavorite } = useFavoriteAssets();
   const { settings, updateSetting, isLoaded: settingsLoaded } = useSettings();
+  const { rates, isLoading: ratesLoading, lastUpdated, refetch: refetchRates } = useExchangeRates();
   const navigate = useNavigate();
   const [assetSearch, setAssetSearch] = useState('');
 
@@ -40,51 +58,65 @@ const Calculator: React.FC = () => {
     stopLoss: '',
     takeProfit: '',
     asset: 'EUR/USD',
+    accountCurrency: 'USD',
   });
 
-  // Load saved defaults when settings are loaded
+  const [lastModifiedRiskField, setLastModifiedRiskField] = useState<'percent' | 'cash' | null>(null);
+  const [calculationResult, setCalculationResult] = useState<CalculationResult | null>(null);
+  const [currentAssetConfig, setCurrentAssetConfig] = useState<AssetConfig | null>(null);
+  const [inputErrors, setInputErrors] = useState<Record<string, string>>({});
+
+  // Charger la config de l'actif sélectionné
+  useEffect(() => {
+    if (formData.asset && isAssetSupported(formData.asset)) {
+      try {
+        const config = getAssetConfig(formData.asset);
+        setCurrentAssetConfig(config);
+      } catch {
+        setCurrentAssetConfig(null);
+      }
+    } else {
+      setCurrentAssetConfig(null);
+    }
+  }, [formData.asset]);
+
+  // Charger les paramètres par défaut
   useEffect(() => {
     if (settingsLoaded) {
       setFormData(prev => {
         const newData = { ...prev };
+        
+        // Capital par défaut
         if (settings.defaultCapital !== null && prev.capital === '') {
           newData.capital = settings.defaultCapital.toString();
         }
+        
+        // Risque par défaut
         if (settings.defaultRiskPercent !== null && prev.riskPercent === '') {
           newData.riskPercent = settings.defaultRiskPercent.toString();
-          // Calculate risk cash if capital is also set
           const capital = settings.defaultCapital ?? parseFloat(prev.capital);
           if (capital && settings.defaultRiskPercent) {
             newData.riskCash = ((capital * settings.defaultRiskPercent) / 100).toFixed(2);
           }
         }
+        
+        // Devise du compte basée sur les settings
+        if (settings.currency) {
+          const supportedCodes = SUPPORTED_ACCOUNT_CURRENCIES.map(c => c.code);
+          if (supportedCodes.includes(settings.currency)) {
+            newData.accountCurrency = settings.currency;
+          }
+        }
+        
         return newData;
       });
       if (settings.defaultRiskPercent !== null) {
         setLastModifiedRiskField('percent');
       }
     }
-  }, [settingsLoaded, settings.defaultCapital, settings.defaultRiskPercent]);
+  }, [settingsLoaded, settings.defaultCapital, settings.defaultRiskPercent, settings.currency]);
 
-  // Track which field was last modified for bidirectional calculation
-  const [lastModifiedRiskField, setLastModifiedRiskField] = useState<'percent' | 'cash' | null>(null);
-
-  const [results, setResults] = useState<{
-    riskAmount: number;
-    slPips: number;
-    tpPips: number;
-    lotSize: number;
-    lotSizeMini: number;
-    lotSizeMicro: number;
-    rrRatio: number;
-    slValue: number;
-    tpValue: number;
-    direction: 'buy' | 'sell' | null;
-  } | null>(null);
-
-  const [warnings, setWarnings] = useState<string[]>([]);
-
-  // Filter assets based on search and organize with favorites first
+  // Filtrer les actifs supportés
   const { filteredAssets, filteredFavorites } = useMemo(() => {
     const searchLower = assetSearch.toLowerCase();
     const result: { [key: string]: string[] } = {};
@@ -92,6 +124,9 @@ const Calculator: React.FC = () => {
     
     for (const [category, assets] of Object.entries(ASSET_CATEGORIES)) {
       const filtered = assets.filter(asset => {
+        // Ne montrer que les actifs avec configuration
+        if (!isAssetSupported(asset)) return false;
+        
         const matches = !assetSearch || asset.toLowerCase().includes(searchLower);
         if (matches && favorites.includes(asset)) {
           favs.push(asset);
@@ -105,11 +140,12 @@ const Calculator: React.FC = () => {
     return { filteredAssets: result, filteredFavorites: favs };
   }, [assetSearch, favorites]);
 
+  // Handlers pour les champs
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    setInputErrors(prev => ({ ...prev, [field]: '' }));
   };
 
-  // Bidirectional risk calculation
   const handleRiskPercentChange = (value: string) => {
     setFormData(prev => {
       const newData = { ...prev, riskPercent: value };
@@ -147,7 +183,6 @@ const Calculator: React.FC = () => {
       const newData = { ...prev, capital: value };
       const capital = parseFloat(value);
       
-      // Recalculate based on last modified field
       if (lastModifiedRiskField === 'percent' && prev.riskPercent) {
         const percent = parseFloat(prev.riskPercent);
         if (!isNaN(capital) && !isNaN(percent) && capital > 0) {
@@ -163,119 +198,116 @@ const Calculator: React.FC = () => {
     });
   };
 
-  // Get pip value for an asset
-  const getPipValue = (asset: string): number => {
-    const category = getAssetCategory(asset);
-    let pipValue = PIP_VALUES[asset] || 10;
+  // Construire les taux de change pour le moteur de calcul
+  const buildExchangeRates = useCallback((): Record<string, number> => {
+    const exchangeRates: Record<string, number> = { USD: 1 };
     
-    if (category.includes('Forex') && !asset.includes('JPY')) {
-      pipValue = 10;
-    } else if (asset.includes('JPY')) {
-      pipValue = 1000 / 100;
-    } else if (asset === 'XAU/USD') {
-      pipValue = 1;
-    } else if (asset === 'XAG/USD') {
-      pipValue = 50;
-    } else if (category.includes('Indices')) {
-      pipValue = 1;
-    } else if (category.includes('Crypto')) {
-      pipValue = 1;
+    if (rates) {
+      // Les rates du hook sont en format: devise -> valeur en USD
+      Object.entries(rates).forEach(([currency, rate]) => {
+        if (typeof rate === 'number') {
+          exchangeRates[currency] = rate;
+        }
+      });
     }
     
-    return pipValue;
-  };
+    return exchangeRates;
+  }, [rates]);
 
-  const calculateLot = () => {
+  // Calculer le lot
+  const calculateLot = useCallback(() => {
     const capital = parseFloat(formData.capital);
     const riskPercent = parseFloat(formData.riskPercent);
-    const asset = formData.asset;
-
-    if (!capital || !riskPercent) {
-      toast.error(t('fillCapitalAndRisk'));
-      return;
-    }
-
-    const riskAmount = (capital * riskPercent) / 100;
-    const pipValue = getPipValue(asset);
-    const pipSize = getPipSize(asset);
-    const category = getAssetCategory(asset);
-
     const entryPrice = parseFloat(formData.entryPrice);
     const stopLoss = parseFloat(formData.stopLoss);
-    const takeProfit = parseFloat(formData.takeProfit);
+    const takeProfit = formData.takeProfit ? parseFloat(formData.takeProfit) : undefined;
 
-    if (!entryPrice || !stopLoss) {
-      toast.error(t('fillAllFields'));
+    // Validation basique
+    const errors: Record<string, string> = {};
+    
+    if (!capital || capital <= 0) {
+      errors.capital = language === 'fr' ? 'Capital requis' : 'Capital required';
+    }
+    if (!riskPercent || riskPercent <= 0) {
+      errors.riskPercent = language === 'fr' ? 'Risque requis' : 'Risk required';
+    }
+    if (!entryPrice || entryPrice <= 0) {
+      errors.entryPrice = language === 'fr' ? 'Prix requis' : 'Price required';
+    }
+    if (!stopLoss || stopLoss <= 0) {
+      errors.stopLoss = language === 'fr' ? 'Stop Loss requis' : 'Stop Loss required';
+    }
+    
+    if (Object.keys(errors).length > 0) {
+      setInputErrors(errors);
+      toast.error(language === 'fr' ? 'Veuillez remplir tous les champs obligatoires' : 'Please fill all required fields');
       return;
     }
 
-    // Determine direction based on entry vs SL
-    const direction: 'buy' | 'sell' = entryPrice > stopLoss ? 'buy' : 'sell';
-    
-    // Calculate SL distance in pips/points
-    const slDistance = Math.abs(entryPrice - stopLoss);
-    const slPips = slDistance / pipSize;
-    
-    // Lot size calculation: LotSize = RiskMoney / (SL_pips * pip_value)
-    const lotSize = riskAmount / (slPips * pipValue);
-    const lotSizeMini = lotSize * 10;
-    const lotSizeMicro = lotSize * 100;
-    
-    // TP calculations
-    let tpPips = 0;
-    let rrRatio = 0;
-    if (takeProfit) {
-      const tpDistance = Math.abs(takeProfit - entryPrice);
-      tpPips = tpDistance / pipSize;
-      rrRatio = tpPips / slPips;
+    // Vérifier que les taux sont disponibles
+    if (!rates || Object.keys(rates).length === 0) {
+      toast.error(language === 'fr' 
+        ? 'Taux de change non disponibles. Actualisez ou réessayez.' 
+        : 'Exchange rates not available. Refresh or try again.');
+      return;
     }
 
-    const slValue = riskAmount;
-    const tpValue = riskAmount * rrRatio;
+    // Construire l'input pour le moteur de calcul
+    const input: CalculationInput = {
+      symbol: formData.asset,
+      capital,
+      riskPercent,
+      entryPrice,
+      stopLoss,
+      takeProfit,
+      accountCurrency: formData.accountCurrency,
+      exchangeRates: buildExchangeRates(),
+    };
 
-      // Generate warnings
-      const newWarnings: string[] = [];
-      if (riskPercent > 2) {
-        newWarnings.push(`⚠️ ${t('warningRisk2')}`);
-      }
-      if (riskPercent > 5) {
-        newWarnings.push(`🚨 ${t('warningRisk5')}`);
-      }
-      if (slPips < 5 && category.includes('Forex')) {
-        newWarnings.push(`⚠️ ${t('warningSLTight')}`);
-      }
-      if (slPips < 10 && category.includes('Forex')) {
-        newWarnings.push(`💡 ${t('warningSpread')}`);
-      }
-      if (rrRatio < 1 && rrRatio > 0) {
-        newWarnings.push(`⚠️ ${t('warningRRBad')}`);
-      }
-      if (lotSize > 10) {
-        newWarnings.push(`🚨 ${t('warningLotHigh')}`);
-      }
+    // Exécuter le calcul
+    const result = calculateLotSize(input);
+    setCalculationResult(result);
 
-    setWarnings(newWarnings);
-    setResults({
-      riskAmount: Math.round(riskAmount * 100) / 100,
-      slPips: Math.round(slPips * 10) / 10,
-      tpPips: Math.round(tpPips * 10) / 10,
-      lotSize: Math.round(lotSize * 100) / 100,
-      lotSizeMini: Math.round(lotSizeMini * 100) / 100,
-      lotSizeMicro: Math.round(lotSizeMicro * 100) / 100,
-      rrRatio: Math.round(rrRatio * 100) / 100,
-      slValue: Math.round(slValue * 100) / 100,
-      tpValue: Math.round(tpValue * 100) / 100,
-      direction,
-    });
+    if (result.isValid) {
+      toast.success(language === 'fr' ? 'Calcul effectué!' : 'Calculation done!');
+    } else if (result.errors.length > 0) {
+      // Mapper les erreurs aux champs
+      const newErrors: Record<string, string> = {};
+      result.errors.forEach(err => {
+        newErrors[err.field] = err.message;
+      });
+      setInputErrors(newErrors);
+    }
+  }, [formData, rates, buildExchangeRates, language]);
 
-    toast.success(t('calculationDone'));
+  // Envoyer vers Add Trade
+  const sendToTrade = () => {
+    if (!calculationResult?.isValid || !calculationResult.lotSize) return;
+    
+    const pendingTradeData = {
+      asset: formData.asset,
+      entryPrice: formData.entryPrice,
+      stopLoss: formData.stopLoss,
+      takeProfit: formData.takeProfit,
+      lotSize: calculationResult.lotSize.toString(),
+      direction: calculationResult.direction,
+      risk: formData.riskPercent,
+      riskCash: formData.riskCash,
+      capital: formData.capital,
+    };
+    localStorage.setItem(PENDING_TRADE_KEY, JSON.stringify(pendingTradeData));
+    toast.success(t('dataSentToTrade'));
+    navigate('/add-trade');
   };
 
-  const copyLotSize = () => {
-    if (results) {
-      navigator.clipboard.writeText(results.lotSize.toString());
-      toast.success(t('lotSizeCopied'));
-    }
+  // Formater le montant pour l'affichage
+  const formatDisplayAmount = (amount: number) => {
+    const currencySymbols: Record<string, string> = {
+      USD: '$', EUR: '€', GBP: '£', CHF: 'CHF', JPY: '¥',
+      CAD: 'C$', AUD: 'A$', NZD: 'NZ$', XAF: 'FCFA', XOF: 'FCFA', CNY: '¥'
+    };
+    const symbol = currencySymbols[formData.accountCurrency] || formData.accountCurrency;
+    return `${symbol}${amount.toFixed(2)}`;
   };
 
   return (
@@ -287,7 +319,9 @@ const Calculator: React.FC = () => {
             {t('calculator')}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {t('calculatorDesc')}
+            {language === 'fr' 
+              ? 'Calcul précis de la taille de position' 
+              : 'Precise position size calculation'}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -317,12 +351,18 @@ const Calculator: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Input Section */}
+        {/* Section Entrées */}
         <div className="glass-card p-6 space-y-6 animate-fade-in">
           <h3 className="font-display font-semibold text-foreground">{t('parameters')}</h3>
 
           <div className="space-y-4">
-            {/* Asset Selector with integrated search */}
+            {/* Devise du compte */}
+            <AccountCurrencySelector
+              value={formData.accountCurrency}
+              onChange={(v) => handleInputChange('accountCurrency', v)}
+            />
+
+            {/* Sélecteur d'actif */}
             <div className="space-y-2">
               <div className="flex items-center gap-1.5">
                 <Label>{t('asset')}</Label>
@@ -331,12 +371,13 @@ const Calculator: React.FC = () => {
               <Select value={formData.asset} onValueChange={(v) => {
                 handleInputChange('asset', v);
                 setAssetSearch('');
+                setCalculationResult(null);
               }}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-border max-h-80">
-                  <div className="p-2 sticky top-0 bg-popover border-b border-border">
+                  <div className="p-2 sticky top-0 bg-popover border-b border-border z-10">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -350,7 +391,7 @@ const Calculator: React.FC = () => {
                     </div>
                   </div>
                   <div className="max-h-60 overflow-y-auto">
-                    {/* Favorites section */}
+                    {/* Favoris */}
                     {filteredFavorites.length > 0 && (
                       <div>
                         <div className="px-2 py-1.5 text-xs font-semibold text-yellow-500 bg-yellow-500/10 sticky top-0 flex items-center gap-1">
@@ -362,11 +403,7 @@ const Calculator: React.FC = () => {
                             <div className="flex items-center gap-2">
                               <button
                                 type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                  toggleFavorite(asset);
-                                }}
+                                onClick={(e) => { e.stopPropagation(); e.preventDefault(); toggleFavorite(asset); }}
                                 className="hover:scale-110 transition-transform"
                               >
                                 <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
@@ -377,7 +414,7 @@ const Calculator: React.FC = () => {
                         ))}
                       </div>
                     )}
-                    {/* Categories */}
+                    {/* Catégories */}
                     {Object.entries(filteredAssets).map(([category, assets]) => (
                       <div key={category}>
                         <div className="px-2 py-1.5 text-xs font-semibold text-primary bg-primary/10 sticky top-0">
@@ -388,11 +425,7 @@ const Calculator: React.FC = () => {
                             <div className="flex items-center gap-2">
                               <button
                                 type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                  toggleFavorite(asset);
-                                }}
+                                onClick={(e) => { e.stopPropagation(); e.preventDefault(); toggleFavorite(asset); }}
                                 className="hover:scale-110 transition-transform"
                               >
                                 <Star className={cn(
@@ -414,15 +447,19 @@ const Calculator: React.FC = () => {
                   </div>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                {t('category')}: {getAssetCategory(formData.asset)}
-              </p>
+              {currentAssetConfig && (
+                <p className="text-xs text-muted-foreground">
+                  {language === 'fr' ? 'Type' : 'Type'}: {currentAssetConfig.assetType.replace(/_/g, ' ')} • 
+                  Quote: {currentAssetConfig.quoteCurrency}
+                </p>
+              )}
             </div>
 
+            {/* Capital et Risque */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-1.5">
-                  <Label>{t('capital')} ({getCurrencySymbol()})</Label>
+                  <Label>{t('capital')}</Label>
                   <HelpTooltip tooltip={calculatorTooltips.capital} />
                 </div>
                 <Input
@@ -434,7 +471,11 @@ const Calculator: React.FC = () => {
                     const value = e.target.value.replace(/[^0-9.,]/g, '').replace(',', '.');
                     handleCapitalChange(value);
                   }}
+                  className={cn(inputErrors.capital && "border-loss")}
                 />
+                {inputErrors.capital && (
+                  <p className="text-xs text-loss">{inputErrors.capital}</p>
+                )}
               </div>
               <div className="space-y-2 col-span-2">
                 <div className="flex items-center gap-1.5">
@@ -454,7 +495,8 @@ const Calculator: React.FC = () => {
                       }}
                       className={cn(
                         "pr-8",
-                        parseFloat(formData.riskPercent) > 2 && "border-loss/50"
+                        parseFloat(formData.riskPercent) > 2 && "border-loss/50",
+                        inputErrors.riskPercent && "border-loss"
                       )}
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">%</span>
@@ -469,15 +511,17 @@ const Calculator: React.FC = () => {
                         const value = e.target.value.replace(/[^0-9.,]/g, '').replace(',', '.');
                         handleRiskCashChange(value);
                       }}
-                      className="pr-8"
+                      className="pr-12"
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">{getCurrencySymbol()}</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                      {formData.accountCurrency}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Dynamic Mode-specific Inputs */}
+            {/* Prix d'entrée, SL, TP */}
             <div className="pt-4 border-t border-border">
               <EntryModeInputs
                 entryPrice={formData.entryPrice}
@@ -486,154 +530,81 @@ const Calculator: React.FC = () => {
                 onEntryPriceChange={(v) => handleInputChange('entryPrice', v)}
                 onStopLossChange={(v) => handleInputChange('stopLoss', v)}
                 onTakeProfitChange={(v) => handleInputChange('takeProfit', v)}
+                assetConfig={currentAssetConfig}
+                errors={{
+                  entryPrice: inputErrors.entryPrice,
+                  stopLoss: inputErrors.stopLoss,
+                  takeProfit: inputErrors.takeProfit,
+                }}
               />
             </div>
           </div>
 
+          {/* Bouton Calculer */}
           <Button
             onClick={calculateLot}
+            disabled={ratesLoading}
             className="w-full gap-2 bg-gradient-primary hover:opacity-90 font-display"
           >
             <CalcIcon className="w-4 h-4" />
-            {t('calculate')}
+            {ratesLoading 
+              ? (language === 'fr' ? 'Chargement des taux...' : 'Loading rates...') 
+              : t('calculate')}
           </Button>
 
+          {/* Indicateur taux de change */}
+          <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">
+            <div className="flex items-center gap-1">
+              <Info className="w-3 h-3" />
+              <span>
+                {language === 'fr' ? 'Dernière MAJ taux' : 'Rates updated'}: 
+                {lastUpdated ? ` ${lastUpdated.toLocaleTimeString()}` : ' -'}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => refetchRates()}
+              disabled={ratesLoading}
+              className="h-6 px-2"
+            >
+              <RefreshCw className={cn("w-3 h-3", ratesLoading && "animate-spin")} />
+            </Button>
+          </div>
         </div>
 
-        {/* Results Section */}
+        {/* Section Résultats */}
         <div className="space-y-6">
-          {results && (
-            <div className="glass-card p-6 animate-fade-in">
-              <h3 className="font-display font-semibold text-foreground mb-6 flex items-center gap-2">
-                {t('results')}
-                {results.direction === 'buy' ? (
-                  <span className="flex items-center gap-1 text-sm text-profit">
-                    <TrendingUp className="w-4 h-4" /> BUY
-                  </span>
-                ) : results.direction === 'sell' ? (
-                  <span className="flex items-center gap-1 text-sm text-loss">
-                    <TrendingDown className="w-4 h-4" /> SELL
-                  </span>
-                ) : null}
-              </h3>
-
-              {/* Main Result - Lot Size */}
-              <div className="text-center p-6 rounded-xl bg-primary/10 border border-primary/30 mb-6 relative">
+          {calculationResult && (
+            <>
+              <CalculationResults
+                result={calculationResult}
+                formatAmount={formatDisplayAmount}
+              />
+              
+              {/* Bouton Envoyer vers Trade */}
+              {calculationResult.isValid && calculationResult.lotSize && (
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={copyLotSize}
-                  className="absolute top-2 right-2 h-8 w-8 p-0"
+                  variant="outline"
+                  className="w-full gap-2 border-primary/50 hover:bg-primary/10"
+                  onClick={sendToTrade}
                 >
-                  <Copy className="w-4 h-4" />
+                  <Send className="w-4 h-4" />
+                  {t('sendToTrade')}
                 </Button>
-                <p className="text-sm text-muted-foreground uppercase tracking-wide mb-2">
-                  {t('recommendedLotSize')}
-                </p>
-                <p className="font-display text-5xl font-bold text-primary neon-text">
-                  {results.lotSize}
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  {t('standardLots')}
-                </p>
-              </div>
-
-              {/* Detailed Results */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg bg-secondary/50">
-                  <p className="text-xs text-muted-foreground">{t('riskAmount')}</p>
-                  <p className="font-display text-xl font-bold text-foreground">
-                    {formatAmount(results.riskAmount, false, false)}
-                  </p>
-                </div>
-                {results.rrRatio > 0 && (
-                  <div className="p-4 rounded-lg bg-secondary/50">
-                    <p className="text-xs text-muted-foreground">R:R Ratio</p>
-                    <p className={cn(
-                      "font-display text-xl font-bold",
-                      results.rrRatio >= 2 ? "text-profit" : results.rrRatio >= 1 ? "text-primary" : "text-loss"
-                    )}>
-                      1:{results.rrRatio}
-                    </p>
-                  </div>
-                )}
-                <div className="p-4 rounded-lg bg-loss/10 border border-loss/20">
-                  <p className="text-xs text-muted-foreground">{t('slPoints')}</p>
-                  <p className="font-display text-xl font-bold text-loss">{results.slPips} pips</p>
-                  <p className="text-xs text-muted-foreground mt-1">{t('maxLoss')}: {formatAmount(results.slValue, false, false)}</p>
-                </div>
-                <div className="p-4 rounded-lg bg-profit/10 border border-profit/20">
-                  <p className="text-xs text-muted-foreground">{t('tpPoints')}</p>
-                  <p className="font-display text-xl font-bold text-profit">{results.tpPips || '-'} pips</p>
-                  <p className="text-xs text-muted-foreground mt-1">{t('potentialGain')}: {formatAmount(results.tpValue || 0, false, false)}</p>
-                </div>
-              </div>
-
-              {/* Visual SL/TP */}
-              {results.tpPips > 0 && (
-                <div className="mt-6 p-4 bg-secondary/30 rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-3 text-center">{t('visualization')}</p>
-                  <div className="relative h-8 rounded-full bg-gradient-to-r from-loss via-secondary to-profit overflow-hidden">
-                    <div 
-                      className="absolute top-0 bottom-0 w-1 bg-foreground"
-                      style={{ 
-                        left: `${(results.slPips / (results.slPips + results.tpPips)) * 100}%` 
-                      }}
-                    />
-                    <div className="absolute top-0 left-0 bottom-0 flex items-center px-2 text-xs text-loss-foreground font-medium">
-                      SL
-                    </div>
-                    <div className="absolute top-0 right-0 bottom-0 flex items-center px-2 text-xs text-profit-foreground font-medium">
-                      TP
-                    </div>
-                  </div>
-                </div>
               )}
-
-              {/* Send to Trade */}
-              <Button
-                variant="outline"
-                className="w-full mt-6 gap-2 border-primary/50 hover:bg-primary/10"
-                onClick={() => {
-                  const pendingTradeData = {
-                    asset: formData.asset,
-                    entryPrice: formData.entryPrice,
-                    stopLoss: formData.stopLoss,
-                    takeProfit: formData.takeProfit,
-                    lotSize: results.lotSize.toString(),
-                    direction: results.direction,
-                    risk: formData.riskPercent,
-                    riskCash: formData.riskCash,
-                    capital: formData.capital,
-                  };
-                  localStorage.setItem(PENDING_TRADE_KEY, JSON.stringify(pendingTradeData));
-                  toast.success(t('dataSentToTrade'));
-                  navigate('/add-trade');
-                }}
-              >
-                <Send className="w-4 h-4" />
-                {t('sendToTrade')}
-              </Button>
-            </div>
+            </>
           )}
 
-          {/* Warnings */}
-          {warnings.length > 0 && (
-            <div className="glass-card p-4 border-loss/30 animate-fade-in">
-              <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle className="w-5 h-5 text-loss" />
-                <h4 className="font-semibold text-loss">{t('warnings')}</h4>
-              </div>
-              <ul className="space-y-2">
-                {warnings.map((warning, index) => (
-                  <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
-                    {warning}
-                  </li>
-                ))}
-              </ul>
+          {/* Message initial */}
+          {!calculationResult && (
+            <div className="glass-card p-8 text-center text-muted-foreground">
+              <CalcIcon className="w-12 h-12 mx-auto mb-4 opacity-30" />
+              <p>{language === 'fr' 
+                ? 'Remplissez les paramètres et cliquez sur Calculer' 
+                : 'Fill in parameters and click Calculate'}</p>
             </div>
           )}
-
         </div>
       </div>
     </div>
