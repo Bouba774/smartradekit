@@ -391,7 +391,7 @@ const Auth: React.FC = () => {
             <div className="relative">
               <div className="absolute inset-0 bg-primary/30 rounded-2xl blur-xl" />
               <img 
-                src="/assets/app-logo.jpg" 
+                src="/assets/app-logo.png" 
                 alt="Smart Trade Tracker" 
                 className="relative w-20 h-20 rounded-2xl object-cover shadow-neon transition-transform hover:scale-105 duration-300"
               />

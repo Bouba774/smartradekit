@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { APP_NAME, APP_VERSION } from '@/lib/version';
-import appLogo from '@/assets/app-logo.jpg';
+import appLogo from '@/assets/app-logo.png';
 import {
   History,
   GitCompare,

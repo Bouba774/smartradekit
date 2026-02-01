@@ -20,9 +20,9 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: [
-        "favicon.jpg",
+        "favicon.png",
         "favicon.ico",
-        "assets/app-logo.jpg"
+        "assets/app-logo.png"
       ],
       manifest: false, // We use our own manifest.json in public folder
       devOptions: {

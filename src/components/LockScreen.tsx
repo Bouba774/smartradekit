@@ -4,7 +4,7 @@ import { Lock, Fingerprint, AlertTriangle, Timer } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { PINInput } from '@/components/PINInput';
-import appLogo from '@/assets/app-logo.jpg';
+import appLogo from '@/assets/app-logo.png';
 
 interface LockScreenProps {
   onUnlock: (pin: string) => Promise<boolean>;
