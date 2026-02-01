@@ -13,6 +13,9 @@ export interface AppSettings {
   currency: string;
   defaultCapital: number | null;
   defaultRiskPercent: number | null;
+  capitalDefined: boolean;
+  capitalCurrency: string;
+  capitalLastUpdated: string | null;
 }
 
 const defaultSettings: AppSettings = {
@@ -24,6 +27,9 @@ const defaultSettings: AppSettings = {
   currency: 'USD',
   defaultCapital: null,
   defaultRiskPercent: null,
+  capitalDefined: false,
+  capitalCurrency: 'USD',
+  capitalLastUpdated: null,
 };
 
 export const useSettings = () => {
@@ -54,7 +60,7 @@ export const useSettings = () => {
         // First try to get from database
         const { data, error } = await supabase
           .from('user_settings')
-          .select('vibration, sounds, animations, font_size, background, currency, default_capital, default_risk_percent')
+          .select('vibration, sounds, animations, font_size, background, currency, default_capital, default_risk_percent, capital_defined, capital_currency, capital_last_updated')
           .eq('user_id', user.id)
           .single();
 
@@ -72,6 +78,9 @@ export const useSettings = () => {
             currency: data.currency ?? defaultSettings.currency,
             defaultCapital: data.default_capital ?? null,
             defaultRiskPercent: data.default_risk_percent ?? null,
+            capitalDefined: data.capital_defined ?? false,
+            capitalCurrency: data.capital_currency ?? 'USD',
+            capitalLastUpdated: data.capital_last_updated ?? null,
           };
           setSettings(dbSettings);
           // Also save to localStorage for offline access
@@ -90,6 +99,8 @@ export const useSettings = () => {
               currency: defaultSettings.currency,
               default_capital: defaultSettings.defaultCapital,
               default_risk_percent: defaultSettings.defaultRiskPercent,
+              capital_defined: defaultSettings.capitalDefined,
+              capital_currency: defaultSettings.capitalCurrency,
             }, { onConflict: 'user_id' });
 
           if (insertError) {
@@ -136,6 +147,9 @@ export const useSettings = () => {
             currency: newSettings.currency,
             default_capital: newSettings.defaultCapital,
             default_risk_percent: newSettings.defaultRiskPercent,
+            capital_defined: newSettings.capitalDefined,
+            capital_currency: newSettings.capitalCurrency,
+            capital_last_updated: newSettings.capitalLastUpdated,
           }, { onConflict: 'user_id' });
 
         if (error) {
@@ -173,6 +187,8 @@ export const useSettings = () => {
             currency: defaultSettings.currency,
             default_capital: defaultSettings.defaultCapital,
             default_risk_percent: defaultSettings.defaultRiskPercent,
+            capital_defined: defaultSettings.capitalDefined,
+            capital_currency: defaultSettings.capitalCurrency,
           }, { onConflict: 'user_id' });
       } catch (e) {
         console.error('Error resetting settings:', e);

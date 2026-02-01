@@ -57,11 +57,13 @@ import {
   Check,
   ChevronsUpDown,
   Sliders,
+  Wallet,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { CURRENCIES, getCurrencyLabel } from '@/data/currencies';
 import { SecuritySettings } from '@/components/SecuritySettings';
+import CapitalSettingsCard from '@/components/CapitalSettingsCard';
 
 const Settings: React.FC = () => {
   const { language, setLanguage, t, languages } = useLanguage();
@@ -412,6 +414,23 @@ const Settings: React.FC = () => {
                 </PopoverContent>
               </Popover>
             </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Initial Capital */}
+        <AccordionItem value="capital" className="glass-card border-primary/20 rounded-lg overflow-hidden">
+          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-primary/5">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Wallet className="w-4 h-4 text-primary" />
+              </div>
+              <span className="font-display font-semibold text-foreground">
+                {language === 'fr' ? 'Capital Initial' : 'Initial Capital'}
+              </span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <CapitalSettingsCard />
           </AccordionContent>
         </AccordionItem>
 

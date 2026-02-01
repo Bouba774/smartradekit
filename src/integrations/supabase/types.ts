@@ -1181,6 +1181,9 @@ export type Database = {
           auto_lock_timeout: number | null
           background: string | null
           biometric_enabled: boolean | null
+          capital_currency: string | null
+          capital_defined: boolean | null
+          capital_last_updated: string | null
           confidential_mode: boolean | null
           created_at: string
           currency: string | null
@@ -1204,6 +1207,9 @@ export type Database = {
           auto_lock_timeout?: number | null
           background?: string | null
           biometric_enabled?: boolean | null
+          capital_currency?: string | null
+          capital_defined?: boolean | null
+          capital_last_updated?: string | null
           confidential_mode?: boolean | null
           created_at?: string
           currency?: string | null
@@ -1227,6 +1233,9 @@ export type Database = {
           auto_lock_timeout?: number | null
           background?: string | null
           biometric_enabled?: boolean | null
+          capital_currency?: string | null
+          capital_defined?: boolean | null
+          capital_last_updated?: string | null
           confidential_mode?: boolean | null
           created_at?: string
           currency?: string | null
