@@ -1,17 +1,22 @@
 /**
- * MOTEUR DE CALCUL DE TRADING - VERSION CORRIGÉE
- * ================================================
- * Calculs fiables et vérifiés pour le position sizing
- * Conforme aux standards MT4/MT5
+ * MOTEUR DE CALCUL DE TRADING - VERSION CORRIGÉE FINALE
+ * ======================================================
+ * Calculs 100% fiables et conformes MT4/MT5
  * 
- * FORMULE UNIVERSELLE:
- * lot = risque_monétaire / (distance_prix × valeur_point_par_lot)
+ * FORMULE UNIVERSELLE (SEULE MÉTHODE AUTORISÉE):
+ * 1. distance_SL = |prix_entrée - stop_loss|
+ * 2. pips_SL = distance_SL / taille_pip
+ * 3. risque = capital × (risque% / 100)
+ * 4. lot = risque / (pips_SL × valeur_pip_par_lot)
+ * 5. lot_final = arrondi_au_pas_du_broker
  * 
- * Où valeur_point_par_lot dépend du type d'actif:
- * - Forex: contract_size (ex: 100,000 pour EUR/USD = 10$/pip)
- * - Or XAU/USD: contract_size (100 oz = 100$/$ de mouvement)
- * - Indices: contract_size × point_value
- * - Crypto: 1 (1 lot = 1 coin)
+ * VALEURS PIP OBLIGATOIRES (par lot standard):
+ * - EUR/USD, GBP/USD, etc. (non-JPY): 10 USD/pip
+ * - USD/JPY: ~1000 JPY/pip ≈ 6.67 USD/pip
+ * - XAU/USD: 1 USD/pip (1 pip = 0.01, 100oz × 0.01)
+ * - XAG/USD: 5 USD/pip (1 pip = 0.001, 5000oz × 0.001)
+ * - Indices: variable selon contrat
+ * - Crypto: 1 USD par $ de mouvement par coin
  */
 
 import { AssetConfig, getAssetConfig, RoundingMode } from './assetConfigs';
@@ -91,7 +96,7 @@ const FIXED_RATES: Record<string, number> = {
 };
 
 // ============================================================================
-// FONCTIONS DE VALIDATION
+// VALIDATION
 // ============================================================================
 
 export function validateInput(input: CalculationInput): ValidationError[] {
@@ -171,7 +176,7 @@ export function validateInput(input: CalculationInput): ValidationError[] {
 }
 
 // ============================================================================
-// FONCTIONS DE CONVERSION
+// CONVERSION DEVISES
 // ============================================================================
 
 export function getConversionRate(
@@ -220,7 +225,7 @@ export function getConversionRate(
 }
 
 // ============================================================================
-// FONCTIONS D'ARRONDI
+// ARRONDI
 // ============================================================================
 
 export function roundLot(
@@ -229,13 +234,8 @@ export function roundLot(
   lotStep: number,
   mode: RoundingMode
 ): number {
-  let rounded: number;
-  
-  if (mode === 'DOWN') {
-    rounded = Math.floor(lotRaw / lotStep) * lotStep;
-  } else {
-    rounded = Math.round(lotRaw / lotStep) * lotStep;
-  }
+  // TOUJOURS arrondir vers le bas pour la sécurité
+  let rounded = Math.floor(lotRaw / lotStep) * lotStep;
   
   const decimals = getDecimalPlaces(lotStep);
   rounded = Number(rounded.toFixed(decimals));
@@ -250,107 +250,32 @@ function getDecimalPlaces(value: number): number {
 }
 
 // ============================================================================
-// CALCUL VALEUR PAR POINT/PIP - CORRIGÉ
+// VALEUR PIP CORRECTE - FORMULE STRICTE
 // ============================================================================
 
 /**
- * Calcule la valeur monétaire d'un mouvement de 1 unité de prix pour 1 lot
+ * Calcule la valeur monétaire de 1 PIP pour 1 lot standard
  * 
- * RÈGLES PAR TYPE D'ACTIF:
+ * FORMULE: valeur_pip = contract_size × pip_size
  * 
- * FOREX (EUR/USD, GBP/USD, etc.):
- * - 1 pip = 0.0001 (ou 0.01 pour JPY)
- * - Valeur 1 pip = contract_size × pip_size = 100,000 × 0.0001 = 10 USD
- * 
- * OR (XAU/USD):
- * - 1 lot = 100 onces
- * - Mouvement de 1$ = 100$ de P/L
- * - Pour calcul: on utilise la distance en $ directement
- * 
- * INDICES (US30, US100, etc.):
- * - 1 point = 1$ (ou selon contract_size)
- * - Valeur point = contract_size
- * 
- * CRYPTO (BTC/USD, ETH/USD):
- * - 1 lot = 1 coin (généralement)
- * - Mouvement de 1$ = 1$ de P/L par coin
+ * EXEMPLES CORRECTS:
+ * - EUR/USD: 100,000 × 0.0001 = 10 USD/pip
+ * - USD/JPY: 100,000 × 0.01 = 1000 JPY/pip
+ * - XAU/USD: 100 oz × 0.01 = 1 USD/pip
+ * - XAG/USD: 5000 oz × 0.001 = 5 USD/pip
+ * - US30: 1 × 1 = 1 USD/point
+ * - BTC/USD: 1 × 1 = 1 USD par $ de mouvement
  */
-function calculatePointValuePerLot(config: AssetConfig): number {
-  switch (config.assetType) {
-    case 'forex_non_jpy':
-    case 'forex_jpy':
-      // Forex: valeur pip = contract_size × pip_size
-      // EUR/USD: 100,000 × 0.0001 = 10 USD par pip
-      // USD/JPY: 100,000 × 0.01 = 1000 JPY par pip
-      return config.contractSize * config.pipSize;
-    
-    case 'metal_gold':
-    case 'metal_silver':
-    case 'metal_platinum':
-      // Métaux: valeur par $ de mouvement = contract_size
-      // XAU/USD: 1$ mouvement × 100 oz = 100 USD
-      return config.contractSize;
-    
-    case 'index_us':
-    case 'index_eu':
-    case 'index_asia':
-      // Indices: valeur par point = contract_size
-      return config.contractSize;
-    
-    case 'crypto_major':
-    case 'crypto_alt':
-      // Crypto: 1 lot = 1 coin, donc 1$ mouvement = 1$ P/L
-      return config.contractSize;
-    
-    case 'energy':
-      // Énergie: selon contract_size
-      return config.contractSize;
-    
-    case 'stock':
-      // Actions: 1 lot = 1 action
-      return 1;
-    
-    default:
-      return config.contractSize * config.pipSize;
-  }
+function calculatePipValue(config: AssetConfig): number {
+  return config.contractSize * config.pipSize;
 }
 
 /**
- * Convertit la distance prix en "pips" selon le type d'actif
- * Pour l'affichage uniquement
+ * Convertit la distance prix en pips
+ * FORMULE UNIVERSELLE: pips = distance_prix / pip_size
  */
-function calculatePipsFromPrice(distancePrice: number, config: AssetConfig): number {
-  switch (config.assetType) {
-    case 'forex_non_jpy':
-    case 'forex_jpy':
-      // Forex: distance / pip_size
-      return distancePrice / config.pipSize;
-    
-    case 'metal_gold':
-    case 'metal_silver':
-    case 'metal_platinum':
-      // Métaux: afficher en points (1 point = 0.1 ou 0.01 selon l'actif)
-      // XAU/USD: 82.53$ de distance = 82.53 points
-      return distancePrice;
-    
-    case 'index_us':
-    case 'index_eu':
-    case 'index_asia':
-      // Indices: afficher en points
-      return distancePrice / config.pipSize;
-    
-    case 'crypto_major':
-    case 'crypto_alt':
-      // Crypto: afficher en dollars
-      return distancePrice;
-    
-    case 'energy':
-    case 'stock':
-      return distancePrice / config.pipSize;
-    
-    default:
-      return distancePrice / config.pipSize;
-  }
+function priceToPips(distance: number, pipSize: number): number {
+  return distance / pipSize;
 }
 
 /**
@@ -365,12 +290,12 @@ export function getPipsLabel(config: AssetConfig, language: 'fr' | 'en' = 'fr'):
     case 'metal_gold':
     case 'metal_silver':
     case 'metal_platinum':
-      return language === 'fr' ? 'points ($)' : 'points ($)';
+      return 'pips';
     
     case 'index_us':
     case 'index_eu':
     case 'index_asia':
-      return language === 'fr' ? 'points' : 'points';
+      return language === 'fr' ? 'pts' : 'pts';
     
     case 'crypto_major':
     case 'crypto_alt':
@@ -382,18 +307,19 @@ export function getPipsLabel(config: AssetConfig, language: 'fr' | 'en' = 'fr'):
 }
 
 // ============================================================================
-// MOTEUR DE CALCUL PRINCIPAL - CORRIGÉ
+// MOTEUR DE CALCUL PRINCIPAL
 // ============================================================================
 
 /**
- * Calcule la taille de lot optimale
+ * CALCUL DE LA TAILLE DE LOT
  * 
- * FORMULE UNIVERSELLE SIMPLIFIÉE:
- * 1. distance_price = abs(entry - stop_loss)
- * 2. risk_money = capital × (risk_percent / 100)
- * 3. value_per_point = selon type d'actif (contractSize pour métaux, etc.)
- * 4. lot_raw = risk_money / (distance_price × value_per_point × conversion_rate)
- * 5. lot_final = floor(lot_raw / lot_step) × lot_step
+ * FORMULE STRICTE (SEULE AUTORISÉE):
+ * 1. distance_SL = |entry - SL|
+ * 2. pips_SL = distance_SL / pip_size
+ * 3. risque = capital × (risk% / 100)
+ * 4. valeur_pip = contract_size × pip_size (converti en devise compte)
+ * 5. lot = risque / (pips_SL × valeur_pip)
+ * 6. lot_final = floor(lot / lot_step) × lot_step
  */
 export function calculateLotSize(input: CalculationInput): CalculationResult {
   const result: CalculationResult = {
@@ -417,14 +343,14 @@ export function calculateLotSize(input: CalculationInput): CalculationResult {
     conversionRate: null,
   };
   
-  // Validation
+  // === ÉTAPE 1: VALIDATION ===
   const validationErrors = validateInput(input);
   if (validationErrors.length > 0) {
     result.errors = validationErrors;
     return result;
   }
   
-  // Obtenir config actif
+  // === ÉTAPE 2: CONFIGURATION ACTIF ===
   let config: AssetConfig;
   try {
     config = getAssetConfig(input.symbol);
@@ -438,22 +364,24 @@ export function calculateLotSize(input: CalculationInput): CalculationResult {
     return result;
   }
   
-  // Direction
+  // === ÉTAPE 3: DIRECTION ===
   result.direction = input.entryPrice > input.stopLoss ? 'buy' : 'sell';
   
-  // Distance SL en prix
+  // === ÉTAPE 4: DISTANCE STOP LOSS ===
+  // Distance en prix
   result.slDistancePrice = Math.abs(input.entryPrice - input.stopLoss);
   
-  // Distance SL en pips (pour affichage)
-  result.slDistancePips = calculatePipsFromPrice(result.slDistancePrice, config);
+  // Distance en PIPS (formule universelle: distance / pip_size)
+  result.slDistancePips = priceToPips(result.slDistancePrice, config.pipSize);
   
-  // Risque monétaire
+  // === ÉTAPE 5: RISQUE MONÉTAIRE ===
   result.riskAmount = input.capital * (input.riskPercent / 100);
   
-  // Valeur par point/$ de mouvement pour 1 lot
-  result.pipValue = calculatePointValuePerLot(config);
+  // === ÉTAPE 6: VALEUR PIP ===
+  // Valeur pip pour 1 lot (en devise de cotation)
+  result.pipValue = calculatePipValue(config);
   
-  // Conversion devise
+  // === ÉTAPE 7: CONVERSION DEVISE ===
   const quoteCurrency = config.quoteCurrency;
   const accountCurrency = input.accountCurrency;
   
@@ -476,26 +404,15 @@ export function calculateLotSize(input: CalculationInput): CalculationResult {
     result.pipValueConverted = result.pipValue;
   }
   
-  // CALCUL DU LOT - FORMULE CORRIGÉE
-  // Pour tous les actifs: lot = risk / (distance_price × value_per_unit_movement × conversion)
-  let lotRaw: number;
-  
-  if (config.assetType === 'forex_non_jpy' || config.assetType === 'forex_jpy') {
-    // Forex: utilise les pips
-    // lot = risk / (pips × pip_value_converted)
-    lotRaw = result.riskAmount / (result.slDistancePips * result.pipValueConverted);
-  } else {
-    // Métaux, Indices, Crypto: utilise la distance en prix directement
-    // lot = risk / (distance_price × value_per_point × conversion)
-    lotRaw = result.riskAmount / (result.slDistancePrice * result.pipValueConverted);
-  }
-  
+  // === ÉTAPE 8: CALCUL DU LOT ===
+  // FORMULE STRICTE: lot = risque / (pips_SL × valeur_pip_convertie)
+  const lotRaw = result.riskAmount / (result.slDistancePips * result.pipValueConverted);
   result.lotRaw = lotRaw;
   
-  // Arrondir vers le bas
+  // === ÉTAPE 9: ARRONDI VERS LE BAS ===
   const lotFinal = roundLot(lotRaw, config.minLot, config.lotStep, config.roundingMode);
   
-  // Vérifier les limites
+  // === ÉTAPE 10: VÉRIFICATION LIMITES ===
   if (lotFinal < config.minLot) {
     result.errors.push({
       field: 'lotSize',
@@ -513,30 +430,23 @@ export function calculateLotSize(input: CalculationInput): CalculationResult {
     result.lotSize = lotFinal;
   }
   
-  // Take Profit
+  // === ÉTAPE 11: CALCUL PERTE RÉELLE ===
+  // Perte basée sur le lot ARRONDI (pas le lot brut)
+  result.maxLoss = result.slDistancePips * result.pipValueConverted * result.lotSize;
+  
+  // === ÉTAPE 12: TAKE PROFIT (OPTIONNEL) ===
   if (input.takeProfit && input.takeProfit > 0) {
     result.tpDistancePrice = Math.abs(input.takeProfit - input.entryPrice);
-    result.tpDistancePips = calculatePipsFromPrice(result.tpDistancePrice, config);
+    result.tpDistancePips = priceToPips(result.tpDistancePrice, config.pipSize);
     
-    // Risk/Reward = distance_TP / distance_SL (en prix, pas en pips)
+    // Risk/Reward = distance_TP / distance_SL
     result.rrRatio = result.tpDistancePrice / result.slDistancePrice;
     
-    // Gain potentiel
-    if (config.assetType === 'forex_non_jpy' || config.assetType === 'forex_jpy') {
-      result.potentialGain = result.tpDistancePips * result.pipValueConverted * result.lotSize;
-    } else {
-      result.potentialGain = result.tpDistancePrice * result.pipValueConverted * result.lotSize;
-    }
+    // Gain potentiel avec lot arrondi
+    result.potentialGain = result.tpDistancePips * result.pipValueConverted * result.lotSize;
   }
   
-  // Perte réelle avec lot arrondi
-  if (config.assetType === 'forex_non_jpy' || config.assetType === 'forex_jpy') {
-    result.maxLoss = result.slDistancePips * result.pipValueConverted * result.lotSize;
-  } else {
-    result.maxLoss = result.slDistancePrice * result.pipValueConverted * result.lotSize;
-  }
-  
-  // Warnings
+  // === ÉTAPE 13: WARNINGS ===
   if (input.riskPercent > 2) {
     result.warnings.push(`⚠️ Risque élevé: ${input.riskPercent}%`);
   }
