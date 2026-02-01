@@ -49,10 +49,21 @@ export interface AdvancedStats {
   longestLossStreak: number;
   currentStreak: { type: 'win' | 'loss' | 'none'; count: number };
   
-  // Drawdown
+  // Drawdown (based on initial capital)
   maxDrawdown: number;
   maxDrawdownPercent: number;
   maxDrawdownDisplay: string; // "-$500 (5.0%)" or "--"
+  currentDrawdown: number;
+  currentDrawdownPercent: number;
+  currentDrawdownDisplay: string;
+  isInDrawdown: boolean;
+  
+  // ROI (based on initial capital)
+  roi: number; // Return on Investment %
+  roiDisplay: string; // "+25.5%" or "--"
+  currentEquity: number;
+  currentEquityDisplay: string;
+  capitalDefined: boolean; // Flag to know if capital was defined by user
   
   // Time metrics
   avgTradeDuration: string;
@@ -158,9 +169,19 @@ const calculateStreaks = (trades: Trade[]) => {
   };
 };
 
-// Calculate max drawdown
-const calculateMaxDrawdown = (trades: Trade[], startingCapital: number = 10000) => {
-  if (trades.length === 0) return { amount: 0, percent: 0 };
+// Calculate max drawdown and current drawdown
+const calculateDrawdownMetrics = (trades: Trade[], startingCapital: number) => {
+  if (trades.length === 0) {
+    return { 
+      maxAmount: 0, 
+      maxPercent: 0,
+      currentAmount: 0,
+      currentPercent: 0,
+      isInDrawdown: false,
+      currentEquity: startingCapital,
+      peak: startingCapital
+    };
+  }
 
   const sortedTrades = [...trades]
     .sort((a, b) => new Date(a.trade_date).getTime() - new Date(b.trade_date).getTime());
@@ -184,14 +205,37 @@ const calculateMaxDrawdown = (trades: Trade[], startingCapital: number = 10000) 
   });
 
   const maxDrawdownPercent = peak > 0 ? (maxDrawdownAmount / peak) * 100 : 0;
+  const currentDrawdownAmount = peak - balance;
+  const currentDrawdownPercent = peak > 0 ? (currentDrawdownAmount / peak) * 100 : 0;
 
   return { 
-    amount: round(maxDrawdownAmount, 2), 
-    percent: round(maxDrawdownPercent, 1) 
+    maxAmount: round(maxDrawdownAmount, 2), 
+    maxPercent: round(maxDrawdownPercent, 1),
+    currentAmount: round(Math.max(0, currentDrawdownAmount), 2),
+    currentPercent: round(Math.max(0, currentDrawdownPercent), 1),
+    isInDrawdown: currentDrawdownAmount > 0,
+    currentEquity: round(balance, 2),
+    peak: round(peak, 2)
   };
 };
 
-export const useAdvancedStats = (trades: Trade[]): AdvancedStats => {
+// Legacy function for backward compatibility
+const calculateMaxDrawdown = (trades: Trade[], startingCapital: number = 10000) => {
+  const metrics = calculateDrawdownMetrics(trades, startingCapital);
+  return { amount: metrics.maxAmount, percent: metrics.maxPercent };
+};
+
+export interface AdvancedStatsOptions {
+  initialCapital?: number;
+  capitalDefined?: boolean;
+}
+
+export const useAdvancedStats = (
+  trades: Trade[], 
+  options: AdvancedStatsOptions = {}
+): AdvancedStats => {
+  const { initialCapital = 10000, capitalDefined = false } = options;
+  
   return useMemo(() => {
     // ==========================================
     // STEP 1: Filter valid trades
@@ -376,9 +420,14 @@ export const useAdvancedStats = (trades: Trade[]): AdvancedStats => {
     const streaks = calculateStreaks(validClosedTrades);
     
     // ==========================================
-    // STEP 10: Drawdown
+    // STEP 10: Drawdown & ROI (based on initial capital)
     // ==========================================
-    const drawdown = calculateMaxDrawdown(validClosedTrades);
+    const drawdownMetrics = calculateDrawdownMetrics(validClosedTrades, initialCapital);
+    
+    // ROI = (Current Equity - Initial Capital) / Initial Capital * 100
+    const roi = initialCapital > 0 
+      ? round(((drawdownMetrics.currentEquity - initialCapital) / initialCapital) * 100, 2)
+      : 0;
     
     // ==========================================
     // STEP 11: Time Calculations
@@ -450,9 +499,24 @@ export const useAdvancedStats = (trades: Trade[]): AdvancedStats => {
       : '--';
     
     // Max drawdown display
-    const maxDrawdownDisplay = drawdown.amount > 0 
-      ? `-$${drawdown.amount.toFixed(2)} (${clamp(drawdown.percent, 0, 100).toFixed(1)}%)`
+    const maxDrawdownDisplay = drawdownMetrics.maxAmount > 0 
+      ? `-$${drawdownMetrics.maxAmount.toFixed(2)} (${clamp(drawdownMetrics.maxPercent, 0, 100).toFixed(1)}%)`
       : '--';
+    
+    // Current drawdown display
+    const currentDrawdownDisplay = drawdownMetrics.isInDrawdown
+      ? `-$${drawdownMetrics.currentAmount.toFixed(2)} (${clamp(drawdownMetrics.currentPercent, 0, 100).toFixed(1)}%)`
+      : '--';
+    
+    // ROI display
+    const roiDisplay = hasTrades && capitalDefined
+      ? `${roi >= 0 ? '+' : ''}${roi.toFixed(2)}%`
+      : '--';
+    
+    // Current equity display
+    const currentEquityDisplay = hasTrades
+      ? `$${drawdownMetrics.currentEquity.toFixed(2)}`
+      : `$${initialCapital.toFixed(2)}`;
 
     // ==========================================
     // RETURN FINAL STATS
@@ -489,12 +553,21 @@ export const useAdvancedStats = (trades: Trade[]): AdvancedStats => {
       longestWinStreak: streaks.longestWin,
       longestLossStreak: streaks.longestLoss,
       currentStreak: streaks.current,
-      maxDrawdown: drawdown.amount,
-      maxDrawdownPercent: clamp(drawdown.percent, 0, 100),
+      maxDrawdown: drawdownMetrics.maxAmount,
+      maxDrawdownPercent: clamp(drawdownMetrics.maxPercent, 0, 100),
       maxDrawdownDisplay,
+      currentDrawdown: drawdownMetrics.currentAmount,
+      currentDrawdownPercent: clamp(drawdownMetrics.currentPercent, 0, 100),
+      currentDrawdownDisplay,
+      isInDrawdown: drawdownMetrics.isInDrawdown,
+      roi,
+      roiDisplay,
+      currentEquity: drawdownMetrics.currentEquity,
+      currentEquityDisplay,
+      capitalDefined,
       avgTradeDuration,
       totalTimeInPosition,
       hasTrades,
     };
-  }, [trades]);
+  }, [trades, initialCapital, capitalDefined]);
 };

@@ -40,6 +40,8 @@ import {
   PieChart as PieChartIcon,
   Wallet,
   Info,
+  LineChart as LineChartIcon,
+  ArrowDownRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -72,11 +74,19 @@ const Dashboard: React.FC = () => {
   const { profile } = useAuth();
   const { currentLevel } = useChallenges();
   const { trades, isLoading } = useTrades();
-  const stats = useAdvancedStats(trades);
   const { formatAmount, currency } = useCurrency();
   const { isEnabled: focusEnabled, toggle: toggleFocus } = useTradeFocus();
   const { capitalInfo, showPrompt, dismissPrompt } = useInitialCapital();
   const { settings } = useSettings();
+  
+  // Get initial capital for equity curve and stats
+  const initialCapital = capitalInfo.capitalDefined && capitalInfo.capital ? capitalInfo.capital : 10000;
+  
+  // Pass capital info to advanced stats hook
+  const stats = useAdvancedStats(trades, { 
+    initialCapital, 
+    capitalDefined: capitalInfo.capitalDefined 
+  });
   
   // State for capital prompt dialog
   const [capitalPromptOpen, setCapitalPromptOpen] = useState(showPrompt);
@@ -97,9 +107,6 @@ const Dashboard: React.FC = () => {
   const userNickname = profile?.nickname || 'Trader';
   const userLevel = profile?.level || 1;
   const levelTitle = language === 'fr' ? currentLevel.title : currentLevel.titleEn;
-
-  // Get initial capital for equity curve
-  const initialCapital = capitalInfo.capitalDefined && capitalInfo.capital ? capitalInfo.capital : 10000;
 
   // Generate equity curve data from trades (with default empty chart data)
   const equityData = React.useMemo(() => {
@@ -463,6 +470,87 @@ const Dashboard: React.FC = () => {
             delay={1200}
             tooltip={mainStatsTooltips.avgTradeResult}
           />
+        </div>
+      </div>
+
+      {/* Section: ROI & Drawdown (Capital-Based) */}
+      <div>
+        <SectionHeader icon={LineChartIcon} title={language === 'fr' ? 'ROI & Drawdown' : 'ROI & Drawdown'} delay={1025} />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <StatCard
+            title={language === 'fr' ? 'Capital Actuel' : 'Current Equity'}
+            value={
+              <ConfidentialValue>
+                {stats.capitalDefined ? stats.currentEquityDisplay : '--'}
+              </ConfidentialValue>
+            }
+            icon={Wallet}
+            variant={stats.currentEquity >= initialCapital ? 'profit' : 'loss'}
+            delay={1030}
+            tooltip={language === 'fr' 
+              ? 'Valeur actuelle du capital (capital initial + PnL cumulé)' 
+              : 'Current capital value (initial capital + cumulative PnL)'}
+          />
+          <StatCard
+            title="ROI"
+            value={
+              <ConfidentialValue>
+                {stats.roiDisplay}
+              </ConfidentialValue>
+            }
+            icon={Percent}
+            variant={stats.roi >= 0 ? 'profit' : 'loss'}
+            delay={1035}
+            tooltip={language === 'fr' 
+              ? 'Retour sur Investissement : (Capital actuel - Capital initial) / Capital initial × 100. Définissez votre capital pour un calcul précis.' 
+              : 'Return on Investment: (Current Equity - Initial Capital) / Initial Capital × 100. Set your capital for accurate calculation.'}
+          />
+          <StatCard
+            title={language === 'fr' ? 'Drawdown Max' : 'Max Drawdown'}
+            value={
+              <ConfidentialValue>
+                {stats.capitalDefined ? stats.maxDrawdownDisplay : `${stats.maxDrawdownPercent.toFixed(1)}%`}
+              </ConfidentialValue>
+            }
+            icon={ArrowDownRight}
+            variant={stats.maxDrawdownPercent > 20 ? 'loss' : stats.maxDrawdownPercent > 10 ? 'neutral' : 'profit'}
+            delay={1040}
+            tooltip={language === 'fr' 
+              ? 'Perte maximale depuis le plus haut capital atteint. Un drawdown < 20% est considéré sain.' 
+              : 'Maximum loss from peak equity. A drawdown < 20% is considered healthy.'}
+          />
+          <StatCard
+            title={language === 'fr' ? 'Drawdown Actuel' : 'Current Drawdown'}
+            value={
+              <ConfidentialValue>
+                {stats.isInDrawdown 
+                  ? (stats.capitalDefined ? stats.currentDrawdownDisplay : `${stats.currentDrawdownPercent.toFixed(1)}%`)
+                  : (language === 'fr' ? 'Aucun' : 'None')}
+              </ConfidentialValue>
+            }
+            icon={stats.isInDrawdown ? AlertTriangle : TrendingUp}
+            variant={stats.isInDrawdown 
+              ? (stats.currentDrawdownPercent > 15 ? 'loss' : 'neutral') 
+              : 'profit'}
+            delay={1045}
+            tooltip={language === 'fr' 
+              ? 'Perte actuelle depuis le dernier plus haut. Vert = au sommet, Orange/Rouge = en drawdown.' 
+              : 'Current loss from last peak. Green = at peak, Orange/Red = in drawdown.'}
+          />
+          {!stats.capitalDefined && (
+            <div 
+              className="glass-card p-3 flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary/50 transition-colors animate-fade-in"
+              style={{ animationDelay: '1050ms' }}
+              onClick={() => setCapitalPromptOpen(true)}
+            >
+              <Info className="w-5 h-5 text-yellow-500 mb-1" />
+              <p className="text-xs text-muted-foreground">
+                {language === 'fr' 
+                  ? 'Définir capital pour calculs précis' 
+                  : 'Set capital for accurate calculations'}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
