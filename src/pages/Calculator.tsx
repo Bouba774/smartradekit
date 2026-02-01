@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { Calculator as CalcIcon, Send, Search, Star, Save, RefreshCw, Info } from 'lucide-react';
+import { Calculator as CalcIcon, Send, Search, Star, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import EntryModeInputs from '@/components/calculator/EntryModeInputs';
@@ -447,12 +447,6 @@ const Calculator: React.FC = () => {
                   </div>
                 </SelectContent>
               </Select>
-              {currentAssetConfig && (
-                <p className="text-xs text-muted-foreground">
-                  {language === 'fr' ? 'Type' : 'Type'}: {currentAssetConfig.assetType.replace(/_/g, ' ')} • 
-                  Quote: {currentAssetConfig.quoteCurrency}
-                </p>
-              )}
             </div>
 
             {/* Capital et Risque */}
@@ -552,25 +546,6 @@ const Calculator: React.FC = () => {
               : t('calculate')}
           </Button>
 
-          {/* Indicateur taux de change */}
-          <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">
-            <div className="flex items-center gap-1">
-              <Info className="w-3 h-3" />
-              <span>
-                {language === 'fr' ? 'Dernière MAJ taux' : 'Rates updated'}: 
-                {lastUpdated ? ` ${lastUpdated.toLocaleTimeString()}` : ' -'}
-              </span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => refetchRates()}
-              disabled={ratesLoading}
-              className="h-6 px-2"
-            >
-              <RefreshCw className={cn("w-3 h-3", ratesLoading && "animate-spin")} />
-            </Button>
-          </div>
         </div>
 
         {/* Section Résultats */}

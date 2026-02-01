@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Copy, TrendingUp, TrendingDown, AlertTriangle, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { CalculationResult, formatRRRatio, formatPips, getAssetTypeLabel } from '@/lib/calculator/calculationEngine';
+import { CalculationResult, formatRRRatio, formatPips, getPipsLabel } from '@/lib/calculator/calculationEngine';
 import { toast } from 'sonner';
 
 interface CalculationResultsProps {
@@ -24,13 +24,18 @@ const CalculationResults: React.FC<CalculationResultsProps> = ({
     }
   };
 
+  // Obtenir le label pips/points selon l'actif
+  const pipsLabel = result.assetConfig 
+    ? getPipsLabel(result.assetConfig, language === 'fr' ? 'fr' : 'en')
+    : 'pips';
+
   if (!result.isValid && result.errors.length > 0) {
     return (
       <div className="glass-card p-6 animate-fade-in border-loss/30">
         <div className="flex items-center gap-2 mb-4">
           <AlertTriangle className="w-5 h-5 text-loss" />
           <h3 className="font-display font-semibold text-loss">
-            {language === 'fr' ? 'Erreurs de calcul' : 'Calculation Errors'}
+            {language === 'fr' ? 'Erreur' : 'Error'}
           </h3>
         </div>
         <ul className="space-y-2">
@@ -52,23 +57,24 @@ const CalculationResults: React.FC<CalculationResultsProps> = ({
   return (
     <div className="glass-card p-6 animate-fade-in">
       {/* Header avec direction */}
-      <h3 className="font-display font-semibold text-foreground mb-6 flex items-center gap-2">
-        {t('results')}
-        {result.direction === 'buy' ? (
-          <span className="flex items-center gap-1 text-sm text-profit px-2 py-0.5 rounded-full bg-profit/10">
-            <TrendingUp className="w-4 h-4" /> BUY
-          </span>
-        ) : result.direction === 'sell' ? (
-          <span className="flex items-center gap-1 text-sm text-loss px-2 py-0.5 rounded-full bg-loss/10">
-            <TrendingDown className="w-4 h-4" /> SELL
-          </span>
-        ) : null}
-        {result.assetConfig && (
-          <span className="text-xs text-muted-foreground ml-auto">
-            {getAssetTypeLabel(result.assetConfig.assetType, language === 'fr' ? 'fr' : 'en')}
-          </span>
-        )}
-      </h3>
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="font-display font-semibold text-foreground flex items-center gap-2">
+          {t('results')}
+          {result.direction === 'buy' ? (
+            <span className="flex items-center gap-1 text-sm text-profit px-2 py-0.5 rounded-full bg-profit/10">
+              <TrendingUp className="w-4 h-4" /> BUY
+            </span>
+          ) : result.direction === 'sell' ? (
+            <span className="flex items-center gap-1 text-sm text-loss px-2 py-0.5 rounded-full bg-loss/10">
+              <TrendingDown className="w-4 h-4" /> SELL
+            </span>
+          ) : null}
+        </h3>
+        <div className="flex items-center gap-1 text-profit">
+          <CheckCircle className="w-4 h-4" />
+          <span className="text-xs">{language === 'fr' ? 'Vérifié' : 'Verified'}</span>
+        </div>
+      </div>
 
       {/* Résultat principal - Lot Size */}
       <div className="text-center p-6 rounded-xl bg-primary/10 border border-primary/30 mb-6 relative">
@@ -82,35 +88,32 @@ const CalculationResults: React.FC<CalculationResultsProps> = ({
           <Copy className="w-4 h-4" />
         </Button>
         <p className="text-sm text-muted-foreground uppercase tracking-wide mb-2">
-          {t('recommendedLotSize')}
+          {language === 'fr' ? 'Taille de lot recommandée' : 'Recommended lot size'}
         </p>
-        <p className="font-display text-5xl font-bold text-primary neon-text">
+        <p className="font-display text-5xl font-bold text-primary">
           {result.lotSize}
         </p>
         <p className="text-sm text-muted-foreground mt-2">
-          {t('standardLots')}
+          {language === 'fr' ? 'lots standard' : 'standard lots'}
         </p>
-        {result.lotRaw !== null && result.lotRaw !== result.lotSize && (
-          <p className="text-xs text-muted-foreground mt-1">
-            ({language === 'fr' ? 'Lot brut' : 'Raw lot'}: {result.lotRaw.toFixed(4)})
-          </p>
-        )}
       </div>
 
-      {/* Grille de résultats détaillés */}
+      {/* Grille de résultats simplifiée */}
       <div className="grid grid-cols-2 gap-4">
-        {/* Risque */}
+        {/* Risque réel */}
         <div className="p-4 rounded-lg bg-secondary/50">
-          <p className="text-xs text-muted-foreground">{t('riskAmount')}</p>
+          <p className="text-xs text-muted-foreground">
+            {language === 'fr' ? 'Risque réel' : 'Actual risk'}
+          </p>
           <p className="font-display text-xl font-bold text-foreground">
-            {result.riskAmount !== null ? formatAmount(result.riskAmount, false, true) : '-'}
+            {result.maxLoss !== null ? formatAmount(result.maxLoss) : '-'}
           </p>
         </div>
 
-        {/* R:R Ratio */}
+        {/* R:R Ratio - seulement si TP défini */}
         {result.rrRatio !== null && (
           <div className="p-4 rounded-lg bg-secondary/50">
-            <p className="text-xs text-muted-foreground">R:R Ratio</p>
+            <p className="text-xs text-muted-foreground">Risk/Reward</p>
             <p className={cn(
               "font-display text-xl font-bold",
               result.rrRatio >= 2 ? "text-profit" : 
@@ -123,104 +126,47 @@ const CalculationResults: React.FC<CalculationResultsProps> = ({
 
         {/* Stop Loss */}
         <div className="p-4 rounded-lg bg-loss/10 border border-loss/20">
-          <p className="text-xs text-muted-foreground">{t('slPoints')}</p>
+          <p className="text-xs text-muted-foreground">Stop Loss</p>
           <p className="font-display text-xl font-bold text-loss">
-            {formatPips(result.slDistancePips)} pips
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {t('maxLoss')}: {result.maxLoss !== null ? formatAmount(result.maxLoss, false, true) : '-'}
+            {formatPips(result.slDistancePips)} {pipsLabel}
           </p>
         </div>
 
-        {/* Take Profit */}
-        <div className="p-4 rounded-lg bg-profit/10 border border-profit/20">
-          <p className="text-xs text-muted-foreground">{t('tpPoints')}</p>
-          <p className="font-display text-xl font-bold text-profit">
-            {result.tpDistancePips !== null ? `${formatPips(result.tpDistancePips)} pips` : '-'}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {t('potentialGain')}: {result.potentialGain !== null ? formatAmount(result.potentialGain, false, true) : '-'}
-          </p>
-        </div>
+        {/* Take Profit - seulement si défini */}
+        {result.tpDistancePips !== null && (
+          <div className="p-4 rounded-lg bg-profit/10 border border-profit/20">
+            <p className="text-xs text-muted-foreground">Take Profit</p>
+            <p className="font-display text-xl font-bold text-profit">
+              {formatPips(result.tpDistancePips)} {pipsLabel}
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Visualisation SL/TP */}
-      {result.tpDistancePips !== null && result.tpDistancePips > 0 && result.slDistancePips !== null && (
-        <div className="mt-6 p-4 bg-secondary/30 rounded-lg">
-          <p className="text-xs text-muted-foreground mb-3 text-center">
-            {language === 'fr' ? 'Visualisation du trade' : 'Trade Visualization'}
+      {/* Gain potentiel - seulement si TP défini */}
+      {result.potentialGain !== null && (
+        <div className="mt-4 p-3 rounded-lg bg-profit/5 border border-profit/20 text-center">
+          <p className="text-xs text-muted-foreground">
+            {language === 'fr' ? 'Gain potentiel' : 'Potential gain'}
           </p>
-          <div className="relative h-8 rounded-full bg-gradient-to-r from-loss via-secondary to-profit overflow-hidden">
-            <div 
-              className="absolute top-0 bottom-0 w-1 bg-foreground"
-              style={{ 
-                left: `${(result.slDistancePips / (result.slDistancePips + result.tpDistancePips)) * 100}%` 
-              }}
-            />
-            <div className="absolute top-0 left-0 bottom-0 flex items-center px-2 text-xs text-loss-foreground font-medium">
-              SL
-            </div>
-            <div className="absolute top-0 right-0 bottom-0 flex items-center px-2 text-xs text-profit-foreground font-medium">
-              TP
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Détails techniques */}
-      {result.assetConfig && (
-        <div className="mt-4 p-3 rounded-lg bg-muted/30 text-xs space-y-1">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">
-              {language === 'fr' ? 'Valeur pip (1 lot)' : 'Pip value (1 lot)'}:
-            </span>
-            <span className="font-mono">
-              {result.pipValue?.toFixed(4)} {result.assetConfig.quoteCurrency}
-            </span>
-          </div>
-          {result.conversionRate && result.conversionRate !== 1 && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">
-                {language === 'fr' ? 'Taux conversion' : 'Conversion rate'}:
-              </span>
-              <span className="font-mono">{result.conversionRate.toFixed(6)}</span>
-            </div>
-          )}
-          {result.pipValueConverted !== result.pipValue && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">
-                {language === 'fr' ? 'Valeur pip convertie' : 'Converted pip value'}:
-              </span>
-              <span className="font-mono">{result.pipValueConverted?.toFixed(4)}</span>
-            </div>
-          )}
+          <p className="font-display text-lg font-bold text-profit">
+            +{formatAmount(result.potentialGain)}
+          </p>
         </div>
       )}
 
       {/* Warnings */}
       {result.warnings.length > 0 && (
-        <div className="mt-4 p-4 rounded-lg border border-yellow-500/30 bg-yellow-500/10">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="w-4 h-4 text-yellow-500" />
-            <span className="text-sm font-medium text-yellow-500">
-              {language === 'fr' ? 'Avertissements' : 'Warnings'}
-            </span>
-          </div>
+        <div className="mt-4 p-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10">
           <ul className="space-y-1">
             {result.warnings.map((warning, index) => (
-              <li key={index} className="text-sm text-muted-foreground">
+              <li key={index} className="text-sm text-yellow-500">
                 {warning}
               </li>
             ))}
           </ul>
         </div>
       )}
-
-      {/* Validation checkmark */}
-      <div className="mt-4 flex items-center justify-center gap-2 text-sm text-profit">
-        <CheckCircle className="w-4 h-4" />
-        <span>{language === 'fr' ? 'Calcul vérifié' : 'Calculation verified'}</span>
-      </div>
     </div>
   );
 };
