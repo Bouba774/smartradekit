@@ -43,24 +43,23 @@ const CalculatorInputs: React.FC<CalculatorInputsProps> = ({
     value: string,
     onChange: (value: string) => void
   ) => {
-    // Allow empty, numbers, and one decimal point
     if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
       onChange(value);
     }
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Capital */}
       <div className="space-y-2">
-        <div className="flex items-center gap-1.5">
-          <Label className="text-sm font-medium text-foreground">
+        <div className="flex items-center gap-2">
+          <Label className="text-base font-semibold text-foreground">
             Capital ({currencySymbol})
           </Label>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
-                <Info className="w-3.5 h-3.5 text-muted-foreground" />
+                <Info className="w-4 h-4 text-muted-foreground" />
               </TooltipTrigger>
               <TooltipContent>
                 <p className="max-w-xs">
@@ -78,20 +77,20 @@ const CalculatorInputs: React.FC<CalculatorInputsProps> = ({
           value={capital}
           onChange={(e) => handleNumericInput(e.target.value, onCapitalChange)}
           placeholder="10000"
-          className="h-12 font-mono text-base bg-secondary/50"
+          className="h-14 text-lg font-medium bg-background/80 border-0 rounded-xl"
         />
       </div>
 
-      {/* Risque - Two columns */}
+      {/* Risque */}
       <div className="space-y-2">
-        <div className="flex items-center gap-1.5">
-          <Label className="text-sm font-medium text-foreground">
+        <div className="flex items-center gap-2">
+          <Label className="text-base font-semibold text-foreground">
             {isFr ? 'Risque' : 'Risk'}
           </Label>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
-                <Info className="w-3.5 h-3.5 text-muted-foreground" />
+                <Info className="w-4 h-4 text-muted-foreground" />
               </TooltipTrigger>
               <TooltipContent>
                 <p className="max-w-xs">
@@ -112,9 +111,9 @@ const CalculatorInputs: React.FC<CalculatorInputsProps> = ({
               value={riskPercent}
               onChange={(e) => handleNumericInput(e.target.value, onRiskPercentChange)}
               placeholder="2"
-              className="h-12 font-mono text-base bg-secondary/50 pr-10"
+              className="h-14 text-lg font-medium bg-background/80 border-0 rounded-xl pr-12"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-lg font-medium">
               %
             </span>
           </div>
@@ -126,9 +125,9 @@ const CalculatorInputs: React.FC<CalculatorInputsProps> = ({
               value={riskAmount}
               onChange={(e) => handleNumericInput(e.target.value, onRiskAmountChange)}
               placeholder="200.00"
-              className="h-12 font-mono text-base bg-secondary/50 pr-10"
+              className="h-14 text-lg font-medium bg-background/80 border-0 rounded-xl pr-12"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-lg font-medium">
               {currencySymbol}
             </span>
           </div>
@@ -137,7 +136,7 @@ const CalculatorInputs: React.FC<CalculatorInputsProps> = ({
 
       {/* Prix d'Entrée */}
       <div className="space-y-2">
-        <Label className="text-sm font-medium text-foreground">
+        <Label className="text-base font-semibold text-foreground">
           {isFr ? "Prix d'Entrée" : "Entry Price"}
         </Label>
         <Input
@@ -145,20 +144,20 @@ const CalculatorInputs: React.FC<CalculatorInputsProps> = ({
           inputMode="decimal"
           value={entryPrice}
           onChange={(e) => handleNumericInput(e.target.value, onEntryPriceChange)}
-          placeholder="0.00000"
-          className="h-12 font-mono text-base bg-secondary/50"
+          placeholder="5504.54"
+          className="h-14 text-lg font-medium bg-background/80 border-0 rounded-xl"
         />
       </div>
 
-      {/* Stop Loss & Take Profit - Two columns */}
+      {/* Stop Loss & Take Profit */}
       <div className="grid grid-cols-2 gap-3">
         {/* Stop Loss */}
         <div className="space-y-2">
-          <div className="flex items-center gap-1.5">
-            <Label className="text-sm font-medium text-foreground">
+          <div className="flex items-center gap-2">
+            <Label className="text-base font-semibold text-foreground">
               Stop Loss
             </Label>
-            <span className="text-xs text-destructive">
+            <span className="text-sm text-destructive font-medium">
               ({isFr ? 'obligatoire' : 'required'})
             </span>
           </div>
@@ -167,17 +166,17 @@ const CalculatorInputs: React.FC<CalculatorInputsProps> = ({
             inputMode="decimal"
             value={stopLoss}
             onChange={(e) => handleNumericInput(e.target.value, onStopLossChange)}
-            placeholder="0.00000"
-            className="h-12 font-mono text-base bg-secondary/50"
+            placeholder="5587.07"
+            className="h-14 text-lg font-medium bg-background/80 border-0 rounded-xl"
           />
         </div>
         {/* Take Profit */}
         <div className="space-y-2">
-          <div className="flex items-center gap-1.5">
-            <Label className="text-sm font-medium text-foreground">
+          <div className="flex items-center gap-2">
+            <Label className="text-base font-semibold text-foreground">
               Take Profit
             </Label>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-sm text-muted-foreground">
               ({isFr ? 'optionnel' : 'optional'})
             </span>
           </div>
@@ -186,8 +185,8 @@ const CalculatorInputs: React.FC<CalculatorInputsProps> = ({
             inputMode="decimal"
             value={takeProfit}
             onChange={(e) => handleNumericInput(e.target.value, onTakeProfitChange)}
-            placeholder="0.00000"
-            className="h-12 font-mono text-base bg-secondary/50"
+            placeholder="5127.21"
+            className="h-14 text-lg font-medium bg-background/80 border-0 rounded-xl"
           />
         </div>
       </div>
