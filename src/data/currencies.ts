@@ -82,3 +82,27 @@ export const getCurrencySymbol = (code: string): string => {
 
 // Base currency for all stored values (trades are stored in USD)
 export const BASE_CURRENCY = 'USD';
+
+/**
+ * Devises de compte supportées pour la calculatrice et les paramètres
+ * Sous-ensemble des devises principales utilisées par les brokers
+ */
+export interface AccountCurrency {
+  code: string;
+  symbol: string;
+  name: string;
+}
+
+export const SUPPORTED_ACCOUNT_CURRENCIES: AccountCurrency[] = [
+  { code: 'USD', symbol: '$', name: 'US Dollar' },
+  { code: 'EUR', symbol: '€', name: 'Euro' },
+  { code: 'GBP', symbol: '£', name: 'British Pound' },
+  { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
+  { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+  { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+  { code: 'NZD', symbol: 'NZ$', name: 'New Zealand Dollar' },
+  { code: 'XAF', symbol: 'FCFA', name: 'CFA Franc BEAC' },
+  { code: 'XOF', symbol: 'FCFA', name: 'CFA Franc BCEAO' },
+  { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+];

@@ -39,7 +39,8 @@ import { toast } from 'sonner';
 import { ASSET_CATEGORIES } from '@/data/assets';
 import { useFavoriteAssets } from '@/hooks/useFavoriteAssets';
 import { validateTradeForm, sanitizeText } from '@/lib/tradeValidation';
-import { PENDING_TRADE_KEY } from './Calculator';
+// Clé pour les données de trade en attente (utilisé lors de l'envoi depuis la calculatrice)
+export const PENDING_TRADE_KEY = 'pending_trade_data';
 import HelpTooltip from '@/components/ui/HelpTooltip';
 import { tradeFormTooltips } from '@/data/helpTooltips';
 
