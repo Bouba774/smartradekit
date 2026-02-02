@@ -6,15 +6,13 @@ import { useExchangeRates } from '@/hooks/useExchangeRates';
 import { useCurrency } from '@/hooks/useCurrency';
 import { Calculator as CalcIcon, Send, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 import AssetSelector from '@/components/calculator/AssetSelector';
-import PriceInput from '@/components/calculator/PriceInput';
+import CalculatorInputs from '@/components/calculator/CalculatorInputs';
 import CalculationResults from '@/components/calculator/CalculationResults';
 import TradingVisualization from '@/components/calculator/TradingVisualization';
 import {
@@ -42,28 +40,62 @@ const Calculator: React.FC = () => {
   const [entryPrice, setEntryPrice] = useState<string>('');
   const [stopLoss, setStopLoss] = useState<string>('');
   const [takeProfit, setTakeProfit] = useState<string>('');
-  const [riskPercent, setRiskPercent] = useState<number>(1);
+  const [capitalInput, setCapitalInput] = useState<string>('');
+  const [riskPercentInput, setRiskPercentInput] = useState<string>('');
+  const [riskAmountInput, setRiskAmountInput] = useState<string>('');
   
   // Calculation result
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  // Initialize risk percent from settings
+  // Initialize from settings
   useEffect(() => {
-    if (settingsLoaded && settings.defaultRiskPercent) {
-      setRiskPercent(settings.defaultRiskPercent);
+    if (settingsLoaded) {
+      if (settings.defaultCapital && !capitalInput) {
+        setCapitalInput(settings.defaultCapital.toString());
+      }
+      if (settings.defaultRiskPercent && !riskPercentInput) {
+        setRiskPercentInput(settings.defaultRiskPercent.toString());
+      }
     }
-  }, [settingsLoaded, settings.defaultRiskPercent]);
+  }, [settingsLoaded, settings.defaultCapital, settings.defaultRiskPercent]);
   
   // Get account parameters
   const accountCurrency = settings.capitalCurrency || settings.currency || 'USD';
-  const capital = settings.defaultCapital || 0;
   const currencySymbol = getCurrencySymbol();
   
-  // Calculate risk amount
-  const riskAmount = useMemo(() => {
-    return capital * (riskPercent / 100);
-  }, [capital, riskPercent]);
+  // Parse values
+  const capital = parseFloat(capitalInput) || 0;
+  const riskPercent = parseFloat(riskPercentInput) || 0;
+  
+  // Sync risk percent <-> risk amount
+  const handleRiskPercentChange = useCallback((value: string) => {
+    setRiskPercentInput(value);
+    const percent = parseFloat(value);
+    if (!isNaN(percent) && capital > 0) {
+      const amount = capital * (percent / 100);
+      setRiskAmountInput(amount.toFixed(2));
+    }
+  }, [capital]);
+  
+  const handleRiskAmountChange = useCallback((value: string) => {
+    setRiskAmountInput(value);
+    const amount = parseFloat(value);
+    if (!isNaN(amount) && capital > 0) {
+      const percent = (amount / capital) * 100;
+      setRiskPercentInput(percent.toFixed(2));
+    }
+  }, [capital]);
+  
+  const handleCapitalChange = useCallback((value: string) => {
+    setCapitalInput(value);
+    const cap = parseFloat(value);
+    const percent = parseFloat(riskPercentInput);
+    if (!isNaN(cap) && !isNaN(percent) && cap > 0) {
+      const amount = cap * (percent / 100);
+      setRiskAmountInput(amount.toFixed(2));
+    }
+  }, [riskPercentInput]);
   
   // Handle asset selection
   const handleAssetChange = useCallback((symbol: string, config: AssetConfig | null) => {
@@ -251,92 +283,35 @@ const Calculator: React.FC = () => {
             </CardContent>
           </Card>
           
-          {/* Risk Management */}
+          {/* Calculator Inputs - New Design */}
           <Card className="glass-card">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">
-                {isFr ? 'Gestion du risque' : 'Risk Management'}
+                {isFr ? 'Paramètres' : 'Parameters'}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Capital display */}
-              <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
-                <span className="text-sm text-muted-foreground">
-                  {isFr ? 'Capital' : 'Capital'}
-                </span>
-                <span className="font-mono font-medium">
-                  {capital.toLocaleString()} {currencySymbol}
-                </span>
-              </div>
-              
-              {/* Risk percentage slider */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm">
-                    {isFr ? 'Risque' : 'Risk'} ({riskPercent}%)
-                  </Label>
-                  <span className="text-sm font-medium text-primary">
-                    {riskAmount.toFixed(2)} {currencySymbol}
-                  </span>
-                </div>
-                <Slider
-                  value={[riskPercent]}
-                  onValueChange={([value]) => setRiskPercent(value)}
-                  min={0.1}
-                  max={10}
-                  step={0.1}
-                  className="py-2"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>0.1%</span>
-                  <span>5%</span>
-                  <span>10%</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Price Inputs */}
-          <Card className="glass-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">
-                {isFr ? 'Prix' : 'Prices'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <PriceInput
-                label={isFr ? "Prix d'entrée" : "Entry Price"}
-                value={entryPrice}
-                onChange={setEntryPrice}
-                variant="entry"
-                required
-                placeholder={assetConfig ? `0.${'0'.repeat(assetConfig.priceDecimals)}` : '0.00000'}
-                tooltip={isFr ? 'Prix auquel vous entrez en position' : 'Price at which you enter the trade'}
-              />
-              
-              <PriceInput
-                label="Stop Loss"
-                value={stopLoss}
-                onChange={setStopLoss}
-                variant="sl"
-                required
-                placeholder={assetConfig ? `0.${'0'.repeat(assetConfig.priceDecimals)}` : '0.00000'}
-                tooltip={isFr ? 'Prix de sortie en cas de perte' : 'Exit price in case of loss'}
-              />
-              
-              <PriceInput
-                label="Take Profit"
-                value={takeProfit}
-                onChange={setTakeProfit}
-                variant="tp"
-                placeholder={assetConfig ? `0.${'0'.repeat(assetConfig.priceDecimals)}` : '0.00000'}
-                tooltip={isFr ? 'Prix de sortie en cas de gain (facultatif)' : 'Exit price in case of profit (optional)'}
+            <CardContent>
+              <CalculatorInputs
+                capital={capitalInput}
+                onCapitalChange={handleCapitalChange}
+                riskPercent={riskPercentInput}
+                onRiskPercentChange={handleRiskPercentChange}
+                riskAmount={riskAmountInput}
+                onRiskAmountChange={handleRiskAmountChange}
+                entryPrice={entryPrice}
+                onEntryPriceChange={setEntryPrice}
+                stopLoss={stopLoss}
+                onStopLossChange={setStopLoss}
+                takeProfit={takeProfit}
+                onTakeProfitChange={setTakeProfit}
+                currencySymbol={currencySymbol}
+                language={language}
               />
               
               {/* Direction indicator */}
               {entryPrice && stopLoss && (
                 <div className={cn(
-                  'flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium',
+                  'flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium mt-4',
                   direction === 'BUY' 
                     ? 'bg-emerald-500/10 text-emerald-500' 
                     : 'bg-red-500/10 text-red-500'
