@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useInitialCapital } from '@/hooks/useInitialCapital';
 import { useCurrency } from '@/hooks/useCurrency';
-import { SUPPORTED_ACCOUNT_CURRENCIES } from '@/lib/calculator/calculationEngine';
+import { SUPPORTED_ACCOUNT_CURRENCIES } from '@/data/currencies';
 import {
   Dialog,
   DialogContent,
