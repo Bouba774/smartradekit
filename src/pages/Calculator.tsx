@@ -4,15 +4,14 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useSettings } from '@/hooks/useSettings';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
 import { useCurrency } from '@/hooks/useCurrency';
-import { Calculator as CalcIcon, Send, AlertCircle, RefreshCw } from 'lucide-react';
+import { Calculator as CalcIcon, Send, AlertCircle, RefreshCw, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-import AssetSelector from '@/components/calculator/AssetSelector';
-import CalculatorInputs from '@/components/calculator/CalculatorInputs';
+import CalculatorForm from '@/components/calculator/CalculatorForm';
 import CalculationResults from '@/components/calculator/CalculationResults';
 import TradingVisualization from '@/components/calculator/TradingVisualization';
 import {
@@ -117,7 +116,7 @@ const Calculator: React.FC = () => {
     }
     
     if (capital <= 0) {
-      setError(isFr ? 'Veuillez définir votre capital dans les paramètres' : 'Please set your capital in settings');
+      setError(isFr ? 'Veuillez définir votre capital' : 'Please set your capital');
       return;
     }
     
@@ -186,14 +185,6 @@ const Calculator: React.FC = () => {
     navigate('/add-trade');
   }, [result, selectedAsset, entryPrice, stopLoss, takeProfit, riskPercent, navigate, isFr]);
   
-  // Auto-calculate when inputs change
-  useEffect(() => {
-    if (selectedAsset && assetConfig && entryPrice && stopLoss && capital > 0) {
-      const timer = setTimeout(performCalculation, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedAsset, assetConfig, entryPrice, stopLoss, takeProfit, riskPercent, capital, performCalculation]);
-  
   // Determine direction for visualization
   const direction = useMemo(() => {
     const entry = parseFloat(entryPrice);
@@ -205,7 +196,7 @@ const Calculator: React.FC = () => {
   // Loading state
   if (!settingsLoaded) {
     return (
-      <div className="py-4 max-w-5xl mx-auto space-y-6">
+      <div className="py-4 max-w-2xl mx-auto space-y-6 px-4">
         <Skeleton className="h-12 w-64" />
         <Skeleton className="h-[400px] w-full" />
       </div>
@@ -213,127 +204,95 @@ const Calculator: React.FC = () => {
   }
 
   return (
-    <div className="py-4 max-w-5xl mx-auto">
+    <div className="py-4 max-w-2xl mx-auto px-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
-            {isFr ? 'Calculatrice' : 'Calculator'}
+            {isFr ? 'Calculatrice de Lot' : 'Lot Calculator'}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
             {isFr 
-              ? 'Calcul précis de la taille de position' 
-              : 'Precise position size calculation'}
+              ? 'Calculatrice de taille de position professionnelle' 
+              : 'Professional position size calculator'}
           </p>
         </div>
-        <div className="w-12 h-12 rounded-lg bg-gradient-primary flex items-center justify-center shadow-neon">
-          <CalcIcon className="w-6 h-6 text-primary-foreground" />
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" className="w-12 h-12 rounded-xl">
+            <Save className="w-5 h-5" />
+          </Button>
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg">
+            <CalcIcon className="w-6 h-6 text-white" />
+          </div>
         </div>
       </div>
       
-      {/* Capital warning */}
-      {capital <= 0 && (
-        <div className="glass-card p-4 mb-6 border-yellow-500/30 bg-yellow-500/5">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-yellow-500 mt-0.5" />
-            <div>
-              <p className="font-medium text-yellow-500">
-                {isFr ? 'Capital non défini' : 'Capital not set'}
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                {isFr 
-                  ? 'Définissez votre capital dans les paramètres pour utiliser la calculatrice.'
-                  : 'Set your capital in settings to use the calculator.'}
-              </p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-2"
-                onClick={() => navigate('/settings')}
-              >
-                {isFr ? 'Paramètres' : 'Settings'}
-              </Button>
-            </div>
+      {/* Main Form Card */}
+      <Card className="glass-card mb-6">
+        <CardContent className="pt-6">
+          <h2 className="text-xl font-bold mb-6">
+            {isFr ? 'Paramètres' : 'Parameters'}
+          </h2>
+          
+          <CalculatorForm
+            selectedAsset={selectedAsset}
+            assetConfig={assetConfig}
+            onAssetChange={handleAssetChange}
+            capital={capitalInput}
+            onCapitalChange={handleCapitalChange}
+            riskPercent={riskPercentInput}
+            onRiskPercentChange={handleRiskPercentChange}
+            riskAmount={riskAmountInput}
+            onRiskAmountChange={handleRiskAmountChange}
+            entryPrice={entryPrice}
+            onEntryPriceChange={setEntryPrice}
+            stopLoss={stopLoss}
+            onStopLossChange={setStopLoss}
+            takeProfit={takeProfit}
+            onTakeProfitChange={setTakeProfit}
+            currencySymbol={currencySymbol}
+            language={language}
+            onCalculate={performCalculation}
+          />
+        </CardContent>
+      </Card>
+      
+      {/* Error display */}
+      {error && (
+        <div className="glass-card p-4 mb-6 border-red-500/30 bg-red-500/5 rounded-xl">
+          <div className="flex items-center gap-2 text-red-500">
+            <AlertCircle className="w-5 h-5" />
+            <span>{error}</span>
           </div>
         </div>
       )}
       
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Left column - Inputs */}
-        <div className="space-y-4">
-          {/* Asset Selection */}
-          <Card className="glass-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">
-                {isFr ? 'Actif' : 'Asset'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <AssetSelector
-                value={selectedAsset}
-                onChange={handleAssetChange}
-                language={language}
-              />
-              {assetConfig && (
-                <div className="mt-2 text-xs text-muted-foreground flex gap-4">
-                  <span>1 pip = {assetConfig.pipSize}</span>
-                  <span>1 lot = {assetConfig.contractSize.toLocaleString()} {assetConfig.type === 'forex' ? 'units' : ''}</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          
-          {/* Calculator Inputs - New Design */}
-          <Card className="glass-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">
-                {isFr ? 'Paramètres' : 'Parameters'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CalculatorInputs
-                capital={capitalInput}
-                onCapitalChange={handleCapitalChange}
-                riskPercent={riskPercentInput}
-                onRiskPercentChange={handleRiskPercentChange}
-                riskAmount={riskAmountInput}
-                onRiskAmountChange={handleRiskAmountChange}
-                entryPrice={entryPrice}
-                onEntryPriceChange={setEntryPrice}
-                stopLoss={stopLoss}
-                onStopLossChange={setStopLoss}
-                takeProfit={takeProfit}
-                onTakeProfitChange={setTakeProfit}
-                currencySymbol={currencySymbol}
-                language={language}
-              />
-              
-              {/* Direction indicator */}
-              {entryPrice && stopLoss && (
-                <div className={cn(
-                  'flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium mt-4',
-                  direction === 'BUY' 
-                    ? 'bg-emerald-500/10 text-emerald-500' 
-                    : 'bg-red-500/10 text-red-500'
-                )}>
-                  {direction === 'BUY' ? '↑' : '↓'} {isFr ? 'Position' : 'Position'}: {direction}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-        
-        {/* Right column - Results & Visualization */}
-        <div className="space-y-4">
-          {/* Visualization */}
-          {entryPrice && stopLoss && (
-            <Card className="glass-card">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">
-                  {isFr ? 'Visualisation' : 'Visualization'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+      {/* Results Section */}
+      {result && (
+        <Card className="glass-card mb-6">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3 mb-4">
+              <h2 className="text-xl font-bold">
+                {isFr ? 'Résultats' : 'Results'}
+              </h2>
+              <span className={cn(
+                'flex items-center gap-1 text-sm font-bold',
+                result.direction === 'BUY' ? 'text-emerald-500' : 'text-red-500'
+              )}>
+                {result.direction === 'BUY' ? '↗' : '↘'} {result.direction}
+              </span>
+            </div>
+            
+            <CalculationResults
+              result={result}
+              currencySymbol={currencySymbol}
+              assetType={assetConfig?.type || 'forex'}
+              language={language}
+            />
+            
+            {/* Visualization */}
+            {entryPrice && stopLoss && (
+              <div className="mt-6">
                 <TradingVisualization
                   entry={parseFloat(entryPrice) || 0}
                   stopLoss={parseFloat(stopLoss) || 0}
@@ -341,80 +300,37 @@ const Calculator: React.FC = () => {
                   direction={direction}
                   priceDecimals={assetConfig?.priceDecimals || 5}
                 />
-              </CardContent>
-            </Card>
-          )}
-          
-          {/* Error display */}
-          {error && (
-            <div className="glass-card p-4 border-red-500/30 bg-red-500/5">
-              <div className="flex items-center gap-2 text-red-500">
-                <AlertCircle className="w-5 h-5" />
-                <span>{error}</span>
               </div>
-            </div>
-          )}
-          
-          {/* Results */}
-          {result && (
-            <Card className="glass-card">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">
-                  {isFr ? 'Résultats' : 'Results'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CalculationResults
-                  result={result}
-                  currencySymbol={currencySymbol}
-                  assetType={assetConfig?.type || 'forex'}
-                  language={language}
-                />
-                
-                {/* Send to trade button */}
-                <Button
-                  onClick={sendToTrade}
-                  className="w-full mt-4"
-                  size="lg"
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  {isFr ? 'Envoyer vers un nouveau trade' : 'Send to new trade'}
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-          
-          {/* Empty state when no calculation */}
-          {!result && !error && selectedAsset && (
-            <Card className="glass-card">
-              <CardContent className="py-12 text-center">
-                <CalcIcon className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-                <p className="text-muted-foreground">
-                  {isFr 
-                    ? 'Remplissez les champs pour voir le résultat'
-                    : 'Fill in the fields to see the result'}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-          
-          {/* Rates status */}
-          {isStale && (
-            <div className="flex items-center justify-between p-2 rounded bg-yellow-500/10 text-yellow-600 text-xs">
-              <span>{isFr ? 'Taux de change obsolètes' : 'Exchange rates outdated'}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={refetchRates}
-                disabled={ratesLoading}
-              >
-                <RefreshCw className={cn('w-3 h-3 mr-1', ratesLoading && 'animate-spin')} />
-                {isFr ? 'Actualiser' : 'Refresh'}
-              </Button>
-            </div>
-          )}
+            )}
+            
+            {/* Send to trade button */}
+            <Button
+              onClick={sendToTrade}
+              className="w-full mt-6"
+              size="lg"
+            >
+              <Send className="w-4 h-4 mr-2" />
+              {isFr ? 'Envoyer vers un nouveau trade' : 'Send to new trade'}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Rates status */}
+      {isStale && (
+        <div className="flex items-center justify-between p-3 rounded-xl bg-yellow-500/10 text-yellow-600 text-xs">
+          <span>{isFr ? 'Taux de change obsolètes' : 'Exchange rates outdated'}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={refetchRates}
+            disabled={ratesLoading}
+          >
+            <RefreshCw className={cn('w-3 h-3 mr-1', ratesLoading && 'animate-spin')} />
+            {isFr ? 'Actualiser' : 'Refresh'}
+          </Button>
         </div>
-      </div>
+      )}
     </div>
   );
 };
