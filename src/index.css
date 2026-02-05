@@ -266,26 +266,29 @@
   }
 }
 
-/* 
- * Disable ALL animations and transitions globally EXCEPT on landing page and loader
- * Landing page animations are preserved via .landing-page class
- */
-body:not(.landing-page) * {
-  animation-duration: 0s !important;
-  animation-delay: 0s !important;
-  transition-duration: 0s !important;
-  transition-delay: 0s !important;
+/* Performance optimization: Reduced animations except on landing page */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
-/* Allow lightweight tooltip micro-interactions (fade + slide) even when global
- * animations are disabled across the app.
- */
+/* Lightweight interactions for app pages */
 body:not(.landing-page) .tooltip-info {
-  transition: opacity 100ms ease-out, transform 100ms ease-out !important;
+  transition: opacity 100ms ease-out, transform 100ms ease-out;
+}
+
+body:not(.landing-page) button,
+body:not(.landing-page) a,
+body:not(.landing-page) input,
+body:not(.landing-page) .glass-card {
+  transition: background-color 100ms ease, border-color 100ms ease, box-shadow 100ms ease, opacity 100ms ease;
 }
 
 /* Preserve loader spin animation */
-body:not(.landing-page) .animate-spin {
+.animate-spin {
   animation: spin 1s linear infinite !important;
 }
 
