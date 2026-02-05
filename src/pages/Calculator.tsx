@@ -32,26 +32,72 @@ const Calculator: React.FC = () => {
   // Form state
   const [selectedAsset, setSelectedAsset] = useState<string>('');
   const [assetConfig, setAssetConfig] = useState<AssetConfig | null>(null);
+  const [capitalInput, setCapitalInput] = useState<string>('');
   const [entryPrice, setEntryPrice] = useState<string>('');
   const [stopLoss, setStopLoss] = useState<string>('');
   const [takeProfit, setTakeProfit] = useState<string>('');
   const [riskPercentInput, setRiskPercentInput] = useState<string>('');
+  const [riskAmountInput, setRiskAmountInput] = useState<string>('');
   
   // Calculation result
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  // Initialize risk percent from settings
-  useEffect(() => {
-    if (settingsLoaded && settings.defaultRiskPercent && !riskPercentInput) {
-      setRiskPercentInput(settings.defaultRiskPercent.toString());
-    }
-  }, [settingsLoaded, settings.defaultRiskPercent]);
-  
-  // Get user's capital and currency from settings
-  const capital = settings.defaultCapital || 0;
+  // Get currency from settings
   const accountCurrency = settings.capitalCurrency || settings.currency || 'USD';
+  
+  // Initialize from settings (optional defaults)
+  useEffect(() => {
+    if (settingsLoaded) {
+      if (settings.defaultRiskPercent && !riskPercentInput) {
+        setRiskPercentInput(settings.defaultRiskPercent.toString());
+      }
+      if (settings.defaultCapital && !capitalInput) {
+        setCapitalInput(settings.defaultCapital.toString());
+        // Sync risk amount if percent is set
+        if (settings.defaultRiskPercent) {
+          const amount = settings.defaultCapital * (settings.defaultRiskPercent / 100);
+          setRiskAmountInput(amount.toFixed(2));
+        }
+      }
+    }
+  }, [settingsLoaded, settings.defaultRiskPercent, settings.defaultCapital]);
+  
+  // Parse capital from input
+  const capital = parseFloat(capitalInput) || 0;
   const riskPercent = parseFloat(riskPercentInput) || 0;
+  
+  // Sync risk % → amount
+  const handleRiskPercentChange = useCallback((value: string) => {
+    setRiskPercentInput(value);
+    const percent = parseFloat(value);
+    if (!isNaN(percent) && capital > 0) {
+      setRiskAmountInput((capital * (percent / 100)).toFixed(2));
+    } else if (value === '') {
+      setRiskAmountInput('');
+    }
+  }, [capital]);
+  
+  // Sync amount → risk %
+  const handleRiskAmountChange = useCallback((value: string) => {
+    setRiskAmountInput(value);
+    const amount = parseFloat(value);
+    if (!isNaN(amount) && capital > 0) {
+      setRiskPercentInput(((amount / capital) * 100).toFixed(2));
+    } else if (value === '') {
+      setRiskPercentInput('');
+    }
+  }, [capital]);
+  
+  // Sync capital changes with risk amount
+  const handleCapitalChange = useCallback((value: string) => {
+    setCapitalInput(value);
+    const cap = parseFloat(value);
+    const percent = parseFloat(riskPercentInput);
+    if (!isNaN(cap) && !isNaN(percent) && cap > 0) {
+      setRiskAmountInput((cap * (percent / 100)).toFixed(2));
+    }
+  }, [riskPercentInput]);
   
   // Handle asset selection
   const handleAssetChange = useCallback((symbol: string, config: AssetConfig | null) => {
@@ -165,11 +211,6 @@ const Calculator: React.FC = () => {
           <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
             {isFr ? 'Calculatrice de Lot' : 'Lot Calculator'}
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {isFr 
-              ? `Capital: ${capital.toLocaleString()} ${accountCurrency}` 
-              : `Capital: ${capital.toLocaleString()} ${accountCurrency}`}
-          </p>
         </div>
         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg">
           <CalcIcon className="w-6 h-6 text-white" />
@@ -183,8 +224,12 @@ const Calculator: React.FC = () => {
             selectedAsset={selectedAsset}
             assetConfig={assetConfig}
             onAssetChange={handleAssetChange}
+            capital={capitalInput}
+            onCapitalChange={handleCapitalChange}
             riskPercent={riskPercentInput}
-            onRiskPercentChange={setRiskPercentInput}
+            onRiskPercentChange={handleRiskPercentChange}
+            riskAmount={riskAmountInput}
+            onRiskAmountChange={handleRiskAmountChange}
             entryPrice={entryPrice}
             onEntryPriceChange={setEntryPrice}
             stopLoss={stopLoss}
@@ -192,6 +237,7 @@ const Calculator: React.FC = () => {
             takeProfit={takeProfit}
             onTakeProfitChange={setTakeProfit}
             language={language}
+            currency={accountCurrency}
             onCalculate={performCalculation}
           />
         </CardContent>

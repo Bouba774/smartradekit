@@ -20,9 +20,14 @@ interface CalculatorFormProps {
   selectedAsset: string;
   assetConfig: AssetConfig | null;
   onAssetChange: (symbol: string, config: AssetConfig | null) => void;
+  // Capital
+  capital: string;
+  onCapitalChange: (value: string) => void;
   // Risk
   riskPercent: string;
   onRiskPercentChange: (value: string) => void;
+  riskAmount: string;
+  onRiskAmountChange: (value: string) => void;
   // Prices
   entryPrice: string;
   onEntryPriceChange: (value: string) => void;
@@ -32,6 +37,7 @@ interface CalculatorFormProps {
   onTakeProfitChange: (value: string) => void;
   // UI
   language: string;
+  currency: string;
   onCalculate: () => void;
 }
 
@@ -39,8 +45,12 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
   selectedAsset,
   assetConfig,
   onAssetChange,
+  capital,
+  onCapitalChange,
   riskPercent,
   onRiskPercentChange,
+  riskAmount,
+  onRiskAmountChange,
   entryPrice,
   onEntryPriceChange,
   stopLoss,
@@ -48,6 +58,7 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
   takeProfit,
   onTakeProfitChange,
   language,
+  currency,
   onCalculate,
 }) => {
   const isFr = language === 'fr';
@@ -234,11 +245,42 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
         )}
       </div>
 
-      {/* Risque % uniquement */}
+      {/* Capital */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <Label className="text-base font-semibold text-foreground">
-            {isFr ? 'Risque (%)' : 'Risk (%)'}
+            Capital ({currency})
+          </Label>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="w-4 h-4 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">
+                  {isFr 
+                    ? 'Le capital total de votre compte de trading'
+                    : 'The total capital of your trading account'}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <Input
+          type="text"
+          inputMode="decimal"
+          value={capital}
+          onChange={(e) => handleNumericInput(e.target.value, onCapitalChange)}
+          placeholder="10000"
+          className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl"
+        />
+      </div>
+
+      {/* Risque % et Montant */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Label className="text-base font-semibold text-foreground">
+            {isFr ? 'Risque' : 'Risk'}
           </Label>
           <TooltipProvider>
             <Tooltip>
@@ -255,18 +297,35 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
             </Tooltip>
           </TooltipProvider>
         </div>
-        <div className="relative">
-          <Input
-            type="text"
-            inputMode="decimal"
-            value={riskPercent}
-            onChange={(e) => handleNumericInput(e.target.value, onRiskPercentChange)}
-            placeholder="2"
-            className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl pr-12"
-          />
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-lg font-medium">
-            %
-          </span>
+        <div className="grid grid-cols-2 gap-3">
+          {/* Risk % */}
+          <div className="relative">
+            <Input
+              type="text"
+              inputMode="decimal"
+              value={riskPercent}
+              onChange={(e) => handleNumericInput(e.target.value, onRiskPercentChange)}
+              placeholder="2"
+              className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl pr-12"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-lg font-medium">
+              %
+            </span>
+          </div>
+          {/* Risk Amount */}
+          <div className="relative">
+            <Input
+              type="text"
+              inputMode="decimal"
+              value={riskAmount}
+              onChange={(e) => handleNumericInput(e.target.value, onRiskAmountChange)}
+              placeholder="200.00"
+              className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl pr-12"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-lg font-medium">
+              {currency}
+            </span>
+          </div>
         </div>
       </div>
       
