@@ -112,9 +112,7 @@ const Dashboard: React.FC = () => {
   const equityData = React.useMemo(() => {
     if (trades.length === 0) {
       return [
-        { date: 'J1', value: initialCapital },
-        { date: 'J2', value: initialCapital },
-        { date: 'J3', value: initialCapital },
+        { date: language === 'fr' ? 'Départ' : 'Start', value: initialCapital, pnl: 0, isStart: true },
       ];
     }
     
@@ -122,15 +120,27 @@ const Dashboard: React.FC = () => {
       new Date(a.trade_date).getTime() - new Date(b.trade_date).getTime()
     );
     
+    // Start with initial capital point
+    const result: { date: string; value: number; pnl: number; isStart?: boolean; asset?: string }[] = [
+      { date: language === 'fr' ? 'Départ' : 'Start', value: initialCapital, pnl: 0, isStart: true }
+    ];
+    
     let runningTotal = initialCapital;
-    return sortedTrades.slice(-15).map((trade) => {
-      runningTotal += trade.profit_loss || 0;
-      return {
+    const tradesToShow = sortedTrades.slice(-20); // Show more trades for better curve
+    
+    tradesToShow.forEach((trade) => {
+      const pnl = trade.profit_loss || 0;
+      runningTotal += pnl;
+      result.push({
         date: format(parseISO(trade.trade_date), 'dd/MM', { locale: fr }),
         value: runningTotal,
-      };
+        pnl: pnl,
+        asset: trade.asset,
+      });
     });
-  }, [trades, initialCapital]);
+    
+    return result;
+  }, [trades, initialCapital, language]);
 
   // Generate monthly data (with default empty data)
   const monthlyData = React.useMemo(() => {
@@ -167,32 +177,15 @@ const Dashboard: React.FC = () => {
     { name: t('breakeven'), value: stats.breakevenTrades || 0.1, actualValue: stats.breakevenTrades, color: 'hsl(var(--muted-foreground))' },
   ];
 
-  // Market distribution colors
-  const marketColors: { [key: string]: string } = {
-    'Forex Majors': '#22c55e',
-    'Forex Crosses': '#16a34a',
-    'Forex Exotics': '#15803d',
-    'Crypto': '#3b82f6',
-    'Indices US': '#ef4444',
-    'Indices Europe': '#dc2626',
-    'Indices Asie': '#b91c1c',
-    'Métaux': '#f59e0b',
-    'Énergies': '#d97706',
-    'Actions US Tech': '#8b5cf6',
-    'Actions US Finance': '#7c3aed',
-    'Actions US Autres': '#6d28d9',
-    'Other': '#6b7280',
-  };
-
   // Market distribution data
   const marketDistribution = React.useMemo(() => {
     if (trades.length === 0) return [];
     
-    const marketCounts: { [key: string]: number } = {};
+    const marketCounts: { [key: string]: { count: number; pnl: number } } = {};
     
     trades.forEach(trade => {
       const category = getAssetCategory(trade.asset);
-      // Group Forex categories
+      // Group categories for cleaner display
       let marketGroup = category;
       if (category.startsWith('Forex')) {
         marketGroup = 'Forex';
@@ -202,20 +195,31 @@ const Dashboard: React.FC = () => {
         marketGroup = 'Stocks';
       }
       
-      marketCounts[marketGroup] = (marketCounts[marketGroup] || 0) + 1;
+      if (!marketCounts[marketGroup]) {
+        marketCounts[marketGroup] = { count: 0, pnl: 0 };
+      }
+      marketCounts[marketGroup].count += 1;
+      marketCounts[marketGroup].pnl += trade.profit_loss || 0;
     });
 
+    const total = trades.length;
+    const marketColors: { [key: string]: string } = {
+      'Forex': 'hsl(45, 93%, 47%)',
+      'Crypto': 'hsl(142, 71%, 45%)',
+      'Indices': 'hsl(0, 84%, 60%)',
+      'Stocks': 'hsl(217, 91%, 60%)',
+      'Métaux': 'hsl(48, 96%, 53%)',
+      'Énergies': 'hsl(25, 95%, 53%)',
+      'Other': 'hsl(220, 9%, 46%)',
+    };
+
     return Object.entries(marketCounts)
-      .map(([name, count]) => ({
+      .map(([name, data]) => ({
         name,
-        value: count,
-        color: name === 'Forex' ? '#f59e0b' :
-               name === 'Crypto' ? '#22c55e' :
-               name === 'Indices' ? '#ef4444' :
-               name === 'Stocks' ? '#3b82f6' :
-               name === 'Métaux' ? '#eab308' :
-               name === 'Énergies' ? '#f97316' :
-               '#6b7280'
+        value: data.count,
+        pnl: data.pnl,
+        percentage: Math.round((data.count / total) * 100),
+        color: marketColors[name] || marketColors['Other'],
       }))
       .sort((a, b) => b.value - a.value);
   }, [trades]);
@@ -600,46 +604,109 @@ const Dashboard: React.FC = () => {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Equity Curve */}
-        <div className="glass-card p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '1750ms' }}>
-          <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-primary" />
-            {t('equityCurve')}
-          </h3>
+        {/* Equity Curve - Enhanced */}
+        <div className="glass-card p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display font-semibold text-foreground flex items-center gap-2">
+              <Activity className="w-5 h-5 text-primary" />
+              {t('equityCurve')}
+            </h3>
+            {capitalInfo.capitalDefined && (
+              <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+                {language === 'fr' ? 'Capital' : 'Capital'}: {formatAmount(initialCapital)}
+              </span>
+            )}
+          </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={equityData}>
+              <AreaChart data={equityData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <defs>
-                  <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  <linearGradient id="equityGradientProfit" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--profit))" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="hsl(var(--profit))" stopOpacity={0.05} />
+                  </linearGradient>
+                  <linearGradient id="equityGradientLoss" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--loss))" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="hsl(var(--loss))" stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} width={50} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.5} />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="hsl(var(--muted-foreground))" 
+                  fontSize={10} 
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis 
+                  stroke="hsl(var(--muted-foreground))" 
+                  fontSize={10} 
+                  width={55}
+                  tickFormatter={(val) => val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val.toString()}
+                  tickLine={false}
+                  axisLine={false}
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',
                     borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                   }}
-                  formatter={(value: number) => [formatAmount(value), 'Capital']}
+                  formatter={(value: number, name: string, props: any) => {
+                    const entry = props.payload;
+                    if (entry.isStart) {
+                      return [formatAmount(value), language === 'fr' ? 'Capital Initial' : 'Initial Capital'];
+                    }
+                    return [
+                      `${formatAmount(value)} (${entry.pnl >= 0 ? '+' : ''}${formatAmount(entry.pnl)})`,
+                      entry.asset || 'Capital'
+                    ];
+                  }}
+                  labelFormatter={(label) => label}
                 />
                 <Area
                   type="monotone"
                   dataKey="value"
-                  stroke="hsl(var(--primary))"
+                  stroke={stats.netProfit >= 0 ? 'hsl(var(--profit))' : 'hsl(var(--loss))'}
                   strokeWidth={2}
-                  fill="url(#equityGradient)"
+                  fill={stats.netProfit >= 0 ? 'url(#equityGradientProfit)' : 'url(#equityGradientLoss)'}
+                  dot={{ 
+                    r: 3, 
+                    fill: stats.netProfit >= 0 ? 'hsl(var(--profit))' : 'hsl(var(--loss))',
+                    strokeWidth: 0 
+                  }}
+                  activeDot={{ 
+                    r: 5, 
+                    fill: stats.netProfit >= 0 ? 'hsl(var(--profit))' : 'hsl(var(--loss))',
+                    stroke: 'hsl(var(--background))',
+                    strokeWidth: 2 
+                  }}
                 />
               </AreaChart>
             </ResponsiveContainer>
           </div>
+          {/* Quick stats under chart */}
+          <div className="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
+            <div className="text-xs text-muted-foreground">
+              {language === 'fr' ? 'Évolution' : 'Change'}: 
+              <span className={`ml-1 font-medium ${stats.netProfit >= 0 ? 'text-profit' : 'text-loss'}`}>
+                {stats.netProfit >= 0 ? '+' : ''}{formatAmount(stats.netProfit)}
+              </span>
+            </div>
+            {capitalInfo.capitalDefined && (
+              <div className="text-xs text-muted-foreground">
+                ROI: 
+                <span className={`ml-1 font-medium ${stats.roi >= 0 ? 'text-profit' : 'text-loss'}`}>
+                  {stats.roi >= 0 ? '+' : ''}{stats.roi.toFixed(1)}%
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Monthly Performance */}
-        <div className="glass-card p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '1800ms' }}>
+        <div className="glass-card p-4 sm:p-6">
           <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary" />
             {t('monthlyPerformance')}
@@ -647,14 +714,15 @@ const Dashboard: React.FC = () => {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} width={50} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.5} />
+                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} width={50} tickLine={false} axisLine={false} />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',
                     borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                   }}
                   formatter={(value: number, name: string) => [
                     name === 'pnl' ? formatAmount(value) : value,
@@ -678,7 +746,7 @@ const Dashboard: React.FC = () => {
       {/* Distribution Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
         {/* Position Distribution */}
-        <div className="glass-card p-6 animate-fade-in" style={{ animationDelay: '1850ms' }}>
+        <div className="glass-card p-6">
           <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
             <ArrowUpDown className="w-5 h-5 text-primary" />
             {t('positionDistribution')}
@@ -694,6 +762,8 @@ const Dashboard: React.FC = () => {
                   outerRadius={70}
                   paddingAngle={5}
                   dataKey="value"
+                  strokeWidth={2}
+                  stroke="hsl(var(--background))"
                 >
                   {positionData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -723,7 +793,7 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Results Distribution */}
-        <div className="glass-card p-6 animate-fade-in" style={{ animationDelay: '1900ms' }}>
+        <div className="glass-card p-6">
           <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
             <Target className="w-5 h-5 text-primary" />
             {t('resultsLabel')}
@@ -739,6 +809,8 @@ const Dashboard: React.FC = () => {
                   outerRadius={70}
                   paddingAngle={5}
                   dataKey="value"
+                  strokeWidth={2}
+                  stroke="hsl(var(--background))"
                 >
                   {resultsData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -771,8 +843,8 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Market Distribution */}
-        <div className="glass-card p-6 animate-fade-in" style={{ animationDelay: '1925ms' }}>
+        {/* Market Distribution - Enhanced */}
+        <div className="glass-card p-6">
           <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
             <PieChartIcon className="w-5 h-5 text-primary" />
             {language === 'fr' ? 'Répartition par Marché' : 'Market Distribution'}
@@ -785,9 +857,12 @@ const Dashboard: React.FC = () => {
                     data={marketDistribution}
                     cx="50%"
                     cy="50%"
-                    outerRadius={70}
-                    paddingAngle={2}
+                    innerRadius={35}
+                    outerRadius={65}
+                    paddingAngle={3}
                     dataKey="value"
+                    strokeWidth={2}
+                    stroke="hsl(var(--background))"
                   >
                     {marketDistribution.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -798,8 +873,15 @@ const Dashboard: React.FC = () => {
                       backgroundColor: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                     }}
-                    formatter={(value: number, name: string) => [value, name]}
+                    formatter={(value: number, name: string, props: any) => {
+                      const entry = props.payload;
+                      return [
+                        `${value} trades (${entry.percentage}%) - P&L: ${entry.pnl >= 0 ? '+' : ''}${formatAmount(entry.pnl)}`,
+                        name
+                      ];
+                    }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -809,23 +891,23 @@ const Dashboard: React.FC = () => {
               </div>
             )}
           </div>
-          <div className="flex justify-center gap-3 mt-2 flex-wrap">
-            {marketDistribution.slice(0, 4).map((market) => (
-              <div key={market.name} className="flex items-center gap-1.5">
+          {/* Enhanced legend with percentages */}
+          <div className="grid grid-cols-2 gap-2 mt-3">
+            {marketDistribution.map((market) => (
+              <div key={market.name} className="flex items-center gap-2 text-xs">
                 <div 
-                  className="w-3 h-3 rounded-full" 
+                  className="w-2.5 h-2.5 rounded-full shrink-0" 
                   style={{ backgroundColor: market.color }} 
                 />
-                <span className="text-xs text-muted-foreground">
-                  {market.value} {market.name}
-                </span>
+                <span className="text-muted-foreground truncate">{market.name}</span>
+                <span className="ml-auto font-medium text-foreground">{market.percentage}%</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Radar Performance */}
-        <div className="glass-card p-6 animate-fade-in" style={{ animationDelay: '1950ms' }}>
+        <div className="glass-card p-6">
           <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
             <Zap className="w-5 h-5 text-primary" />
             {t('overview')}
@@ -857,7 +939,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Gauges */}
-      <div className="glass-card p-6 animate-fade-in" style={{ animationDelay: '2000ms' }}>
+      <div className="glass-card p-6">
         <h3 className="font-display font-semibold text-foreground mb-6 flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-primary" />
           {t('keyIndicators')}

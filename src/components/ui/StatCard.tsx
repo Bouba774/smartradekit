@@ -24,7 +24,7 @@ const StatCard: React.FC<StatCardProps> = ({
   trendValue,
   variant = 'default',
   className,
-  delay = 0,
+  delay,
   tooltip,
 }) => {
   const variantStyles = {
@@ -44,11 +44,10 @@ const StatCard: React.FC<StatCardProps> = ({
   return (
     <div
       className={cn(
-        "stat-card animate-fade-in",
+        "stat-card",
         variantStyles[variant],
         className
       )}
-      style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-1.5">
