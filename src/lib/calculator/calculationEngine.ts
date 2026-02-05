@@ -1,10 +1,11 @@
 /**
- * Professional Trading Calculator - Calculation Engine
- * 
- * DETERMINISTIC calculation engine aligned with MT4/MT5/TradingView standards.
- * 
- * Core Formula:
- * LotSize = RiskAmount / (SL_Distance_in_Pips × PipValue_in_AccountCurrency)
+  * Professional Trading Calculator - Calculation Engine
+  * 
+  * DETERMINISTIC calculation engine aligned with MT4/MT5/TradingView standards.
+  * Contract sizes are INTERNAL and NEVER exposed to users.
+  * 
+  * Core Formula:
+  * LotSize = RiskAmount / (SL_Distance × ContractSize × ConversionRate)
  */
 
 import { AssetConfig } from './assetConfigs';
@@ -29,27 +30,8 @@ export interface CalculationResult {
   direction: 'BUY' | 'SELL';          // Trade direction
   lotSize: number;                     // Recommended lot size
   
-  // Risk analysis
-  riskAmount: number;                  // Risk amount in account currency
-  actualRisk: number;                  // Actual risk after lot rounding
-  
-  // Stop Loss details
-  slDistancePips: number;              // SL distance in pips/points
-  slDistancePrice: number;             // SL distance in price
-  potentialLoss: number;               // Potential loss in account currency
-  
-  // Take Profit details (if TP provided)
-  tpDistancePips?: number;             // TP distance in pips/points
-  tpDistancePrice?: number;            // TP distance in price
-  potentialProfit?: number;            // Potential profit in account currency
-  
   // Risk/Reward
   riskReward?: number;                 // Risk/Reward ratio
-  
-  // Conversion details
-  pipValueInQuote: number;             // Pip value in quote currency
-  pipValueInAccount: number;           // Pip value in account currency
-  conversionRate: number;              // Conversion rate used
   
   // Warnings
   warnings: string[];                  // Any warnings or advice
@@ -154,6 +136,16 @@ function convertCurrency(
 
 /**
  * Calculate position size with full deterministic logic
+  * 
+  * Formula: LotSize = RiskAmount / (SL_Distance × ContractSize × ConversionRate)
+  * 
+  * Contract sizes are retrieved automatically from asset configuration:
+  * - Forex: 100,000 units
+  * - Gold (XAUUSD): 100 oz
+  * - Silver (XAGUSD): 5,000 oz
+  * - Indices: 1 contract
+  * - Crypto: 1 unit
+  * - Oil: 1,000 barrels
  */
 export function calculatePosition(
   input: CalculationInput
@@ -181,47 +173,39 @@ export function calculatePosition(
   // STEP 3: Calculate SL distance
   // ============================================
   const slDistancePrice = Math.abs(entryPrice - stopLoss);
-  const slDistancePips = slDistancePrice / asset.pipSize;
   
   // ============================================
-  // STEP 4: Calculate pip value in quote currency
-  // For most assets: pipValue = contractSize × pipSize
+   // STEP 4: Get conversion rate to account currency
+   // Contract size is INTERNAL - never exposed to user
   // ============================================
-  const pipValueInQuote = asset.contractSize * asset.pipSize;
-  
-  // ============================================
-  // STEP 5: Convert pip value to account currency
-  // ============================================
-  let pipValueInAccount = pipValueInQuote;
   let conversionRate = 1;
   
   if (asset.quoteCurrency !== accountCurrency) {
-    const conversion = convertCurrency(
-      pipValueInQuote,
+     const rate = getExchangeRate(
       asset.quoteCurrency,
       accountCurrency,
       exchangeRates
     );
     
-    if (!conversion) {
+     if (rate === null) {
       return {
         error: `Cannot convert ${asset.quoteCurrency} to ${accountCurrency}. Missing exchange rate.`,
         code: 'MISSING_RATE'
       };
     }
     
-    pipValueInAccount = conversion.value;
-    conversionRate = conversion.rate;
+     conversionRate = rate;
   }
   
   // ============================================
-  // STEP 6: Calculate lot size
-  // LotSize = RiskAmount / (SL_Pips × PipValue_in_Account)
+   // STEP 5: Calculate lot size using the EXACT formula
+   // LotSize = RiskAmount / (SL_Distance × ContractSize × ConversionRate)
+   // ContractSize is from asset config (INTERNAL - never shown to user)
   // ============================================
-  const rawLotSize = riskAmount / (slDistancePips * pipValueInAccount);
+   const rawLotSize = riskAmount / (slDistancePrice * asset.contractSize * conversionRate);
   
   // ============================================
-  // STEP 7: Round lot size DOWN to nearest lot step
+   // STEP 6: Round lot size DOWN to nearest lot step
   // Always round DOWN to ensure we don't exceed risk
   // ============================================
   const lotSteps = Math.floor(rawLotSize / asset.lotStep);
@@ -240,17 +224,9 @@ export function calculatePosition(
   }
   
   // ============================================
-  // STEP 8: Calculate actual risk after rounding
+   // STEP 7: Calculate RR (if TP provided)
+   // RR = TP_Distance / SL_Distance
   // ============================================
-  const actualRisk = lotSize * slDistancePips * pipValueInAccount;
-  const potentialLoss = actualRisk;
-  
-  // ============================================
-  // STEP 9: Calculate TP details (if provided)
-  // ============================================
-  let tpDistancePips: number | undefined;
-  let tpDistancePrice: number | undefined;
-  let potentialProfit: number | undefined;
   let riskReward: number | undefined;
   
   if (takeProfit !== undefined) {
@@ -260,17 +236,15 @@ export function calculatePosition(
       : takeProfit < entryPrice;
     
     if (isValidTp) {
-      tpDistancePrice = Math.abs(takeProfit - entryPrice);
-      tpDistancePips = tpDistancePrice / asset.pipSize;
-      potentialProfit = lotSize * tpDistancePips * pipValueInAccount;
-      riskReward = potentialProfit / actualRisk;
+       const tpDistance = Math.abs(takeProfit - entryPrice);
+       riskReward = tpDistance / slDistancePrice;
     } else {
       warnings.push('Take profit is on the wrong side of entry price');
     }
   }
   
   // ============================================
-  // STEP 10: Generate warnings/advice
+   // STEP 8: Generate warnings/advice (minimal)
   // ============================================
   
   // Risk too high
@@ -278,40 +252,19 @@ export function calculatePosition(
     warnings.push('High risk: Consider reducing to 1-2% per trade');
   }
   
-  // SL too tight (less than 5 pips for forex)
-  if (asset.type === 'forex' && slDistancePips < 5) {
-    warnings.push('Very tight SL: Consider wider stop for market volatility');
-  }
-  
   // Poor RR ratio
   if (riskReward !== undefined && riskReward < 1) {
     warnings.push('Risk/Reward below 1:1 - Consider adjusting TP or SL');
   }
   
-  // Large deviation from target risk
-  const riskDeviation = Math.abs(riskAmount - actualRisk) / riskAmount;
-  if (riskDeviation > 0.1) {
-    warnings.push(`Actual risk differs from target by ${(riskDeviation * 100).toFixed(1)}% due to lot step rounding`);
-  }
-  
   // ============================================
-  // RETURN RESULT
+   // RETURN RESULT - Only lot size and RR
+   // NO internal values exposed (contract size, pip values, etc.)
   // ============================================
   return {
     direction,
     lotSize: Number(lotSize.toFixed(2)),
-    riskAmount: Number(riskAmount.toFixed(2)),
-    actualRisk: Number(actualRisk.toFixed(2)),
-    slDistancePips: Number(slDistancePips.toFixed(1)),
-    slDistancePrice: Number(slDistancePrice.toFixed(asset.priceDecimals)),
-    potentialLoss: Number(potentialLoss.toFixed(2)),
-    tpDistancePips: tpDistancePips !== undefined ? Number(tpDistancePips.toFixed(1)) : undefined,
-    tpDistancePrice: tpDistancePrice !== undefined ? Number(tpDistancePrice.toFixed(asset.priceDecimals)) : undefined,
-    potentialProfit: potentialProfit !== undefined ? Number(potentialProfit.toFixed(2)) : undefined,
     riskReward: riskReward !== undefined ? Number(riskReward.toFixed(2)) : undefined,
-    pipValueInQuote: Number(pipValueInQuote.toFixed(4)),
-    pipValueInAccount: Number(pipValueInAccount.toFixed(4)),
-    conversionRate: Number(conversionRate.toFixed(6)),
     warnings,
   };
 }
