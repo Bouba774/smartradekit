@@ -91,11 +91,11 @@ const MenuPage: React.FC = () => {
             </div>
           </div>
           
-          {/* Menu Title */}
-          <h1 className="text-lg font-semibold flex-1 text-center">{t('menu')}</h1>
+          {/* Spacer */}
+          <div className="flex-1"></div>
           
-          {/* Spacer for balance */}
-          <div className="w-[88px]"></div>
+          {/* Menu Title - Right aligned */}
+          <h1 className="text-lg font-semibold">{t('menu')}</h1>
         </div>
       </div>
 
