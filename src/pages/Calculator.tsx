@@ -19,8 +19,8 @@ import {
   CalculationResult,
 } from '@/lib/calculator';
 
-// Key for passing trade data to AddTrade page
-const PENDING_TRADE_KEY = 'smart-trade-tracker-pending-trade';
+// Import the PENDING_TRADE_KEY from AddTrade to ensure consistency
+import { PENDING_TRADE_KEY } from '@/pages/AddTrade';
 
 const Calculator: React.FC = () => {
   const { language } = useLanguage();
@@ -207,25 +207,27 @@ const Calculator: React.FC = () => {
     const entry = parseFloat(entryPrice);
     const sl = parseFloat(stopLoss);
     const tp = takeProfit ? parseFloat(takeProfit) : undefined;
-     const riskAmount = capital * (riskPercent / 100);
+    const riskAmount = capital * (riskPercent / 100);
     
+    // Build trade data with field names matching AddTrade.tsx expectations
     const pendingTrade = {
       asset: selectedAsset,
-      direction: result.direction.toLowerCase(),
-      entry_price: entry,
-      stop_loss: sl,
-      take_profit: tp,
-      lot_size: result.lotSize,
-       risk_amount: riskAmount,
-      risk_percent: riskPercent,
+      direction: result.direction.toLowerCase() as 'buy' | 'sell',
+      entryPrice: entry.toString(),
+      stopLoss: sl.toString(),
+      takeProfit: tp ? tp.toString() : '',
+      lotSize: result.lotSize.toString(),
+      riskCash: riskAmount.toFixed(2),
+      risk: riskPercent.toString(),
+      capital: capital.toString(),
     };
     
-    // Store in sessionStorage
-    sessionStorage.setItem(PENDING_TRADE_KEY, JSON.stringify(pendingTrade));
+    // Store in localStorage (matching AddTrade.tsx expectations)
+    localStorage.setItem(PENDING_TRADE_KEY, JSON.stringify(pendingTrade));
     
     toast.success(isFr ? 'Données envoyées au formulaire' : 'Data sent to form');
     navigate('/add-trade');
-  }, [result, selectedAsset, entryPrice, stopLoss, takeProfit, riskPercent, navigate, isFr]);
+  }, [result, selectedAsset, entryPrice, stopLoss, takeProfit, riskPercent, capital, navigate, isFr]);
 
   // Loading state
   if (!settingsLoaded) {
