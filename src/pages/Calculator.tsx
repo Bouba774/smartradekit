@@ -204,18 +204,16 @@ const Calculator: React.FC = () => {
   const sendToTrade = useCallback(() => {
     if (!result || !selectedAsset) return;
     
-    const entry = parseFloat(entryPrice);
-    const sl = parseFloat(stopLoss);
-    const tp = takeProfit ? parseFloat(takeProfit) : undefined;
     const riskAmount = capital * (riskPercent / 100);
     
     // Build trade data with field names matching AddTrade.tsx expectations
+    // Keep full precision for prices - use raw string values
     const pendingTrade = {
       asset: selectedAsset,
       direction: result.direction.toLowerCase() as 'buy' | 'sell',
-      entryPrice: entry.toString(),
-      stopLoss: sl.toString(),
-      takeProfit: tp ? tp.toString() : '',
+      entryPrice: entryPrice, // Keep original input with full precision
+      stopLoss: stopLoss, // Keep original input with full precision
+      takeProfit: takeProfit || '', // Keep original input with full precision
       lotSize: result.lotSize.toString(),
       riskCash: riskAmount.toFixed(2),
       risk: riskPercent.toString(),
