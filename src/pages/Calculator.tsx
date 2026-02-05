@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSettings } from '@/hooks/useSettings';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
-import { Calculator as CalcIcon, Send, AlertCircle } from 'lucide-react';
+import { Calculator as CalcIcon, Send, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 import CalculatorForm from '@/components/calculator/CalculatorForm';
 import CalculationResults from '@/components/calculator/CalculationResults';
@@ -45,6 +46,13 @@ const Calculator: React.FC = () => {
   
   // Get currency from settings
   const accountCurrency = settings.capitalCurrency || settings.currency || 'USD';
+  
+  // Clear error when inputs change
+  useEffect(() => {
+    if (error) {
+      setError(null);
+    }
+  }, [selectedAsset, capitalInput, riskPercentInput, entryPrice, stopLoss, takeProfit]);
   
   // Initialize from settings (optional defaults)
   useEffect(() => {
@@ -112,39 +120,58 @@ const Calculator: React.FC = () => {
     setError(null);
     setResult(null);
     
-    // Validation
+    // Pre-validation with priority order (single error at a time)
+    
+    // 1. Capital
+    if (capital <= 0 || !isFinite(capital)) {
+      setError(isFr ? 'Capital invalide' : 'Invalid capital');
+      return;
+    }
+    
+    // 2. Risk
+    if (riskPercent <= 0 || riskPercent > 10 || !isFinite(riskPercent)) {
+      setError(isFr ? 'Risque incorrect' : 'Invalid risk');
+      return;
+    }
+    
+    // 3. Asset
     if (!selectedAsset || !assetConfig) {
-      setError(isFr ? 'Veuillez sélectionner un actif' : 'Please select an asset');
+      setError(isFr ? 'Actif non pris en charge' : 'Unsupported asset');
       return;
     }
     
-    if (capital <= 0) {
-      setError(isFr ? 'Capital non défini – configurez-le dans les paramètres' : 'Capital not set – configure it in settings');
-      return;
-    }
-    
-    if (riskPercent <= 0) {
-      setError(isFr ? 'Risque invalide – doit être > 0' : 'Invalid risk – must be > 0');
-      return;
-    }
-    
+    // 4. Entry price
     const entry = parseFloat(entryPrice);
-    const sl = parseFloat(stopLoss);
-    const tp = takeProfit ? parseFloat(takeProfit) : undefined;
-    
-    if (isNaN(entry) || entry <= 0) {
+    if (isNaN(entry) || entry <= 0 || !isFinite(entry)) {
       setError(isFr ? 'Prix d\'entrée invalide' : 'Invalid entry price');
       return;
     }
     
-    if (isNaN(sl) || sl <= 0) {
-      setError(isFr ? 'Stop Loss invalide' : 'Invalid Stop Loss');
+    // 5. Stop loss
+    const sl = parseFloat(stopLoss);
+    if (isNaN(sl) || sl <= 0 || !isFinite(sl)) {
+      setError(isFr ? 'Stop loss requis' : 'Stop loss required');
       return;
     }
     
+    // 6. Stop loss cannot equal entry
     if (entry === sl) {
-      setError(isFr ? 'Entrées invalides – vérifiez le Stop Loss' : 'Invalid inputs – check Stop Loss');
+      setError(isFr ? 'Stop loss incorrect' : 'Invalid stop loss');
       return;
+    }
+    
+    // 7. Take profit validation (if defined)
+    const tp = takeProfit ? parseFloat(takeProfit) : undefined;
+    if (tp !== undefined && tp > 0) {
+      const isBuy = entry > sl;
+      if (isBuy && tp <= entry) {
+        setError(isFr ? 'Take profit incorrect' : 'Invalid take profit');
+        return;
+      }
+      if (!isBuy && tp >= entry) {
+        setError(isFr ? 'Take profit incorrect' : 'Invalid take profit');
+        return;
+      }
     }
     
     // Calculate
@@ -157,10 +184,16 @@ const Calculator: React.FC = () => {
       stopLoss: sl,
       takeProfit: tp,
       exchangeRates: rates,
-    });
+    }, isFr);
     
     if (isCalculationError(calcResult)) {
-      setError(calcResult.error);
+      setError(calcResult.error || (isFr ? 'Calcul impossible' : 'Calculation error'));
+      return;
+    }
+    
+    // Final validation of result
+    if (!calcResult.lotSize || calcResult.lotSize <= 0 || !isFinite(calcResult.lotSize)) {
+      setError(isFr ? 'Calcul impossible' : 'Calculation error');
       return;
     }
     
@@ -246,10 +279,16 @@ const Calculator: React.FC = () => {
       
       {/* Error display */}
       {error && (
-        <div className="glass-card p-4 mb-6 border-red-500/30 bg-red-500/5 rounded-xl">
-          <div className="flex items-center gap-2 text-red-500">
-            <AlertCircle className="w-5 h-5" />
-            <span>{error}</span>
+        <div 
+          className={cn(
+            "mb-6 p-4 rounded-xl",
+            "bg-destructive/15 border border-destructive/30",
+            "animate-in fade-in-0 slide-in-from-top-2 duration-200"
+          )}
+        >
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 flex-shrink-0 text-destructive" />
+            <span className="font-medium text-destructive-foreground">⚠️ {error}</span>
           </div>
         </div>
       )}

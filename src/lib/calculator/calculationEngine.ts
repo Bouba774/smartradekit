@@ -46,29 +46,94 @@ export interface CalculationError {
 // VALIDATION
 // ============================================
 
-function validateInput(input: CalculationInput): string | null {
-  if (!input.capital || input.capital <= 0) {
-    return 'Capital must be greater than 0';
+interface ValidationError {
+  message: string;
+  code: 'CAPITAL' | 'RISK' | 'ASSET' | 'ENTRY' | 'STOP_LOSS' | 'TAKE_PROFIT' | 'CALCULATION';
+}
+
+/**
+ * Validate inputs with priority order and short user-friendly messages
+ * Priority: Capital → Risk → Asset → Entry → Stop Loss → Take Profit
+ */
+function validateInput(input: CalculationInput, isFr: boolean = false): ValidationError | null {
+  // 1. Capital validation (highest priority)
+  if (!input.capital || input.capital <= 0 || !isFinite(input.capital)) {
+    return {
+      message: isFr ? 'Capital invalide' : 'Invalid capital',
+      code: 'CAPITAL'
+    };
   }
   
-  if (!input.riskPercent || input.riskPercent <= 0 || input.riskPercent > 100) {
-    return 'Risk percent must be between 0 and 100';
+  // 2. Risk validation
+  if (!input.riskPercent || input.riskPercent <= 0 || input.riskPercent > 10 || !isFinite(input.riskPercent)) {
+    return {
+      message: isFr ? 'Risque incorrect' : 'Invalid risk',
+      code: 'RISK'
+    };
   }
   
-  if (!input.entryPrice || input.entryPrice <= 0) {
-    return 'Entry price must be greater than 0';
+  // 3. Asset validation
+  if (!input.asset || !input.asset.symbol) {
+    return {
+      message: isFr ? 'Actif non pris en charge' : 'Unsupported asset',
+      code: 'ASSET'
+    };
   }
   
-  if (!input.stopLoss || input.stopLoss <= 0) {
-    return 'Stop loss must be greater than 0';
+  // 4. Entry price validation
+  if (!input.entryPrice || input.entryPrice <= 0 || !isFinite(input.entryPrice)) {
+    return {
+      message: isFr ? "Prix d'entrée invalide" : 'Invalid entry price',
+      code: 'ENTRY'
+    };
   }
   
+  // 5. Stop loss required
+  if (!input.stopLoss || input.stopLoss <= 0 || !isFinite(input.stopLoss)) {
+    return {
+      message: isFr ? 'Stop loss requis' : 'Stop loss required',
+      code: 'STOP_LOSS'
+    };
+  }
+  
+  // 6. Stop loss cannot equal entry
   if (input.entryPrice === input.stopLoss) {
-    return 'Entry price and stop loss cannot be the same';
+    return {
+      message: isFr ? 'Stop loss incorrect' : 'Invalid stop loss',
+      code: 'STOP_LOSS'
+    };
   }
   
-  if (input.takeProfit !== undefined && input.takeProfit <= 0) {
-    return 'Take profit must be greater than 0';
+  // 7. Determine direction and validate SL position
+  const isBuy = input.entryPrice > input.stopLoss;
+  
+  // For BUY: SL must be below entry (already checked by direction detection)
+  // For SELL: SL must be above entry (already checked by direction detection)
+  // This is implicitly validated by the direction detection logic
+  
+  // 8. Take profit validation (if defined)
+  if (input.takeProfit !== undefined && input.takeProfit > 0) {
+    if (!isFinite(input.takeProfit)) {
+      return {
+        message: isFr ? 'Take profit incorrect' : 'Invalid take profit',
+        code: 'TAKE_PROFIT'
+      };
+    }
+    
+    // Validate TP position relative to entry
+    if (isBuy && input.takeProfit <= input.entryPrice) {
+      return {
+        message: isFr ? 'Take profit incorrect' : 'Invalid take profit',
+        code: 'TAKE_PROFIT'
+      };
+    }
+    
+    if (!isBuy && input.takeProfit >= input.entryPrice) {
+      return {
+        message: isFr ? 'Take profit incorrect' : 'Invalid take profit',
+        code: 'TAKE_PROFIT'
+      };
+    }
   }
   
   return null;
@@ -148,12 +213,13 @@ function convertCurrency(
   * - Oil: 1,000 barrels
  */
 export function calculatePosition(
-  input: CalculationInput
+  input: CalculationInput,
+  isFr: boolean = false
 ): CalculationResult | CalculationError {
   // Validate input
-  const validationError = validateInput(input);
+  const validationError = validateInput(input, isFr);
   if (validationError) {
-    return { error: validationError, code: 'INVALID_INPUT' };
+    return { error: validationError.message, code: 'INVALID_INPUT' };
   }
   
   const { capital, riskPercent, accountCurrency, asset, entryPrice, stopLoss, takeProfit, exchangeRates } = input;
@@ -204,12 +270,28 @@ export function calculatePosition(
   // ============================================
    const rawLotSize = riskAmount / (slDistancePrice * asset.contractSize * conversionRate);
   
+  // Validate calculation result
+  if (!isFinite(rawLotSize) || isNaN(rawLotSize) || rawLotSize <= 0) {
+    return {
+      error: isFr ? 'Calcul impossible' : 'Calculation error',
+      code: 'CALCULATION_ERROR'
+    };
+  }
+  
   // ============================================
    // STEP 6: Round lot size DOWN to nearest lot step
   // Always round DOWN to ensure we don't exceed risk
   // ============================================
   const lotSteps = Math.floor(rawLotSize / asset.lotStep);
   let lotSize = lotSteps * asset.lotStep;
+  
+  // Validate final lot size
+  if (!isFinite(lotSize) || isNaN(lotSize) || lotSize <= 0) {
+    return {
+      error: isFr ? 'Calcul impossible' : 'Calculation error',
+      code: 'CALCULATION_ERROR'
+    };
+  }
   
   // Ensure minimum lot
   if (lotSize < asset.minLot) {
@@ -229,17 +311,12 @@ export function calculatePosition(
   // ============================================
   let riskReward: number | undefined;
   
-  if (takeProfit !== undefined) {
-    // Validate TP direction
-    const isValidTp = direction === 'BUY' 
-      ? takeProfit > entryPrice 
-      : takeProfit < entryPrice;
+  if (takeProfit !== undefined && takeProfit > 0) {
+    const tpDistance = Math.abs(takeProfit - entryPrice);
+    const calculatedRR = tpDistance / slDistancePrice;
     
-    if (isValidTp) {
-       const tpDistance = Math.abs(takeProfit - entryPrice);
-       riskReward = tpDistance / slDistancePrice;
-    } else {
-      warnings.push('Take profit is on the wrong side of entry price');
+    if (isFinite(calculatedRR) && !isNaN(calculatedRR)) {
+      riskReward = calculatedRR;
     }
   }
   
@@ -249,12 +326,7 @@ export function calculatePosition(
   
   // Risk too high
   if (riskPercent > 5) {
-    warnings.push('High risk: Consider reducing to 1-2% per trade');
-  }
-  
-  // Poor RR ratio
-  if (riskReward !== undefined && riskReward < 1) {
-    warnings.push('Risk/Reward below 1:1 - Consider adjusting TP or SL');
+    warnings.push(isFr ? 'Risque élevé' : 'High risk');
   }
   
   // ============================================
