@@ -1,6 +1,6 @@
  {
    "name": "Smart Trade Tracker",
-   "short_name": "STT",
+  "short_name": "Smart Trade Tracker",
    "description": "Journal de trading professionnel avec analyses avancées",
    "start_url": "/",
    "display": "standalone",
