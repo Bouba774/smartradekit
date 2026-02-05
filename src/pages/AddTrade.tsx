@@ -1123,7 +1123,7 @@ const AddTrade: React.FC = () => {
           
           <div className="space-y-2">
             <Label>{t('emotion')}</Label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {EMOTIONS.map(emotion => (
                 <Button
                   key={emotion.value}
@@ -1131,7 +1131,7 @@ const AddTrade: React.FC = () => {
                   variant={formData.emotion === emotion.value ? 'default' : 'outline'}
                   size="sm"
                   className={cn(
-                    "gap-2",
+                    "gap-2 flex-shrink-0 whitespace-nowrap",
                     formData.emotion === emotion.value && "bg-primary hover:bg-primary/90"
                   )}
                   onClick={() => handleInputChange('emotion', emotion.value)}
@@ -1145,13 +1145,13 @@ const AddTrade: React.FC = () => {
 
           <div className="space-y-2">
             <Label>{t('tags')}</Label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {TAGS.map(tag => (
                 <Badge
                   key={tag.value}
                   variant={selectedTags.includes(tag.value) ? 'default' : 'outline'}
                   className={cn(
-                    "cursor-pointer transition-all",
+                    "cursor-pointer transition-all flex-shrink-0 whitespace-nowrap",
                     selectedTags.includes(tag.value) && "bg-primary hover:bg-primary/90"
                   )}
                   onClick={() => toggleTag(tag.value)}
