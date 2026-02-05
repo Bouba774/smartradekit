@@ -174,6 +174,7 @@ const Calculator: React.FC = () => {
     const entry = parseFloat(entryPrice);
     const sl = parseFloat(stopLoss);
     const tp = takeProfit ? parseFloat(takeProfit) : undefined;
+     const riskAmount = capital * (riskPercent / 100);
     
     const pendingTrade = {
       asset: selectedAsset,
@@ -182,7 +183,7 @@ const Calculator: React.FC = () => {
       stop_loss: sl,
       take_profit: tp,
       lot_size: result.lotSize,
-      risk_amount: result.actualRisk,
+       risk_amount: riskAmount,
       risk_percent: riskPercent,
     };
     
