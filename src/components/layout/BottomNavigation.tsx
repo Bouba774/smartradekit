@@ -11,6 +11,21 @@ import {
 } from 'lucide-react';
 import { usePrefetchOnHover } from '@/hooks/useDataPrefetch';
 
+// Routes that should keep "Menu" highlighted
+const MENU_ROUTES = [
+  '/menu',
+  '/history',
+  '/comparison',
+  '/psychology',
+  '/journal',
+  '/currency-conversion',
+  '/challenges',
+  '/ai-assistant',
+  '/profile',
+  '/settings',
+  '/about',
+];
+
 const BottomNavigation: React.FC = () => {
   const { t } = useLanguage();
   const location = useLocation();
@@ -78,7 +93,12 @@ const BottomNavigation: React.FC = () => {
   };
 
   const isActive = (path: string) => {
-    if (path === 'add') return false;
+    if (path === 'add') {
+      return location.pathname === '/add-trade';
+    }
+    if (path === '/menu') {
+      return MENU_ROUTES.includes(location.pathname);
+    }
     return location.pathname === path;
   };
 
