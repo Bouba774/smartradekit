@@ -20,13 +20,9 @@ interface CalculatorFormProps {
   selectedAsset: string;
   assetConfig: AssetConfig | null;
   onAssetChange: (symbol: string, config: AssetConfig | null) => void;
-  // Capital & Risk
-  capital: string;
-  onCapitalChange: (value: string) => void;
+  // Risk
   riskPercent: string;
   onRiskPercentChange: (value: string) => void;
-  riskAmount: string;
-  onRiskAmountChange: (value: string) => void;
   // Prices
   entryPrice: string;
   onEntryPriceChange: (value: string) => void;
@@ -35,7 +31,6 @@ interface CalculatorFormProps {
   takeProfit: string;
   onTakeProfitChange: (value: string) => void;
   // UI
-  currencySymbol: string;
   language: string;
   onCalculate: () => void;
 }
@@ -44,19 +39,14 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
   selectedAsset,
   assetConfig,
   onAssetChange,
-  capital,
-  onCapitalChange,
   riskPercent,
   onRiskPercentChange,
-  riskAmount,
-  onRiskAmountChange,
   entryPrice,
   onEntryPriceChange,
   stopLoss,
   onStopLossChange,
   takeProfit,
   onTakeProfitChange,
-  currencySymbol,
   language,
   onCalculate,
 }) => {
@@ -137,20 +127,6 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
           <Label className="text-base font-semibold text-foreground">
             {isFr ? 'Actif' : 'Asset'}
           </Label>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <Info className="w-4 h-4 text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs">
-                  {isFr 
-                    ? 'Sélectionnez l\'actif que vous souhaitez trader'
-                    : 'Select the asset you want to trade'}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
         </div>
         
         {/* Asset Selector Button */}
@@ -258,42 +234,11 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
         )}
       </div>
 
-      {/* Capital */}
+      {/* Risque % uniquement */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <Label className="text-base font-semibold text-foreground">
-            Capital ({currencySymbol})
-          </Label>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <Info className="w-4 h-4 text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs">
-                  {isFr 
-                    ? 'Votre capital de trading total'
-                    : 'Your total trading capital'}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-        <Input
-          type="text"
-          inputMode="decimal"
-          value={capital}
-          onChange={(e) => handleNumericInput(e.target.value, onCapitalChange)}
-          placeholder="10000"
-          className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl"
-        />
-      </div>
-
-      {/* Risque */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Label className="text-base font-semibold text-foreground">
-            {isFr ? 'Risque' : 'Risk'}
+            {isFr ? 'Risque (%)' : 'Risk (%)'}
           </Label>
           <TooltipProvider>
             <Tooltip>
@@ -310,35 +255,18 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
             </Tooltip>
           </TooltipProvider>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          {/* Risk Percent */}
-          <div className="relative">
-            <Input
-              type="text"
-              inputMode="decimal"
-              value={riskPercent}
-              onChange={(e) => handleNumericInput(e.target.value, onRiskPercentChange)}
-              placeholder="2"
-              className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl pr-12"
-            />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-lg font-medium">
-              %
-            </span>
-          </div>
-          {/* Risk Amount */}
-          <div className="relative">
-            <Input
-              type="text"
-              inputMode="decimal"
-              value={riskAmount}
-              onChange={(e) => handleNumericInput(e.target.value, onRiskAmountChange)}
-              placeholder="200.00"
-              className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl pr-12"
-            />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-lg font-medium">
-              {currencySymbol}
-            </span>
-          </div>
+        <div className="relative">
+          <Input
+            type="text"
+            inputMode="decimal"
+            value={riskPercent}
+            onChange={(e) => handleNumericInput(e.target.value, onRiskPercentChange)}
+            placeholder="2"
+            className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl pr-12"
+          />
+          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-lg font-medium">
+            %
+          </span>
         </div>
       </div>
       
@@ -354,7 +282,7 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
           inputMode="decimal"
           value={entryPrice}
           onChange={(e) => handleNumericInput(e.target.value, onEntryPriceChange)}
-          placeholder="5504.54"
+          placeholder="1.08500"
           className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl"
         />
       </div>
@@ -367,7 +295,7 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
             <Label className="text-base font-semibold text-foreground">
               Stop Loss
             </Label>
-            <span className="text-sm text-destructive font-medium">
+            <span className="text-xs text-destructive font-medium">
               ({isFr ? 'obligatoire' : 'required'})
             </span>
           </div>
@@ -376,7 +304,7 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
             inputMode="decimal"
             value={stopLoss}
             onChange={(e) => handleNumericInput(e.target.value, onStopLossChange)}
-            placeholder="5587.07"
+            placeholder="1.08200"
             className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl"
           />
         </div>
@@ -386,7 +314,7 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
             <Label className="text-base font-semibold text-foreground">
               Take Profit
             </Label>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               ({isFr ? 'optionnel' : 'optional'})
             </span>
           </div>
@@ -395,7 +323,7 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
             inputMode="decimal"
             value={takeProfit}
             onChange={(e) => handleNumericInput(e.target.value, onTakeProfitChange)}
-            placeholder="5127.21"
+            placeholder="1.09000"
             className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl"
           />
         </div>
