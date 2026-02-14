@@ -1,4 +1,4 @@
-// Tooltips d'aide contextuelle pour Smart Trade Tracker
+// Tooltips d'aide contextuelle pour Smart Trade Kit
 // Support multilingue pour les 8 langues de l'application
 
 export type SupportedLanguage = 'fr' | 'en' | 'es' | 'de' | 'it' | 'pt' | 'ar' | 'tr';

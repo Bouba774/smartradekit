@@ -22,8 +22,8 @@ const getEmailContent = (request: SecurityEmailRequest) => {
     case 'new_device':
       return {
         subject: language === 'fr' 
-          ? '🔔 Nouvelle connexion détectée - Smart Trade Tracker'
-          : '🔔 New login detected - Smart Trade Tracker',
+          ? '🔔 Nouvelle connexion détectée - Smart Trade Kit'
+          : '🔔 New login detected - Smart Trade Kit',
         html: language === 'fr' ? `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
@@ -32,7 +32,7 @@ const getEmailContent = (request: SecurityEmailRequest) => {
             <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 12px 12px; border: 1px solid #e2e8f0;">
               <h2 style="color: #1e293b; margin-top: 0;">Nouvelle connexion détectée</h2>
               <p style="color: #64748b; line-height: 1.6;">
-                Une connexion à votre compte Smart Trade Tracker a été effectuée depuis un nouvel appareil :
+                Une connexion à votre compte Smart Trade Kit a été effectuée depuis un nouvel appareil :
               </p>
               <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin: 20px 0;">
                 <table style="width: 100%; border-collapse: collapse;">
@@ -61,7 +61,7 @@ const getEmailContent = (request: SecurityEmailRequest) => {
                 </p>
               </div>
               <p style="color: #94a3b8; font-size: 12px; margin-top: 30px; text-align: center;">
-                Cet email a été envoyé automatiquement par Smart Trade Tracker.<br>
+                Cet email a été envoyé automatiquement par Smart Trade Kit.<br>
                 Ne partagez jamais vos identifiants avec quiconque.
               </p>
             </div>
@@ -74,7 +74,7 @@ const getEmailContent = (request: SecurityEmailRequest) => {
             <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 12px 12px; border: 1px solid #e2e8f0;">
               <h2 style="color: #1e293b; margin-top: 0;">New login detected</h2>
               <p style="color: #64748b; line-height: 1.6;">
-                A login to your Smart Trade Tracker account was made from a new device:
+                A login to your Smart Trade Kit account was made from a new device:
               </p>
               <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin: 20px 0;">
                 <table style="width: 100%; border-collapse: collapse;">
@@ -103,7 +103,7 @@ const getEmailContent = (request: SecurityEmailRequest) => {
                 </p>
               </div>
               <p style="color: #94a3b8; font-size: 12px; margin-top: 30px; text-align: center;">
-                This email was sent automatically by Smart Trade Tracker.<br>
+                This email was sent automatically by Smart Trade Kit.<br>
                 Never share your credentials with anyone.
               </p>
             </div>
@@ -114,8 +114,8 @@ const getEmailContent = (request: SecurityEmailRequest) => {
     case 'account_blocked':
       return {
         subject: language === 'fr'
-          ? '🔒 Compte temporairement bloqué - Smart Trade Tracker'
-          : '🔒 Account temporarily blocked - Smart Trade Tracker',
+          ? '🔒 Compte temporairement bloqué - Smart Trade Kit'
+          : '🔒 Account temporarily blocked - Smart Trade Kit',
         html: language === 'fr' ? `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
@@ -124,7 +124,7 @@ const getEmailContent = (request: SecurityEmailRequest) => {
             <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 12px 12px; border: 1px solid #e2e8f0;">
               <h2 style="color: #1e293b; margin-top: 0;">Tentatives de connexion échouées détectées</h2>
               <p style="color: #64748b; line-height: 1.6;">
-                Votre compte Smart Trade Tracker a été temporairement bloqué suite à plusieurs tentatives de connexion infructueuses.
+                Votre compte Smart Trade Kit a été temporairement bloqué suite à plusieurs tentatives de connexion infructueuses.
               </p>
               <div style="background: #fee2e2; padding: 20px; border-radius: 8px; border: 1px solid #fecaca; margin: 20px 0;">
                 <p style="color: #991b1b; margin: 0;">
@@ -142,7 +142,7 @@ const getEmailContent = (request: SecurityEmailRequest) => {
                 </p>
               </div>
               <p style="color: #94a3b8; font-size: 12px; margin-top: 30px; text-align: center;">
-                Cet email a été envoyé automatiquement par Smart Trade Tracker.
+                Cet email a été envoyé automatiquement par Smart Trade Kit.
               </p>
             </div>
           </div>
@@ -154,7 +154,7 @@ const getEmailContent = (request: SecurityEmailRequest) => {
             <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 12px 12px; border: 1px solid #e2e8f0;">
               <h2 style="color: #1e293b; margin-top: 0;">Failed login attempts detected</h2>
               <p style="color: #64748b; line-height: 1.6;">
-                Your Smart Trade Tracker account has been temporarily blocked due to multiple unsuccessful login attempts.
+                Your Smart Trade Kit account has been temporarily blocked due to multiple unsuccessful login attempts.
               </p>
               <div style="background: #fee2e2; padding: 20px; border-radius: 8px; border: 1px solid #fecaca; margin: 20px 0;">
                 <p style="color: #991b1b; margin: 0;">
@@ -172,7 +172,7 @@ const getEmailContent = (request: SecurityEmailRequest) => {
                 </p>
               </div>
               <p style="color: #94a3b8; font-size: 12px; margin-top: 30px; text-align: center;">
-                This email was sent automatically by Smart Trade Tracker.
+                This email was sent automatically by Smart Trade Kit.
               </p>
             </div>
           </div>
@@ -182,8 +182,8 @@ const getEmailContent = (request: SecurityEmailRequest) => {
     case 'pin_reset':
       return {
         subject: language === 'fr'
-          ? '🔑 Réinitialisation de votre code PIN - Smart Trade Tracker'
-          : '🔑 Reset your PIN code - Smart Trade Tracker',
+          ? '🔑 Réinitialisation de votre code PIN - Smart Trade Kit'
+          : '🔑 Reset your PIN code - Smart Trade Kit',
         html: language === 'fr' ? `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
@@ -206,7 +206,7 @@ const getEmailContent = (request: SecurityEmailRequest) => {
                 </p>
               </div>
               <p style="color: #94a3b8; font-size: 12px; margin-top: 30px; text-align: center;">
-                Cet email a été envoyé automatiquement par Smart Trade Tracker.<br>
+                Cet email a été envoyé automatiquement par Smart Trade Kit.<br>
                 Ne partagez jamais ce lien avec quiconque.
               </p>
             </div>
@@ -233,7 +233,7 @@ const getEmailContent = (request: SecurityEmailRequest) => {
                 </p>
               </div>
               <p style="color: #94a3b8; font-size: 12px; margin-top: 30px; text-align: center;">
-                This email was sent automatically by Smart Trade Tracker.<br>
+                This email was sent automatically by Smart Trade Kit.<br>
                 Never share this link with anyone.
               </p>
             </div>
@@ -275,7 +275,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Smart Trade Tracker <security@smarttradetracker.app>",
+        from: "Smart Trade Kit <security@smarttradetracker.app>",
         to: [request.email],
         subject,
         html,

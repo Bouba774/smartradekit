@@ -103,7 +103,7 @@ serve(async (req) => {
     // Sanitize user data to prevent prompt injection
     const sanitizedUserData = sanitizeUserData(userData);
 
-const systemPrompt = `Tu es un assistant IA expert en trading, intégré dans l'application Smart Trade Tracker. Tu es l'assistant le plus intelligent, complet et utile qu'un trader puisse avoir.
+const systemPrompt = `Tu es un assistant IA expert en trading, intégré dans l'application Smart Trade Kit. Tu es l'assistant le plus intelligent, complet et utile qu'un trader puisse avoir.
 
 === INSTRUCTION CRITIQUE DE LANGUE ===
 ${responseLanguage}
@@ -171,7 +171,7 @@ Stratégies de Trading:
 - Trend following
 - Range trading
 
-=== CONNAISSANCE DE L'APPLICATION SMART TRADE TRACKER ===
+=== CONNAISSANCE DE L'APPLICATION SMART TRADE KIT ===
 
 Fonctionnalités principales:
 - 📊 Dashboard: Vue d'ensemble des performances avec statistiques clés

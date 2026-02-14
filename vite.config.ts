@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => ({
        registerType: "autoUpdate",
        includeAssets: ["favicon.ico", "assets/app-logo.png"],
        manifest: {
-         name: "Smart Trade Tracker",
+         name: "Smart Trade Kit",
          short_name: "STT",
          description: "Journal de trading professionnel avec analyses avancées",
          theme_color: "#0a1929",

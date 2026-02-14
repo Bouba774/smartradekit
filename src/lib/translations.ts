@@ -1,4 +1,4 @@
-// Complete translation system for Smart Trade Tracker
+// Complete translation system for Smart Trade Kit
 // All UI strings must be defined here for full multilingual support
 
 export type Language = 'en' | 'fr' | 'es' | 'pt' | 'ar' | 'zh' | 'hi' | 'ru' | 'de' | 'ja';
@@ -495,16 +495,16 @@ export const translations: Translations = {
   // ABOUT PAGE
   // ============================================
   aboutTitle: { fr: 'À Propos', en: 'About' },
-  aboutDesc: { fr: 'En savoir plus sur Smart Trade Tracker', en: 'Learn more about Smart Trade Tracker' },
-  aboutSmartTradeTracker: { fr: 'À Propos de Smart Trade Tracker', en: 'About Smart Trade Tracker' },
+  aboutDesc: { fr: 'En savoir plus sur Smart Trade Kit', en: 'Learn more about Smart Trade Kit' },
+  aboutSmartTradeTracker: { fr: 'À Propos de Smart Trade Kit', en: 'About Smart Trade Kit' },
   missionStatement: { fr: 'Notre Mission', en: 'Our Mission' },
-  missionDesc: { fr: "Smart Trade Tracker a été créé avec un seul objectif : aider les traders à développer la discipline et la clarté dont ils ont besoin pour réussir. Nous croyons que la rentabilité constante vient de la compréhension de votre psychologie, du suivi de vos données et de l'apprentissage de chaque trade. Notre mission est de fournir les outils qui transforment un trading dispersé en un parcours structuré et basé sur les données vers la maîtrise.", en: "Smart Trade Tracker was created with one purpose: to help traders develop the discipline and clarity they need to succeed. We believe that consistent profitability comes from understanding your psychology, tracking your data, and learning from every trade. Our mission is to provide the tools that turn scattered trading into a structured, data-driven journey toward mastery." },
-  whatIs: { fr: "Qu'est-ce que Smart Trade Tracker?", en: 'What is Smart Trade Tracker?' },
-  whatIsDesc: { fr: "Smart Trade Tracker est un journal de trading complet conçu pour vous aider à suivre chaque trade, analyser vos performances et maîtriser vos émotions. Il résout les problèmes les plus courants rencontrés par les traders :", en: "Smart Trade Tracker is a comprehensive trading journal designed to help you track every trade, analyze your performance, and master your emotions. It solves the most common problems traders face:" },
+  missionDesc: { fr: "Smart Trade Kit a été créé avec un seul objectif : aider les traders à développer la discipline et la clarté dont ils ont besoin pour réussir. Nous croyons que la rentabilité constante vient de la compréhension de votre psychologie, du suivi de vos données et de l'apprentissage de chaque trade. Notre mission est de fournir les outils qui transforment un trading dispersé en un parcours structuré et basé sur les données vers la maîtrise.", en: "Smart Trade Kit was created with one purpose: to help traders develop the discipline and clarity they need to succeed. We believe that consistent profitability comes from understanding your psychology, tracking your data, and learning from every trade. Our mission is to provide the tools that turn scattered trading into a structured, data-driven journey toward mastery." },
+  whatIs: { fr: "Qu'est-ce que Smart Trade Kit?", en: 'What is Smart Trade Kit?' },
+  whatIsDesc: { fr: "Smart Trade Kit est un journal de trading complet conçu pour vous aider à suivre chaque trade, analyser vos performances et maîtriser vos émotions. Il résout les problèmes les plus courants rencontrés par les traders :", en: "Smart Trade Kit is a comprehensive trading journal designed to help you track every trade, analyze your performance, and master your emotions. It solves the most common problems traders face:" },
   ourVision: { fr: 'Notre Vision', en: 'Our Vision' },
   visionDesc: { fr: "Nous envisageons un monde où chaque trader dispose des outils pour devenir constamment rentable. Notre objectif est de vous aider à prendre des décisions basées sur les données, atteindre l'équilibre psychologique et maîtriser la discipline qui sépare les traders performants des autres. La maîtrise à long terme se construit trade après trade — et nous sommes là pour vous aider à suivre chaque étape de ce parcours.", en: "We envision a world where every trader has the tools to become consistently profitable. Our goal is to help you make data-driven decisions, achieve psychological balance, and master the discipline that separates successful traders from the rest. Long-term mastery is built one trade at a time — and we're here to help you track every step of that journey." },
   keyFeatures: { fr: 'Fonctionnalités Principales', en: 'Key Features' },
-  whatMakesUnique: { fr: 'Ce Qui Rend Smart Trade Tracker Unique', en: 'What Makes Smart Trade Tracker Unique' },
+  whatMakesUnique: { fr: 'Ce Qui Rend Smart Trade Kit Unique', en: 'What Makes Smart Trade Kit Unique' },
   ourCommitment: { fr: 'Notre Engagement envers les Utilisateurs', en: 'Our Commitment to Users' },
   callToAction: { fr: 'Commencez Votre Parcours Aujourd\'hui', en: 'Start Your Journey Today' },
   callToActionDesc: { fr: "Chaque trader performant suit ses trades. Chaque trader constant connaît ses données. Commencez à enregistrer vos trades aujourd'hui et découvrez le pouvoir de la discipline et du trading basé sur les données.", en: "Every successful trader tracks their trades. Every consistent trader knows their data. Start logging your trades today and discover the power of discipline and data-driven trading." },

@@ -33,7 +33,7 @@ const translations: Record<string, {
   en: {
     subject: (name) => `🎉 Welcome ${name}! Your trading journey begins`,
     welcome: (name) => `Welcome ${name}!`,
-    intro: "Congratulations on joining the Smart Trade Tracker community! You've taken the first step towards a more structured and professional trading approach.",
+    intro: "Congratulations on joining the Smart Trade Kit community! You've taken the first step towards a more structured and professional trading approach.",
     journalTitle: 'Trading Journal',
     journalDesc: 'Record every trade with precision',
     psychTitle: 'Psychological Analysis',
@@ -42,13 +42,13 @@ const translations: Record<string, {
     challengesDesc: 'Progress with motivating goals',
     ctaButton: '🚀 Start now',
     tip: 'Tip: Start by recording your first trade to see the magic happen!',
-    footerNote: 'You received this email because you just created your Smart Trade Tracker account.',
+    footerNote: 'You received this email because you just created your Smart Trade Kit account.',
     tagline: 'Your intelligent trading journal'
   },
   fr: {
     subject: (name) => `🎉 Bienvenue ${name} ! Votre aventure trading commence`,
     welcome: (name) => `Bienvenue ${name} !`,
-    intro: "Félicitations pour avoir rejoint la communauté Smart Trade Tracker ! Vous avez fait le premier pas vers une approche plus structurée et professionnelle du trading.",
+    intro: "Félicitations pour avoir rejoint la communauté Smart Trade Kit ! Vous avez fait le premier pas vers une approche plus structurée et professionnelle du trading.",
     journalTitle: 'Journal de Trading',
     journalDesc: 'Enregistrez chaque trade avec précision',
     psychTitle: 'Analyse Psychologique',
@@ -57,13 +57,13 @@ const translations: Record<string, {
     challengesDesc: 'Progressez avec des objectifs motivants',
     ctaButton: '🚀 Commencer maintenant',
     tip: 'Conseil : Commencez par enregistrer votre premier trade pour voir la magie opérer !',
-    footerNote: 'Vous recevez cet email car vous venez de créer votre compte Smart Trade Tracker.',
+    footerNote: 'Vous recevez cet email car vous venez de créer votre compte Smart Trade Kit.',
     tagline: 'Votre journal de trading intelligent'
   },
   es: {
     subject: (name) => `🎉 ¡Bienvenido ${name}! Tu viaje de trading comienza`,
     welcome: (name) => `¡Bienvenido ${name}!`,
-    intro: "¡Felicidades por unirte a la comunidad Smart Trade Tracker! Has dado el primer paso hacia un enfoque de trading más estructurado y profesional.",
+    intro: "¡Felicidades por unirte a la comunidad Smart Trade Kit! Has dado el primer paso hacia un enfoque de trading más estructurado y profesional.",
     journalTitle: 'Diario de Trading',
     journalDesc: 'Registra cada operación con precisión',
     psychTitle: 'Análisis Psicológico',
@@ -72,13 +72,13 @@ const translations: Record<string, {
     challengesDesc: 'Progresa con objetivos motivadores',
     ctaButton: '🚀 Empezar ahora',
     tip: 'Consejo: ¡Comienza registrando tu primera operación para ver la magia suceder!',
-    footerNote: 'Recibiste este email porque acabas de crear tu cuenta de Smart Trade Tracker.',
+    footerNote: 'Recibiste este email porque acabas de crear tu cuenta de Smart Trade Kit.',
     tagline: 'Tu diario de trading inteligente'
   },
   pt: {
     subject: (name) => `🎉 Bem-vindo ${name}! Sua jornada de trading começa`,
     welcome: (name) => `Bem-vindo ${name}!`,
-    intro: "Parabéns por se juntar à comunidade Smart Trade Tracker! Você deu o primeiro passo para uma abordagem de trading mais estruturada e profissional.",
+    intro: "Parabéns por se juntar à comunidade Smart Trade Kit! Você deu o primeiro passo para uma abordagem de trading mais estruturada e profissional.",
     journalTitle: 'Diário de Trading',
     journalDesc: 'Registre cada operação com precisão',
     psychTitle: 'Análise Psicológica',
@@ -87,13 +87,13 @@ const translations: Record<string, {
     challengesDesc: 'Progrida com objetivos motivadores',
     ctaButton: '🚀 Começar agora',
     tip: 'Dica: Comece registrando sua primeira operação para ver a mágica acontecer!',
-    footerNote: 'Você recebeu este email porque acabou de criar sua conta Smart Trade Tracker.',
+    footerNote: 'Você recebeu este email porque acabou de criar sua conta Smart Trade Kit.',
     tagline: 'Seu diário de trading inteligente'
   },
   de: {
     subject: (name) => `🎉 Willkommen ${name}! Ihre Trading-Reise beginnt`,
     welcome: (name) => `Willkommen ${name}!`,
-    intro: "Herzlichen Glückwunsch zum Beitritt zur Smart Trade Tracker-Community! Sie haben den ersten Schritt zu einem strukturierteren und professionelleren Trading-Ansatz gemacht.",
+    intro: "Herzlichen Glückwunsch zum Beitritt zur Smart Trade Kit-Community! Sie haben den ersten Schritt zu einem strukturierteren und professionelleren Trading-Ansatz gemacht.",
     journalTitle: 'Trading-Tagebuch',
     journalDesc: 'Erfassen Sie jeden Trade präzise',
     psychTitle: 'Psychologische Analyse',
@@ -102,13 +102,13 @@ const translations: Record<string, {
     challengesDesc: 'Fortschritt mit motivierenden Zielen',
     ctaButton: '🚀 Jetzt starten',
     tip: 'Tipp: Beginnen Sie mit der Aufzeichnung Ihres ersten Trades, um die Magie zu erleben!',
-    footerNote: 'Sie haben diese E-Mail erhalten, weil Sie gerade Ihr Smart Trade Tracker-Konto erstellt haben.',
+    footerNote: 'Sie haben diese E-Mail erhalten, weil Sie gerade Ihr Smart Trade Kit-Konto erstellt haben.',
     tagline: 'Ihr intelligentes Trading-Tagebuch'
   },
   it: {
     subject: (name) => `🎉 Benvenuto ${name}! Il tuo viaggio nel trading inizia`,
     welcome: (name) => `Benvenuto ${name}!`,
-    intro: "Congratulazioni per esserti unito alla community di Smart Trade Tracker! Hai fatto il primo passo verso un approccio al trading più strutturato e professionale.",
+    intro: "Congratulazioni per esserti unito alla community di Smart Trade Kit! Hai fatto il primo passo verso un approccio al trading più strutturato e professionale.",
     journalTitle: 'Diario di Trading',
     journalDesc: 'Registra ogni operazione con precisione',
     psychTitle: 'Analisi Psicologica',
@@ -117,13 +117,13 @@ const translations: Record<string, {
     challengesDesc: 'Progredisci con obiettivi motivanti',
     ctaButton: '🚀 Inizia ora',
     tip: 'Consiglio: Inizia registrando la tua prima operazione per vedere la magia accadere!',
-    footerNote: 'Hai ricevuto questa email perché hai appena creato il tuo account Smart Trade Tracker.',
+    footerNote: 'Hai ricevuto questa email perché hai appena creato il tuo account Smart Trade Kit.',
     tagline: 'Il tuo diario di trading intelligente'
   },
   tr: {
     subject: (name) => `🎉 Hoş geldin ${name}! Trading yolculuğun başlıyor`,
     welcome: (name) => `Hoş geldin ${name}!`,
-    intro: "Smart Trade Tracker topluluğuna katıldığın için tebrikler! Daha yapılandırılmış ve profesyonel bir trading yaklaşımına doğru ilk adımı attın.",
+    intro: "Smart Trade Kit topluluğuna katıldığın için tebrikler! Daha yapılandırılmış ve profesyonel bir trading yaklaşımına doğru ilk adımı attın.",
     journalTitle: 'Trading Günlüğü',
     journalDesc: 'Her işlemi hassasiyetle kaydet',
     psychTitle: 'Psikolojik Analiz',
@@ -132,13 +132,13 @@ const translations: Record<string, {
     challengesDesc: 'Motive edici hedeflerle ilerle',
     ctaButton: '🚀 Şimdi başla',
     tip: 'İpucu: Sihri görmek için ilk işlemini kaydederek başla!',
-    footerNote: 'Bu e-postayı, Smart Trade Tracker hesabınızı yeni oluşturduğunuz için aldınız.',
+    footerNote: 'Bu e-postayı, Smart Trade Kit hesabınızı yeni oluşturduğunuz için aldınız.',
     tagline: 'Akıllı trading günlüğünüz'
   },
   ar: {
     subject: (name) => `🎉 مرحباً ${name}! رحلتك في التداول تبدأ`,
     welcome: (name) => `مرحباً ${name}!`,
-    intro: "تهانينا على انضمامك إلى مجتمع Smart Trade Tracker! لقد اتخذت الخطوة الأولى نحو نهج تداول أكثر تنظيماً واحترافية.",
+    intro: "تهانينا على انضمامك إلى مجتمع Smart Trade Kit! لقد اتخذت الخطوة الأولى نحو نهج تداول أكثر تنظيماً واحترافية.",
     journalTitle: 'مذكرة التداول',
     journalDesc: 'سجل كل صفقة بدقة',
     psychTitle: 'التحليل النفسي',
@@ -147,7 +147,7 @@ const translations: Record<string, {
     challengesDesc: 'تقدم بأهداف محفزة',
     ctaButton: '🚀 ابدأ الآن',
     tip: 'نصيحة: ابدأ بتسجيل أول صفقة لك لترى السحر يحدث!',
-    footerNote: 'تلقيت هذا البريد الإلكتروني لأنك أنشأت للتو حساب Smart Trade Tracker الخاص بك.',
+    footerNote: 'تلقيت هذا البريد الإلكتروني لأنك أنشأت للتو حساب Smart Trade Kit الخاص بك.',
     tagline: 'مذكرة التداول الذكية الخاصة بك'
   }
 };
@@ -185,7 +185,7 @@ const getWelcomeEmailContent = (language: string, nickname: string, dashboardUrl
                 </tr>
               </table>
               <p style="color: #22c55e; font-size: 12px; margin: 12px 0 0; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;">
-                Smart Trade Tracker - ALPHA FX
+                Smart Trade Kit - ALPHA FX
               </p>
             </td>
           </tr>
@@ -291,11 +291,11 @@ const getWelcomeEmailContent = (language: string, nickname: string, dashboardUrl
                 ${t.footerNote}
               </p>
               <p style="color: #475569; font-size: 11px; margin: 0; text-align: center;">
-                <strong style="color: #64748b;">Smart Trade Tracker</strong> - ALPHA FX<br>
+                <strong style="color: #64748b;">Smart Trade Kit</strong> - ALPHA FX<br>
                 <span style="color: #4ade80;">${t.tagline}</span>
               </p>
               <p style="color: #334155; font-size: 10px; margin: 12px 0 0; text-align: center;">
-                © ${new Date().getFullYear()} Smart Trade Tracker. All rights reserved.
+                © ${new Date().getFullYear()} Smart Trade Kit. All rights reserved.
               </p>
             </td>
           </tr>
@@ -357,7 +357,7 @@ serve(async (req: Request) => {
     const { subject, html } = getWelcomeEmailContent(language, nickname, dashboardUrl);
 
     const { error: emailError } = await resend.emails.send({
-      from: "Smart Trade Tracker <noreply@resend.dev>",
+      from: "Smart Trade Kit <noreply@resend.dev>",
       to: [email],
       subject,
       html,

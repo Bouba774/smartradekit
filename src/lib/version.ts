@@ -2,7 +2,7 @@
 // Version follows semantic versioning: Major.Minor.Patch
 // UPDATE THIS VERSION when releasing new features!
  export const APP_VERSION = '13.8.0';
-export const APP_NAME = 'Smart Trade Tracker';
+export const APP_NAME = 'Smart Trade Kit';
 export const BUILD_DATE = new Date().toISOString().split('T')[0];
 
 export const getVersionString = () => `${APP_NAME} V${APP_VERSION}`;

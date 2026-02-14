@@ -332,7 +332,7 @@ const AIAssistant: React.FC = () => {
           </div>
           <div>
             <h3 className="font-display font-semibold text-primary-foreground text-sm">
-              {showHistory ? t('chat.history') || 'Historique' : 'Smart Trade Tracker AI'}
+              {showHistory ? t('chat.history') || 'Historique' : 'Smart Trade Kit AI'}
             </h3>
             <p className="text-primary-foreground/70 text-xs">
               {showHistory 

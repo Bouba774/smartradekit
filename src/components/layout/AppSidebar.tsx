@@ -106,7 +106,7 @@ const AppSidebar: React.FC = () => {
             <div className="flex items-center gap-3">
               <img 
                 src="/assets/app-logo.png" 
-                alt="Smart Trade Tracker" 
+                alt="Smart Trade Kit" 
                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg shrink-0 object-cover animate-logo-glow"
               />
               <div className="overflow-hidden">

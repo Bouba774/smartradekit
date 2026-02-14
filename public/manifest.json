@@ -1,6 +1,6 @@
  {
-   "name": "Smart Trade Tracker",
-  "short_name": "Smart Trade Tracker",
+    "name": "Smart Trade Kit",
+   "short_name": "Smart Trade Kit",
    "description": "Journal de trading professionnel avec analyses avancées",
    "start_url": "/",
    "display": "standalone",

@@ -114,7 +114,7 @@ export const usePDFExport = () => {
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(22);
         doc.setFont('helvetica', 'bold');
-        doc.text('Smart Trade Tracker', 40, 24);
+        doc.text('Smart Trade Kit', 40, 24);
         
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
@@ -353,7 +353,7 @@ export const usePDFExport = () => {
 
         doc.setFontSize(8);
         doc.setTextColor(148, 163, 184);
-        doc.text('Smart Trade Tracker', 14, pageHeight - 8);
+        doc.text('Smart Trade Kit', 14, pageHeight - 8);
         doc.text(
           `${language === 'fr' ? 'Page' : 'Page'} ${i}/${pageCount}`,
           pageWidth - 14,

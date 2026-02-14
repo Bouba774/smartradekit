@@ -750,7 +750,7 @@ export const PDFExportDialog: React.FC<PDFExportDialogProps> = ({
                             STT
                           </div>
                           <div>
-                            <p className="font-bold text-[10px]">Smart Trade Tracker</p>
+                            <p className="font-bold text-[10px]">Smart Trade Kit</p>
                             <p className="text-[8px] text-slate-400">
                               {t.performanceReport}
                             </p>

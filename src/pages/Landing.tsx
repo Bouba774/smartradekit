@@ -463,7 +463,7 @@ const Landing = () => {
                     {t('landingBenefits')}
                   </span>
                   <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
-                    {t('landingWhyChoose')} Smart Trade Tracker?
+                    {t('landingWhyChoose')} Smart Trade Kit?
                   </h2>
                   <p className="text-muted-foreground mb-8 leading-relaxed">
                     {t('landingBenefitsDesc')}

@@ -141,13 +141,13 @@ export const LockScreen: React.FC<LockScreenProps> = ({
           <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-lg">
             <img
               src={appLogo}
-              alt="Smart Trade Tracker"
+              alt="Smart Trade Kit"
               className="w-full h-full object-cover"
             />
           </div>
           <div className="text-center">
             <h1 className="text-xl font-display font-semibold text-foreground">
-              Smart Trade Tracker
+              Smart Trade Kit
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               {isBlocked 
