@@ -14,7 +14,7 @@ const PrivacyPolicy: React.FC = () => {
       <p className="text-muted-foreground mb-6">Dernière mise à jour : 21/12/2025</p>
       
       <p className="mb-6">
-        La présente Politique de Confidentialité explique comment Smart Trade Tracker (« l'Application », « nous ») collecte, utilise, protège et traite les données personnelles de ses utilisateurs (« vous »). Nous nous engageons à respecter le Règlement Général sur la Protection des Données (RGPD) et toutes les lois applicables.
+        La présente Politique de Confidentialité explique comment Smart Trade Kit (« l'Application », « nous ») collecte, utilise, protège et traite les données personnelles de ses utilisateurs (« vous »). Nous nous engageons à respecter le Règlement Général sur la Protection des Données (RGPD) et toutes les lois applicables.
       </p>
 
       <h2 className="text-xl font-bold text-foreground mt-8 mb-4">1. Données collectées</h2>
@@ -148,7 +148,7 @@ const PrivacyPolicy: React.FC = () => {
       <p className="text-muted-foreground mb-6">Last updated: 21/12/2025</p>
       
       <p className="mb-6">
-        This Privacy Policy explains how Smart Trade Tracker ("the Application", "we") collects, uses, protects, and processes personal data of its users ("you"). We comply with the General Data Protection Regulation (GDPR) and applicable laws.
+        This Privacy Policy explains how Smart Trade Kit ("the Application", "we") collects, uses, protects, and processes personal data of its users ("you"). We comply with the General Data Protection Regulation (GDPR) and applicable laws.
       </p>
 
       <h2 className="text-xl font-bold text-foreground mt-8 mb-4">1. Data collected</h2>

@@ -123,12 +123,12 @@ const ConfirmEmail: React.FC = () => {
           <div className="flex justify-center mb-4">
             <img 
               src="/assets/app-logo.png" 
-              alt="Smart Trade Tracker" 
+              alt="Smart Trade Kit" 
               className="w-16 h-16 rounded-2xl object-cover"
             />
           </div>
           <h1 className="font-display text-xl font-bold text-foreground">
-            Smart Trade Tracker
+            Smart Trade Kit
           </h1>
         </div>
 

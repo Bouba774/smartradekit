@@ -392,13 +392,13 @@ const Auth: React.FC = () => {
               <div className="absolute inset-0 bg-primary/30 rounded-2xl blur-xl" />
               <img 
                 src="/assets/app-logo.png" 
-                alt="Smart Trade Tracker" 
+                alt="Smart Trade Kit" 
                 className="relative w-20 h-20 rounded-2xl object-cover shadow-neon transition-transform hover:scale-105 duration-300"
               />
             </div>
           </div>
           <h1 className="font-display text-2xl font-bold text-foreground tracking-tight">
-            Smart Trade Tracker
+            Smart Trade Kit
           </h1>
           <p className="text-primary text-sm font-medium mt-1 tracking-widest">ALPHA FX</p>
         </div>

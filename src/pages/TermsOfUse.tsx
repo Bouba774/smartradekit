@@ -14,10 +14,10 @@ const TermsOfUse: React.FC = () => {
       <p className="text-muted-foreground mb-6">Dernière mise à jour : 21/12/2025</p>
 
       <h2 className="text-xl font-bold text-foreground mt-8 mb-4">1. Acceptation</h2>
-      <p className="text-muted-foreground mb-4">En utilisant l'application Smart Trade Tracker, vous acceptez ces Conditions dans leur intégralité.</p>
+      <p className="text-muted-foreground mb-4">En utilisant l'application Smart Trade Kit, vous acceptez ces Conditions dans leur intégralité.</p>
 
       <h2 className="text-xl font-bold text-foreground mt-8 mb-4">2. Objet de l'application</h2>
-      <p className="text-muted-foreground mb-2">Smart Trade Tracker est une application de journal de trading offrant :</p>
+      <p className="text-muted-foreground mb-2">Smart Trade Kit est une application de journal de trading offrant :</p>
       <ul className="list-disc list-inside mb-4 space-y-1 text-muted-foreground">
         <li>Journal de trading avec historique complet et images/vidéos/audio</li>
         <li>Tableau de bord avec 30+ statistiques en temps réel</li>
@@ -116,10 +116,10 @@ const TermsOfUse: React.FC = () => {
       <p className="text-muted-foreground mb-6">Last updated: 21/12/2025</p>
 
       <h2 className="text-xl font-bold text-foreground mt-8 mb-4">1. Acceptance</h2>
-      <p className="text-muted-foreground mb-4">By using Smart Trade Tracker, you agree to these Terms in their entirety.</p>
+      <p className="text-muted-foreground mb-4">By using Smart Trade Kit, you agree to these Terms in their entirety.</p>
 
       <h2 className="text-xl font-bold text-foreground mt-8 mb-4">2. Application Purpose</h2>
-      <p className="text-muted-foreground mb-2">Smart Trade Tracker is a trading journal application offering:</p>
+      <p className="text-muted-foreground mb-2">Smart Trade Kit is a trading journal application offering:</p>
       <ul className="list-disc list-inside mb-4 space-y-1 text-muted-foreground">
         <li>Trading journal with complete history and images/videos/audio</li>
         <li>Dashboard with 30+ real-time statistics</li>

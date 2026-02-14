@@ -255,7 +255,7 @@ const PeriodComparison: React.FC = () => {
       // Title
       doc.setFontSize(20);
       doc.setTextColor(33, 37, 41);
-      doc.text('Smart Trade Tracker', pageWidth / 2, 20, { align: 'center' });
+      doc.text('Smart Trade Kit', pageWidth / 2, 20, { align: 'center' });
       
       doc.setFontSize(16);
       doc.text(language === 'fr' ? 'Rapport de Comparaison' : 'Comparison Report', pageWidth / 2, 30, { align: 'center' });
@@ -317,7 +317,7 @@ const PeriodComparison: React.FC = () => {
       // Footer
       doc.setFontSize(8);
       doc.setTextColor(108, 117, 125);
-      doc.text('Smart Trade Tracker - ALPHA FX', pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+      doc.text('Smart Trade Kit - ALPHA FX', pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
 
       // Save PDF
       const fileName = `comparison_${format(periodADate, 'yyyy-MM')}_vs_${format(periodBDate, 'yyyy-MM')}.pdf`;
