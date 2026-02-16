@@ -2,49 +2,52 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
-  build:
+  build-android:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout du repo
-      - name: Checkout repository
+      # 1️⃣ Récupérer le code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Installer Node.js (version >=22 pour Capacitor)
+      # 2️⃣ Configurer Node.js 22
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      # 3️⃣ Installer les dépendances avec gestion des peer deps
+      # 3️⃣ Installer les dépendances (résoudre conflits jspdf-autotable)
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
-      # 4️⃣ Build du projet
-      - name: Build Project
+      # 4️⃣ Build de l'application web
+      - name: Build Web App
         run: npm run build
 
-      # 5️⃣ Synchroniser Capacitor
+      # 5️⃣ Ajouter la plateforme Android si elle n'existe pas
+      - name: Add Android Platform
+        run: |
+          npx cap add android || echo "Android platform already added"
+
+      # 6️⃣ Sync Capacitor
       - name: Capacitor Sync
         run: npx cap sync
 
-      # 6️⃣ Ajouter la plateforme Android si nécessaire
-      - name: Add Android Platform
-        run: npx cap add android || echo "Android platform already added"
-
-      # 7️⃣ Construire l’APK (Release)
-      - name: Assemble APK
+      # 7️⃣ Build Android APK
+      - name: Build Android APK
         run: |
           cd android
-          ./gradlew assembleRelease
+          ./gradlew assembleDebug
+          cd ..
 
-      # 8️⃣ Récupérer l’APK et le mettre en artifact
+      # 8️⃣ Upload de l'APK comme artefact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: SmartTradeKit-APK
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
