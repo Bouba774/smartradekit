@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
@@ -355,41 +355,85 @@ const AppWrapper = () => {
   );
 };
 
+// Top-level error boundary to prevent black screen on crash
+class AppErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error?: Error }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  componentDidMount() {
+    window.dispatchEvent(new Event('app-ready'));
+  }
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error("App crash:", error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 32, color: '#fff', background: '#0a1929', minHeight: '100vh', fontFamily: 'sans-serif' }}>
+          <h2>Une erreur est survenue</h2>
+          <p style={{ color: '#aaa' }}>{this.state.error?.message}</p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{ marginTop: 16, padding: '8px 24px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+          >
+            Recharger
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const App = () => {
   useEffect(() => {
-    // Catch unhandled promise rejections to prevent black screen
     const handleRejection = (event: PromiseRejectionEvent) => {
       console.error("Unhandled promise rejection:", event.reason);
       event.preventDefault();
     };
     window.addEventListener('unhandledrejection', handleRejection);
-
-    // Signal to the initial loader that the app is ready
     window.dispatchEvent(new Event('app-ready'));
-
     return () => window.removeEventListener('unhandledrejection', handleRejection);
   }, []);
 
+  // Detect if running inside Capacitor (file:// protocol or capacitor://)
+  const isCapacitor = typeof window !== 'undefined' && (
+    window.location.protocol === 'file:' ||
+    window.location.protocol === 'capacitor:' ||
+    navigator.userAgent.includes('SmartTradeKit/Native')
+  );
+
+  const Router = isCapacitor ? HashRouter : BrowserRouter;
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <AuthProvider>
-          <LanguageProvider>
-            <SecurityProvider>
-              <AdminProvider>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  <BrowserRouter>
-                    <AppWrapper />
-                  </BrowserRouter>
-                </TooltipProvider>
-              </AdminProvider>
-            </SecurityProvider>
-          </LanguageProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <AuthProvider>
+            <LanguageProvider>
+              <SecurityProvider>
+                <AdminProvider>
+                  <TooltipProvider>
+                    <Toaster />
+                    <Sonner />
+                    <Router>
+                      <AppWrapper />
+                    </Router>
+                  </TooltipProvider>
+                </AdminProvider>
+              </SecurityProvider>
+            </LanguageProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </AppErrorBoundary>
   );
 };
 
