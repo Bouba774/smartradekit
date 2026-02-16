@@ -63,23 +63,41 @@ jobs:
             -validity 10000 \
             -dname "CN=Smart Trade Kit, OU=Mobile, O=SmartTradeKit, L=Paris, S=IDF, C=FR"
 
-      # Inject signing config into app/build.gradle
+      # Inject signing config into app/build.gradle using Python for reliability
       - name: Configure Signing
         run: |
-          cd android/app
-          # Add signingConfigs block before buildTypes
-          sed -i '/buildTypes {/i \
-              signingConfigs {\
-                  release {\
-                      storeFile file("../release.keystore")\
-                      storePassword "SmartTradeKit2026"\
-                      keyAlias "smarttradekit"\
-                      keyPassword "SmartTradeKit2026"\
-                  }\
-              }' build.gradle
-          # Add signingConfig to release buildType
-          sed -i '/release {/a \
-                      signingConfig signingConfigs.release' build.gradle
+          python3 << 'EOF'
+          import re
+          
+          with open("android/app/build.gradle", "r") as f:
+              content = f.read()
+          
+          # Insert signingConfigs block inside android { } before buildTypes
+          signing_block = """
+    signingConfigs {
+        release {
+            storeFile file("../release.keystore")
+            storePassword "SmartTradeKit2026"
+            keyAlias "smarttradekit"
+            keyPassword "SmartTradeKit2026"
+        }
+    }
+
+"""
+          content = content.replace("    buildTypes {", signing_block + "    buildTypes {")
+          
+          # Add signingConfig reference inside release buildType
+          content = content.replace(
+              "release {",
+              "release {\n            signingConfig signingConfigs.release",
+              1
+          )
+          
+          with open("android/app/build.gradle", "w") as f:
+              f.write(content)
+          
+          print("Signing config injected successfully")
+          EOF
 
       # Build signed APK
       - name: Build Release APK
