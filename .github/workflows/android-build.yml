@@ -15,39 +15,46 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Configurer Node.js 22
+      # 2️⃣ Installer Node.js 22 (Capacitor compatible)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      # 3️⃣ Installer les dépendances (résoudre conflits jspdf-autotable)
+      # 3️⃣ Installer Java 17 (LTS)
+      - name: Setup Java 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # 4️⃣ Installer les dépendances (résolution jspdf-autotable)
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
-      # 4️⃣ Build de l'application web
+      # 5️⃣ Build web app
       - name: Build Web App
         run: npm run build
 
-      # 5️⃣ Ajouter la plateforme Android si elle n'existe pas
+      # 6️⃣ Ajouter la plateforme Android si nécessaire
       - name: Add Android Platform
         run: |
           npx cap add android || echo "Android platform already added"
 
-      # 6️⃣ Sync Capacitor
+      # 7️⃣ Sync Capacitor
       - name: Capacitor Sync
         run: npx cap sync
 
-      # 7️⃣ Build Android APK
+      # 8️⃣ Build APK Release
       - name: Build Android APK
         run: |
           cd android
-          ./gradlew assembleDebug
+          ./gradlew assembleRelease
           cd ..
 
-      # 8️⃣ Upload de l'APK comme artefact
+      # 9️⃣ Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: SmartTradeKit-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
