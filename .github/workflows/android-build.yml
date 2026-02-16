@@ -7,39 +7,35 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-android:
+  build:
     runs-on: ubuntu-latest
-    env:
-      NODE_OPTIONS: "--max_old_space_size=4096"
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: 20
 
       - name: Install Dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
-      - name: Build PWA for Capacitor
+      - name: Build Project
         run: npm run build
+
+      - name: Capacitor Sync
+        run: npx cap sync
 
       - name: Add Android Platform
         run: npx cap add android || echo "Android platform already added"
 
-      - name: Sync Capacitor
-        run: npx cap sync android
+      - name: Build APK
+        run: npx cap copy android && npx cap open android
 
-      - name: Build Android APK (Gradle)
-        working-directory: android
-        run: |
-          ./gradlew assembleDebug
-
-      - name: Upload APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SmartTradeKit-debug.apk
+          name: smart-trade-kit-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
