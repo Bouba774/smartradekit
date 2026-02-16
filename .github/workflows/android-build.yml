@@ -14,11 +14,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Installer Node.js
+      # 2️⃣ Installer Node.js (version >=22 pour Capacitor)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       # 3️⃣ Installer les dépendances avec gestion des peer deps
       - name: Install Dependencies
