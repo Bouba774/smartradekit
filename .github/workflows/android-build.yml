@@ -13,53 +13,85 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      # Installer Node.js 22
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      # Installer Java 17
       - name: Setup Java 17
         uses: actions/setup-java@v3
         with:
           java-version: 17
           distribution: temurin
 
-      # Forcer Gradle à utiliser Java 17
-      - name: Force Gradle Java Home
-        run: echo "org.gradle.java.home=$JAVA_HOME" >> android/gradle.properties
-
-      # Installer dépendances npm
+      # Install npm dependencies (legacy-peer-deps for jspdf conflicts)
       - name: Install NPM Dependencies
         run: npm install --legacy-peer-deps
 
-      # Build web app
+      # Build web app into dist/
       - name: Build Web
         run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
-      # Ajouter la plateforme Android si non présente
+      # Add Android platform via Capacitor
       - name: Add Android Platform
         run: npx cap add android || echo "Android platform already exists"
 
-      # Sync Capacitor
+      # Sync web assets to native android project
       - name: Capacitor Sync
-        run: npx cap sync
+        run: npx cap sync android
 
-      # Générer APK Release signé (debug keystore automatique)
-      - name: Build Signed APK
+      # Force Gradle to use Java 17
+      - name: Configure Gradle
+        run: |
+          echo "org.gradle.java.home=$JAVA_HOME" >> android/gradle.properties
+          echo "android.useAndroidX=true" >> android/gradle.properties
+
+      # Generate debug keystore for signing
+      - name: Generate Keystore
         run: |
           cd android
-          # Création d'un keystore debug si absent
-          if [ ! -f debug.keystore ]; then
-            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=SmartTradeKit, OU=Dev, O=SmartTradeKit, L=City, S=State, C=FR"
-          fi
-          ./gradlew assembleRelease -PreleaseStoreFile=debug.keystore -PreleaseStorePassword=android -PreleaseKeyAlias=androiddebugkey -PreleaseKeyPassword=android
-          cd ..
+          keytool -genkey -v \
+            -keystore release.keystore \
+            -storepass SmartTradeKit2026 \
+            -alias smarttradekit \
+            -keypass SmartTradeKit2026 \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Smart Trade Kit, OU=Mobile, O=SmartTradeKit, L=Paris, S=IDF, C=FR"
 
-      # Upload APK généré pour téléchargement
+      # Inject signing config into app/build.gradle
+      - name: Configure Signing
+        run: |
+          cd android/app
+          # Add signingConfigs block before buildTypes
+          sed -i '/buildTypes {/i \
+              signingConfigs {\
+                  release {\
+                      storeFile file("../release.keystore")\
+                      storePassword "SmartTradeKit2026"\
+                      keyAlias "smarttradekit"\
+                      keyPassword "SmartTradeKit2026"\
+                  }\
+              }' build.gradle
+          # Add signingConfig to release buildType
+          sed -i '/release {/a \
+                      signingConfig signingConfigs.release' build.gradle
+
+      # Build signed APK
+      - name: Build Release APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      # Upload APK artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: SmartTradeKit-APK
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
