@@ -11,10 +11,7 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: false,
     backgroundColor: '#0a1929',
-    buildOptions: {
-      keystorePath: undefined,
-      keystoreAlias: undefined,
-    },
+    appendUserAgent: 'SmartTradeKit/Native',
   },
   plugins: {
     SplashScreen: {
@@ -23,10 +20,14 @@ const config: CapacitorConfig = {
       showSpinner: false,
       launchAutoHide: true,
       splashImmersive: true,
+      splashFullScreen: true,
     },
     StatusBar: {
       style: 'DARK',
       backgroundColor: '#0a1929',
+    },
+    Filesystem: {
+      directory: 'Documents',
     },
   },
 };
