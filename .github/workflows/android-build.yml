@@ -2,8 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -11,31 +10,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+      # 1️⃣ Checkout du repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      # 2️⃣ Installer Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
+      # 3️⃣ Installer les dépendances avec gestion des peer deps
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
+      # 4️⃣ Build du projet
       - name: Build Project
         run: npm run build
 
+      # 5️⃣ Synchroniser Capacitor
       - name: Capacitor Sync
         run: npx cap sync
 
+      # 6️⃣ Ajouter la plateforme Android si nécessaire
       - name: Add Android Platform
         run: npx cap add android || echo "Android platform already added"
 
-      - name: Build APK
-        run: npx cap copy android && npx cap open android
+      # 7️⃣ Construire l’APK (Release)
+      - name: Assemble APK
+        run: |
+          cd android
+          ./gradlew assembleRelease
 
-      - name: Upload APK Artifact
+      # 8️⃣ Récupérer l’APK et le mettre en artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: smart-trade-kit-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: SmartTradeKit-APK
+          path: android/app/build/outputs/apk/release/app-release.apk
