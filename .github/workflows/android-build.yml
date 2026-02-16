@@ -18,10 +18,10 @@ jobs:
         with:
           node-version: 22
 
-      - name: Setup Java 17
+      - name: Setup Java 21
         uses: actions/setup-java@v3
         with:
-          java-version: 17
+          java-version: 21
           distribution: temurin
 
       # Install npm dependencies (legacy-peer-deps for jspdf conflicts)
