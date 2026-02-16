@@ -63,37 +63,58 @@ jobs:
             -validity 10000 \
             -dname "CN=Smart Trade Kit, OU=Mobile, O=SmartTradeKit, L=Paris, S=IDF, C=FR"
 
-      # Inject signing config into app/build.gradle using Python for reliability
+      # Debug: show generated build.gradle
+      - name: Show build.gradle before patching
+        run: cat android/app/build.gradle
+
+      # Inject signing config into app/build.gradle
       - name: Configure Signing
         run: |
-          python3 << 'EOF'
+          python3 << 'PYEOF'
+          import re
+
           with open("android/app/build.gradle", "r") as f:
               content = f.read()
-          
-          # Insert signingConfigs block before buildTypes
-          signing_block = """    signingConfigs {
-        release {
-            storeFile file("../release.keystore")
-            storePassword "SmartTradeKit2026"
-            keyAlias "smarttradekit"
-            keyPassword "SmartTradeKit2026"
-        }
-    }
 
-"""
-          content = content.replace("    buildTypes {", signing_block + "    buildTypes {")
-          
-          # Add signingConfig inside buildTypes > release (NOT signingConfigs > release)
-          # Target "release {" that comes AFTER "buildTypes {"
-          bt_idx = content.index("buildTypes {")
-          release_idx = content.index("release {", bt_idx)
-          content = content[:release_idx] + "release {\n            signingConfig signingConfigs.release\n" + content[release_idx + len("release {"):]
-          
+          print("=== Original build.gradle ===")
+          print(content[:500])
+
+          # 1. Find buildTypes and inject signingConfigs block right before it
+          bt_match = re.search(r'^(\s*)buildTypes\s*\{', content, re.MULTILINE)
+          if not bt_match:
+              raise Exception("Could not find buildTypes block in build.gradle")
+
+          indent = bt_match.group(1)
+          signing_block = (
+              f"{indent}signingConfigs {{\n"
+              f"{indent}    release {{\n"
+              f"{indent}        storeFile file(\"../release.keystore\")\n"
+              f"{indent}        storePassword \"SmartTradeKit2026\"\n"
+              f"{indent}        keyAlias \"smarttradekit\"\n"
+              f"{indent}        keyPassword \"SmartTradeKit2026\"\n"
+              f"{indent}    }}\n"
+              f"{indent}}}\n\n"
+          )
+          content = content[:bt_match.start()] + signing_block + content[bt_match.start():]
+
+          # 2. Find the release block INSIDE buildTypes and add signingConfig
+          # Re-search since content changed
+          bt_match2 = re.search(r'buildTypes\s*\{', content)
+          bt_pos = bt_match2.end()
+          release_match = re.search(r'(release\s*\{)', content[bt_pos:])
+          if not release_match:
+              raise Exception("Could not find release block inside buildTypes")
+
+          insert_pos = bt_pos + release_match.end()
+          content = content[:insert_pos] + "\n" + indent + "    signingConfig signingConfigs.release" + content[insert_pos:]
+
           with open("android/app/build.gradle", "w") as f:
               f.write(content)
-          
-          print("Signing config injected successfully")
-          EOF
+
+          print("=== Patched build.gradle ===")
+          print(content[:800])
+          print("\nSigning config injected successfully!")
+          PYEOF
 
       # Build signed APK
       - name: Build Release APK
