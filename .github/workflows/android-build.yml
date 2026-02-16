@@ -67,14 +67,11 @@ jobs:
       - name: Configure Signing
         run: |
           python3 << 'EOF'
-          import re
-          
           with open("android/app/build.gradle", "r") as f:
               content = f.read()
           
-          # Insert signingConfigs block inside android { } before buildTypes
-          signing_block = """
-    signingConfigs {
+          # Insert signingConfigs block before buildTypes
+          signing_block = """    signingConfigs {
         release {
             storeFile file("../release.keystore")
             storePassword "SmartTradeKit2026"
@@ -86,12 +83,11 @@ jobs:
 """
           content = content.replace("    buildTypes {", signing_block + "    buildTypes {")
           
-          # Add signingConfig reference inside release buildType
-          content = content.replace(
-              "release {",
-              "release {\n            signingConfig signingConfigs.release",
-              1
-          )
+          # Add signingConfig inside buildTypes > release (NOT signingConfigs > release)
+          # Target "release {" that comes AFTER "buildTypes {"
+          bt_idx = content.index("buildTypes {")
+          release_idx = content.index("release {", bt_idx)
+          content = content[:release_idx] + "release {\n            signingConfig signingConfigs.release\n" + content[release_idx + len("release {"):]
           
           with open("android/app/build.gradle", "w") as f:
               f.write(content)
