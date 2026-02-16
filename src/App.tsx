@@ -357,8 +357,17 @@ const AppWrapper = () => {
 
 const App = () => {
   useEffect(() => {
+    // Catch unhandled promise rejections to prevent black screen
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      console.error("Unhandled promise rejection:", event.reason);
+      event.preventDefault();
+    };
+    window.addEventListener('unhandledrejection', handleRejection);
+
     // Signal to the initial loader that the app is ready
     window.dispatchEvent(new Event('app-ready'));
+
+    return () => window.removeEventListener('unhandledrejection', handleRejection);
   }, []);
 
   return (
