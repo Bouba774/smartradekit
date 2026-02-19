@@ -18,9 +18,9 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 class MainActivity : AppCompatActivity() {
 
     companion object {
-        private const val WEB_URL = "https://smarttradetracker.lovable.app"
+        private const val WEB_URL = "https://smartradekit.lovable.app"
         private val ALLOWED_HOSTS = listOf(
-            "smarttradetracker.lovable.app",
+            "smartradekit.lovable.app",
             "lovable.app",
             "supabase.co",
             "supabase.com"
