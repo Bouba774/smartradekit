@@ -246,11 +246,8 @@ const Dashboard: React.FC = () => {
   );
 
   // Section header component
-  const SectionHeader = ({ icon: Icon, title, delay = 0 }: { icon: any; title: string; delay?: number }) => (
-    <div 
-      className="flex items-center gap-2 mb-4 animate-fade-in" 
-      style={{ animationDelay: `${delay}ms` }}
-    >
+  const SectionHeader = ({ icon: Icon, title }: { icon: any; title: string; delay?: number }) => (
+    <div className="flex items-center gap-2 mb-4">
       <div className="p-2 rounded-lg bg-primary/20 border border-primary/30">
         <Icon className="w-5 h-5 text-primary" />
       </div>
@@ -268,7 +265,7 @@ const Dashboard: React.FC = () => {
       />
 
       {/* Welcome Message */}
-      <div className="glass-card p-4 sm:p-6 animate-fade-in bg-gradient-to-r from-primary/10 to-profit/10 border-primary/30">
+      <div className="glass-card p-4 sm:p-6 bg-gradient-to-r from-primary/10 to-profit/10 border-primary/30">
         <h1 className="font-display text-lg sm:text-2xl md:text-3xl font-bold text-foreground truncate">
           {t('welcome')} {userNickname} 👋
         </h1>
@@ -277,7 +274,7 @@ const Dashboard: React.FC = () => {
       {/* Capital not defined notice */}
       {!capitalInfo.capitalDefined && trades.length > 0 && (
         <div 
-          className="glass-card p-4 flex items-center gap-3 border-yellow-500/30 bg-yellow-500/5 cursor-pointer hover:border-yellow-500/50 transition-colors animate-fade-in"
+          className="glass-card p-4 flex items-center gap-3 border-yellow-500/30 bg-yellow-500/5 cursor-pointer hover:border-yellow-500/50 transition-colors"
           onClick={() => setCapitalPromptOpen(true)}
         >
           <Wallet className="w-5 h-5 text-yellow-500 shrink-0" />
@@ -543,8 +540,7 @@ const Dashboard: React.FC = () => {
           />
           {!stats.capitalDefined && (
             <div 
-              className="glass-card p-3 flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary/50 transition-colors animate-fade-in"
-              style={{ animationDelay: '1050ms' }}
+              className="glass-card p-3 flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary/50 transition-colors"
               onClick={() => setCapitalPromptOpen(true)}
             >
               <Info className="w-5 h-5 text-yellow-500 mb-1" />

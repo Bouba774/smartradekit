@@ -102,19 +102,13 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   const { isLocked, isPinConfigured, isLoading: securityLoading } = useSecurity();
 
   if (loading || securityLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-primary">Loading...</div>
-      </div>
-    );
+    return null; // Splash screen is still visible during loading
   }
 
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
 
-  // If PIN is configured and app is locked, don't render protected content
-  // The lock screen will be shown by AppContent
   if (isPinConfigured && isLocked) {
     return null;
   }
@@ -238,13 +232,15 @@ const AppContent = () => {
     clearLockCooldown();
   }, [clearLockCooldown]);
 
-  // Show loading state
+  // Hide splash screen once security state is resolved
+  useEffect(() => {
+    if (!securityLoading) {
+      window.dispatchEvent(new Event('app-ready'));
+    }
+  }, [securityLoading]);
+
   if (securityLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-primary">Loading...</div>
-      </div>
-    );
+    return null; // Keep splash screen visible
   }
 
   // Show lock screen if locked and user is authenticated with PIN configured
