@@ -89,16 +89,16 @@ jobs:
                   if android_match:
                       # Insert right after android {
                       insert_pos = android_match.end()
-                      signing_block = """
-    signingConfigs {
-        release {
-            storeFile file("../release.keystore")
-            storePassword "SmartTradeKit2026"
-            keyAlias "smarttradekit"
-            keyPassword "SmartTradeKit2026"
-        }
-    }
-"""
+                      signing_block = (
+                          "\n    signingConfigs {\n"
+                          "        release {\n"
+                          "            storeFile file(\"../release.keystore\")\n"
+                          "            storePassword \"SmartTradeKit2026\"\n"
+                          "            keyAlias \"smarttradekit\"\n"
+                          "            keyPassword \"SmartTradeKit2026\"\n"
+                          "        }\n"
+                          "    }\n"
+                      )
                       content = content[:insert_pos] + signing_block + content[insert_pos:]
                   else:
                       raise Exception("Could not find android block in build.gradle")
