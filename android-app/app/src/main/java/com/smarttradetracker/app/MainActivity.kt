@@ -78,11 +78,6 @@ class MainActivity : AppCompatActivity() {
             allowFileAccess = false
             allowContentAccess = false
             mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
-            safeBrowsingEnabled = true
-            
-            // Performance optimizations
-            setRenderPriority(WebSettings.RenderPriority.HIGH)
-            setEnableSmoothTransition(true)
         }
 
         webView.webViewClient = SecureWebViewClient()
@@ -142,9 +137,8 @@ class MainActivity : AppCompatActivity() {
             val url = request?.url?.toString() ?: return false
             
             return if (isAllowedHost(url)) {
-                false // Let WebView handle it
+                false
             } else {
-                // Open external links in browser
                 try {
                     startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                 } catch (e: Exception) {
@@ -173,7 +167,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: android.net.http.SslError?) {
-            // Reject invalid SSL certificates for security
             handler?.cancel()
             Toast.makeText(this@MainActivity, R.string.ssl_error, Toast.LENGTH_LONG).show()
         }
@@ -187,7 +180,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
-            // Log console messages for debugging (in debug builds only)
             return super.onConsoleMessage(consoleMessage)
         }
     }

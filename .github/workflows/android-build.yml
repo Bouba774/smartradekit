@@ -18,38 +18,32 @@ jobs:
         with:
           node-version: 22
 
-      - name: Setup Java 21
-        uses: actions/setup-java@v3
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
         with:
-          java-version: 21
+          java-version: 17
           distribution: temurin
 
-      # Install npm dependencies (legacy-peer-deps for jspdf conflicts)
       - name: Install NPM Dependencies
         run: npm install --legacy-peer-deps
 
-      # Build web app into dist/
       - name: Build Web
         run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
-      # Add Android platform via Capacitor
       - name: Add Android Platform
         run: npx cap add android || echo "Android platform already exists"
 
-      # Sync web assets to native android project
       - name: Capacitor Sync
         run: npx cap sync android
 
-      # Force Gradle to use Java 17
       - name: Configure Gradle
         run: |
           echo "org.gradle.java.home=$JAVA_HOME" >> android/gradle.properties
           echo "android.useAndroidX=true" >> android/gradle.properties
 
-      # Generate debug keystore for signing
       - name: Generate Keystore
         run: |
           cd android
@@ -63,11 +57,9 @@ jobs:
             -validity 10000 \
             -dname "CN=Smart Trade Kit, OU=Mobile, O=SmartTradeKit, L=Paris, S=IDF, C=FR"
 
-      # Debug: show generated build.gradle
-      - name: Show build.gradle before patching
+      - name: Debug - Show build.gradle
         run: cat android/app/build.gradle
 
-      # Inject signing config into app/build.gradle
       - name: Configure Signing
         run: |
           python3 << 'PYEOF'
@@ -76,54 +68,84 @@ jobs:
           with open("android/app/build.gradle", "r") as f:
               content = f.read()
 
-          print("=== Original build.gradle ===")
-          print(content[:500])
+          print("=== Original build.gradle (first 600 chars) ===")
+          print(content[:600])
 
-          # 1. Find buildTypes and inject signingConfigs block right before it
-          bt_match = re.search(r'^(\s*)buildTypes\s*\{', content, re.MULTILINE)
-          if not bt_match:
-              raise Exception("Could not find buildTypes block in build.gradle")
+          # Check if signingConfigs already exists
+          if "signingConfigs" in content:
+              print("signingConfigs already present, skipping injection.")
+          else:
+              # Find the android { block and inject signingConfigs inside it
+              # Strategy: insert signingConfigs block right before buildTypes
+              bt_match = re.search(r'^(\s*)buildTypes\s*\{', content, re.MULTILINE)
+              if not bt_match:
+                  # Try alternative format (Capacitor 8 sometimes uses different indentation)
+                  bt_match = re.search(r'(\s+)buildTypes\s*\{', content)
+              
+              if not bt_match:
+                  print("WARNING: Could not find buildTypes block. Trying alternative approach...")
+                  # Fallback: find 'android {' and append signingConfigs at the end before closing
+                  android_match = re.search(r'android\s*\{', content)
+                  if android_match:
+                      # Insert right after android {
+                      insert_pos = android_match.end()
+                      signing_block = """
+    signingConfigs {
+        release {
+            storeFile file("../release.keystore")
+            storePassword "SmartTradeKit2026"
+            keyAlias "smarttradekit"
+            keyPassword "SmartTradeKit2026"
+        }
+    }
+"""
+                      content = content[:insert_pos] + signing_block + content[insert_pos:]
+                  else:
+                      raise Exception("Could not find android block in build.gradle")
+              else:
+                  indent = bt_match.group(1)
+                  signing_block = (
+                      f"{indent}signingConfigs {{\n"
+                      f"{indent}    release {{\n"
+                      f"{indent}        storeFile file(\"../release.keystore\")\n"
+                      f"{indent}        storePassword \"SmartTradeKit2026\"\n"
+                      f"{indent}        keyAlias \"smarttradekit\"\n"
+                      f"{indent}        keyPassword \"SmartTradeKit2026\"\n"
+                      f"{indent}    }}\n"
+                      f"{indent}}}\n\n"
+                  )
+                  content = content[:bt_match.start()] + signing_block + content[bt_match.start():]
 
-          indent = bt_match.group(1)
-          signing_block = (
-              f"{indent}signingConfigs {{\n"
-              f"{indent}    release {{\n"
-              f"{indent}        storeFile file(\"../release.keystore\")\n"
-              f"{indent}        storePassword \"SmartTradeKit2026\"\n"
-              f"{indent}        keyAlias \"smarttradekit\"\n"
-              f"{indent}        keyPassword \"SmartTradeKit2026\"\n"
-              f"{indent}    }}\n"
-              f"{indent}}}\n\n"
-          )
-          content = content[:bt_match.start()] + signing_block + content[bt_match.start():]
-
-          # 2. Find the release block INSIDE buildTypes and add signingConfig
-          # Re-search since content changed
-          bt_match2 = re.search(r'buildTypes\s*\{', content)
-          bt_pos = bt_match2.end()
-          release_match = re.search(r'(release\s*\{)', content[bt_pos:])
-          if not release_match:
-              raise Exception("Could not find release block inside buildTypes")
-
-          insert_pos = bt_pos + release_match.end()
-          content = content[:insert_pos] + "\n" + indent + "    signingConfig signingConfigs.release" + content[insert_pos:]
+          # Now add signingConfig to the release buildType if not already present
+          if "signingConfig signingConfigs.release" not in content:
+              # Find release block inside buildTypes
+              bt_match2 = re.search(r'buildTypes\s*\{', content)
+              if bt_match2:
+                  bt_pos = bt_match2.end()
+                  release_match = re.search(r'(release\s*\{)', content[bt_pos:])
+                  if release_match:
+                      insert_pos = bt_pos + release_match.end()
+                      content = content[:insert_pos] + "\n            signingConfig signingConfigs.release" + content[insert_pos:]
+                      print("signingConfig added to release buildType.")
+                  else:
+                      print("WARNING: Could not find release block inside buildTypes")
+              else:
+                  print("WARNING: Could not find buildTypes block for signingConfig injection")
 
           with open("android/app/build.gradle", "w") as f:
               f.write(content)
 
-          print("=== Patched build.gradle ===")
-          print(content[:800])
-          print("\nSigning config injected successfully!")
+          print("\n=== Patched build.gradle (first 1000 chars) ===")
+          print(content[:1000])
+          print("\nSigning config processing complete!")
           PYEOF
 
-      # Build signed APK
       - name: Build Release APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleRelease --no-daemon --stacktrace
 
-      # Upload APK artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
