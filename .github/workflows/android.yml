@@ -1,4 +1,4 @@
-name: Build Smart Trade Kit APK (Signed)
+name: Build Smart Trade Kit APK
 
 on:
   push:
@@ -6,49 +6,45 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-android:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Node (pour Vite / Capacitor)
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      # ✅ FIX PRINCIPAL : Java 21
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
 
-      - name: Install NPM Dependencies
+      - name: Install dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Build Web
+      - name: Build web app
         run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
-      - name: Add Android Platform
-        run: npx cap add android || echo "Android platform already exists"
+      - name: Add Android platform
+        run: npx cap add android || echo "Android already added"
 
-      - name: Capacitor Sync
+      - name: Sync Capacitor
         run: npx cap sync android
 
       - name: Configure Gradle
         run: |
-          echo "org.gradle.java.home=$JAVA_HOME" >> android/gradle.properties
-          echo "android.useAndroidX=true" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx4096m" >> android/gradle.properties
+          echo "android.useAndroidX=true" >> android/gradle.properties
 
-      # Génération du keystore
-      - name: Generate Keystore
+      - name: Generate keystore
         run: |
           cd android
           keytool -genkey -v \
@@ -61,63 +57,14 @@ jobs:
             -validity 10000 \
             -dname "CN=Smart Trade Kit, OU=Mobile, O=SmartTradeKit, L=Paris, S=IDF, C=FR"
 
-      # Patch automatique du build.gradle pour signer l’APK
-      - name: Configure Signing
-        run: |
-          python3 << 'PYEOF'
-          import re
-
-          path = "android/app/build.gradle"
-
-          with open(path, "r") as f:
-              content = f.read()
-
-          if "signingConfigs" not in content:
-
-              signing = """
-      signingConfigs {
-          release {
-              storeFile file("../release.keystore")
-              storePassword "SmartTradeKit2026"
-              keyAlias "smarttradekit"
-              keyPassword "SmartTradeKit2026"
-          }
-      }
-              """
-
-              content = re.sub(
-                  r'android\s*\{',
-                  'android {' + signing,
-                  content,
-                  count=1
-              )
-
-          if "signingConfig signingConfigs.release" not in content:
-
-              content = re.sub(
-                  r'release\s*\{',
-                  'release {\n            signingConfig signingConfigs.release',
-                  content,
-                  count=1
-              )
-
-          with open(path, "w") as f:
-              f.write(content)
-
-          print("Signing configuration injected successfully")
-          PYEOF
-
-      # Compilation APK
-      - name: Build Release APK
+      - name: Build APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon --stacktrace
+          ./gradlew assembleRelease
 
-      # Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: SmartTradeKit-APK
           path: android/app/build/outputs/apk/release/*.apk
-          if-no-files-found: error
