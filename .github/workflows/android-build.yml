@@ -120,4 +120,4 @@ jobs:
         with:
           name: SmartTradeKit-APK
           path: android/app/build/outputs/apk/release/*.apk
-          if-no-files-found: erro
+          if-no-files-found: error
