@@ -58,16 +58,20 @@ import {
   ChevronsUpDown,
   Sliders,
   Wallet,
+  Bell,
+  BellOff,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { CURRENCIES, getCurrencyLabel } from '@/data/currencies';
 import { SecuritySettings } from '@/components/SecuritySettings';
 import CapitalSettingsCard from '@/components/CapitalSettingsCard';
+import { requestNotificationPermission, getNotificationPermission } from '@/hooks/useSmartNotifications';
 
 const Settings: React.FC = () => {
   const { language, setLanguage, t, languages } = useLanguage();
   const { theme, setTheme } = useTheme();
+  const [notifPermission, setNotifPermission] = React.useState(getNotificationPermission);
   const { triggerFeedback } = useFeedback();
   const { user } = useAuth();
   const tradeFocus = useTradeFocus();
@@ -487,163 +491,4 @@ const Settings: React.FC = () => {
                   {t('animations')}
                 </Label>
                 <HelpTooltip tooltip={settingsTooltips.animations} size="sm" />
-              </div>
-              <Switch
-                id="animations"
-                checked={settings.animations}
-                onCheckedChange={(checked) => handleUpdateSetting('animations', checked)}
-              />
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* Focus Mode */}
-        <AccordionItem value="focus" className="glass-card border-primary/20 rounded-lg overflow-hidden">
-          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-primary/5">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Focus className="w-4 h-4 text-primary" />
-              </div>
-              <span className="font-display font-semibold text-foreground">
-                {language === 'fr' ? 'Mode Focus' : 'Focus Mode'}
-              </span>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4 space-y-4">
-            {/* Enable Toggle */}
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Label className="text-foreground text-sm">
-                    {language === 'fr' ? 'Activer le mode focus' : 'Enable focus mode'}
-                  </Label>
-                  <HelpTooltip tooltip={settingsTooltips.focusMode} size="sm" />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {language === 'fr' 
-                    ? 'Cache les statistiques et montre uniquement votre plan' 
-                    : 'Hides statistics and shows only your plan'}
-                </p>
-              </div>
-              <Switch
-                checked={tradeFocus.isEnabled}
-                onCheckedChange={() => {
-                  tradeFocus.toggle();
-                  triggerFeedback('click');
-                  toast.success(tradeFocus.isEnabled 
-                    ? (language === 'fr' ? 'Mode Focus désactivé' : 'Focus Mode disabled')
-                    : (language === 'fr' ? 'Mode Focus activé' : 'Focus Mode enabled'));
-                }}
-              />
-            </div>
-
-            {/* Trading Plan */}
-            <div className="space-y-2">
-              <Label className="text-sm">{language === 'fr' ? 'Plan de trading' : 'Trading Plan'}</Label>
-              <Textarea
-                value={tradeFocus.tradingPlan}
-                onChange={(e) => tradeFocus.setTradingPlan(e.target.value)}
-                placeholder={language === 'fr' 
-                  ? 'Décrivez votre plan de trading...' 
-                  : 'Describe your trading plan...'}
-                rows={3}
-                className="resize-none"
-              />
-            </div>
-            
-            {/* Daily Goal */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2 text-sm">
-                <Target className="w-4 h-4 text-primary" />
-                {language === 'fr' ? 'Objectif du jour' : 'Daily Goal'}
-              </Label>
-              <Input
-                value={tradeFocus.dailyGoal}
-                onChange={(e) => tradeFocus.setDailyGoal(e.target.value)}
-                placeholder={language === 'fr' 
-                  ? 'Ex: 2 trades gagnants, +50$' 
-                  : 'Ex: 2 winning trades, +$50'}
-              />
-            </div>
-            
-            {/* Limits */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className="text-sm">{language === 'fr' ? 'Max trades/jour' : 'Max trades/day'}</Label>
-                <Input
-                  type="number"
-                  value={tradeFocus.maxTrades}
-                  onChange={(e) => tradeFocus.setMaxTrades(Number(e.target.value))}
-                  min={1}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm">{language === 'fr' ? 'Perte max ($)' : 'Max loss ($)'}</Label>
-                <Input
-                  type="number"
-                  value={tradeFocus.maxLoss}
-                  onChange={(e) => tradeFocus.setMaxLoss(Number(e.target.value))}
-                  min={0}
-                />
-              </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* Security */}
-        <AccordionItem value="security" className="glass-card border-primary/20 rounded-lg overflow-hidden">
-          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-primary/5">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Shield className="w-4 h-4 text-primary" />
-              </div>
-              <span className="font-display font-semibold text-foreground">
-                {language === 'fr' ? 'Sécurité' : 'Security'}
-              </span>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <SecuritySettings />
-            
-            {/* Link to Privacy Center */}
-            <div className="mt-4 p-4 rounded-lg bg-secondary/30 border border-border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium text-foreground text-sm">
-                    {language === 'fr' ? 'Centre de confidentialité' : 'Privacy Center'}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {language === 'fr' 
-                      ? 'Gérez vos données et consentements' 
-                      : 'Manage your data and consents'}
-                  </p>
-                </div>
-                <a
-                  href="/privacy-center"
-                  className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors text-sm"
-                >
-                  <Shield className="w-3 h-3" />
-                  {language === 'fr' ? 'Accéder' : 'Access'}
-                </a>
-              </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-
-      {/* Reset Button */}
-      <div className="pt-2">
-        <Button
-          variant="outline"
-          className="w-full gap-3 h-11"
-          onClick={handleReset}
-        >
-          <RotateCcw className="w-4 h-4" />
-          {t('resetDisplay')}
-        </Button>
-      </div>
-    </div>
-  );
-};
-
-export default Settings;
+              </d
