@@ -488,4 +488,159 @@ const PsychologicalAnalysis: React.FC = () => {
 
             {/* Trader Profile */}
             <div className="glass-card p-6 animate-fade-in" style={{ animationDelay: '100ms' }}>
-              <div className="flex 
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <User className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="font-display font-semibold text-foreground">
+                  {pt.traderProfile}
+                </h3>
+              </div>
+              {traderProfile ? (
+                <div className="space-y-3">
+                  <div className="text-center mb-4">
+                    <span className="text-3xl">{traderProfile.emoji}</span>
+                    <h4 className="font-semibold text-foreground mt-2">{traderProfile.title}</h4>
+                    <p className="text-sm text-muted-foreground mt-1">{traderProfile.description}</p>
+                  </div>
+                  <div className="space-y-2">
+                    {traderProfile.strengths.map((s: string, i: number) => (
+                      <div key={i} className="flex items-center gap-2 text-sm">
+                        <CheckCircle2 className="w-4 h-4 text-profit" />
+                        <span className="text-foreground">{s}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="space-y-2 mt-2">
+                    {traderProfile.weaknesses.map((w: string, i: number) => (
+                      <div key={i} className="flex items-center gap-2 text-sm">
+                        <AlertTriangle className="w-4 h-4 text-loss" />
+                        <span className="text-foreground">{w}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-center text-sm text-muted-foreground">
+                  {language === 'fr' ? 'Ajoutez plus de trades pour obtenir votre profil' : 'Add more trades to get your profile'}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Emotion Distribution */}
+          <div className="glass-card p-6 animate-fade-in">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                <Heart className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="font-display font-semibold text-foreground">
+                {pt.emotionDistribution}
+              </h3>
+            </div>
+            {emotionDistribution.length > 0 ? (
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={emotionDistribution} cx="50%" cy="50%" outerRadius={100} dataKey="value" nameKey="name" label={({ name, value }) => `${name} ${value}%`}>
+                      {emotionDistribution.map((entry, index) => (
+                        <Cell key={index} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="text-center text-sm text-muted-foreground py-8">
+                {language === 'fr' ? 'Aucune donnée' : 'No data'}
+              </p>
+            )}
+          </div>
+
+          {/* Emotion Performance */}
+          <div className="glass-card p-6 animate-fade-in">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                <Brain className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="font-display font-semibold text-foreground">
+                {pt.emotionPerformance}
+              </h3>
+            </div>
+            {emotionStats.length > 0 ? (
+              <div className="space-y-3">
+                {emotionStats.slice(0, 8).map((stat) => (
+                  <div key={stat.emotion} className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-foreground font-medium">{stat.emotion}</span>
+                      <span className="text-muted-foreground">{stat.trades} trades</span>
+                    </div>
+                    <div className="flex gap-1 h-2">
+                      <div className="bg-profit/60 rounded-l" style={{ width: `${stat.wins}%` }} />
+                      <div className="bg-loss/60 rounded-r" style={{ width: `${stat.losses}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-sm text-muted-foreground py-8">
+                {language === 'fr' ? 'Aucune donnée' : 'No data'}
+              </p>
+            )}
+          </div>
+
+          {/* Emotional Memory */}
+          {emotionalMemory && emotionalMemory.patterns.length > 0 && (
+            <div className="glass-card p-6 animate-fade-in">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <Lightbulb className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="font-display font-semibold text-foreground">
+                  {pt.emotionalMemory}
+                </h3>
+              </div>
+              <div className="space-y-3">
+                {emotionalMemory.patterns.map((pattern, idx) => (
+                  <div key={idx} className="p-3 rounded-lg bg-muted/30">
+                    <p className="text-sm text-foreground">{pattern.insight}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Weekly Emotion Trends */}
+          {weeklyEmotionsByType.chartData.length > 0 && (
+            <div className="glass-card p-6 animate-fade-in">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="font-display font-semibold text-foreground">
+                  {pt.weeklyEmotions}
+                </h3>
+              </div>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={weeklyEmotionsByType.chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="day" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
+                    <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
+                    <Tooltip />
+                    {weeklyEmotionsByType.emotions.map((emotion, idx) => (
+                      <Bar key={emotion} dataKey={emotion} stackId="a" fill={`hsl(${(idx * 47 + 200) % 360}, 70%, 55%)`} />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+export default PsychologicalAnalysis;

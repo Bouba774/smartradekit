@@ -491,4 +491,51 @@ const Settings: React.FC = () => {
                   {t('animations')}
                 </Label>
                 <HelpTooltip tooltip={settingsTooltips.animations} size="sm" />
-              </d
+              </div>
+              <Switch
+                id="animations"
+                checked={settings.animations}
+                onCheckedChange={(checked) => handleUpdateSetting('animations', checked)}
+              />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Security */}
+        <AccordionItem value="security" className="glass-card border-primary/20 rounded-lg overflow-hidden">
+          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-primary/5">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Shield className="w-4 h-4 text-primary" />
+              </div>
+              <span className="font-display font-semibold text-foreground">
+                {language === 'fr' ? 'Sécurité' : 'Security'}
+              </span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <SecuritySettings />
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
+      {/* Reset */}
+      <div className="glass-card p-4 border-loss/20">
+        <Button
+          variant="outline"
+          className="w-full border-loss/30 text-loss hover:bg-loss/10"
+          onClick={() => {
+            resetSettings();
+            triggerFeedback('click');
+            toast.success(language === 'fr' ? 'Paramètres réinitialisés' : 'Settings reset');
+          }}
+        >
+          <RotateCcw className="w-4 h-4 mr-2" />
+          {language === 'fr' ? 'Réinitialiser les paramètres' : 'Reset Settings'}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default Settings;

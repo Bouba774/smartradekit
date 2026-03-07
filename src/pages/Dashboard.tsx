@@ -532,4 +532,16 @@ const Dashboard: React.FC = () => {
             icon={stats.isInDrawdown ? AlertTriangle : TrendingUp}
             variant={stats.isInDrawdown 
               ? (stats.currentDrawdownPercent > 15 ? 'loss' : 'neutral') 
-          
+              : 'profit'}
+            delay={1060}
+            tooltip={language === 'fr' 
+              ? 'Perte actuelle depuis le plus haut capital. Indicateur de risque en temps réel.' 
+              : 'Current loss from peak equity. Real-time risk indicator.'}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
