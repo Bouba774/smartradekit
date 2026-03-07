@@ -637,8 +637,8 @@ const PsychologicalAnalysis: React.FC = () => {
                     <XAxis dataKey="day" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
                     <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
                     <Tooltip />
-                    {weeklyEmotionsByType.emotions.map((emotion, idx) => (
-                      <Bar key={emotion} dataKey={emotion} stackId="a" fill={`hsl(${((idx as number) * 47 + 200) % 360}, 70%, 55%)`} />
+                    {weeklyEmotionsByType.emotions.map((emotion) => (
+                      <Bar key={emotion.name} dataKey={emotion.name} stackId="a" fill={emotion.color} />
                     ))}
                   </BarChart>
                 </ResponsiveContainer>
