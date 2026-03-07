@@ -473,7 +473,7 @@ const Reports: React.FC = () => {
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">{language === 'fr' ? 'Trades' : 'Trades'}</span>
-                        <span className="font-medium text-foreground">{session.count}</span>
+                        <span className="font-medium text-foreground">{session.trades}</span>
                       </div>
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">Win Rate</span>
@@ -483,8 +483,8 @@ const Reports: React.FC = () => {
                       </div>
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">P/L</span>
-                        <span className={cn("font-medium", session.totalPL >= 0 ? "text-profit" : "text-loss")}>
-                          {session.totalPL >= 0 ? '+' : ''}{formatAmount(session.totalPL)}
+                        <span className={cn("font-medium", session.pnl >= 0 ? "text-profit" : "text-loss")}>
+                          {session.pnl >= 0 ? '+' : ''}{formatAmount(session.pnl)}
                         </span>
                       </div>
                     </div>

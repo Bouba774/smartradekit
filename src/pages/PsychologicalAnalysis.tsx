@@ -499,26 +499,34 @@ const PsychologicalAnalysis: React.FC = () => {
               {traderProfile ? (
                 <div className="space-y-3">
                   <div className="text-center mb-4">
-                    <span className="text-3xl">{traderProfile.emoji}</span>
-                    <h4 className="font-semibold text-foreground mt-2">{traderProfile.title}</h4>
+                    <span className="text-3xl">{traderProfile.icon}</span>
+                    <h4 className="font-semibold text-foreground mt-2">{traderProfile.label}</h4>
                     <p className="text-sm text-muted-foreground mt-1">{traderProfile.description}</p>
                   </div>
                   <div className="space-y-2">
-                    {traderProfile.strengths.map((s: string, i: number) => (
-                      <div key={i} className="flex items-center gap-2 text-sm">
-                        <CheckCircle2 className="w-4 h-4 text-profit" />
-                        <span className="text-foreground">{s}</span>
+                    {traderProfile.characteristics.map((c, i) => (
+                      <div key={i} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-foreground">{c.name}</span>
+                          <span className="text-muted-foreground">{c.value}%</span>
+                        </div>
+                        <Progress value={c.value} className="h-1.5" />
                       </div>
                     ))}
                   </div>
-                  <div className="space-y-2 mt-2">
-                    {traderProfile.weaknesses.map((w: string, i: number) => (
-                      <div key={i} className="flex items-center gap-2 text-sm">
-                        <AlertTriangle className="w-4 h-4 text-loss" />
-                        <span className="text-foreground">{w}</span>
-                      </div>
-                    ))}
-                  </div>
+                  {traderProfile.advice.length > 0 && (
+                    <div className="space-y-2 mt-3">
+                      <span className="text-xs text-muted-foreground font-medium">
+                        {language === 'fr' ? 'Conseils' : 'Advice'}
+                      </span>
+                      {traderProfile.advice.map((a, i) => (
+                        <div key={i} className="flex items-start gap-2 text-sm">
+                          <Lightbulb className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                          <span className="text-foreground">{a}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="text-center text-sm text-muted-foreground">
