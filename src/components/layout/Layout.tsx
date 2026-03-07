@@ -4,6 +4,7 @@ import Footer from './Footer';
 import NavigationProgress from '@/components/NavigationProgress';
 import PageTransition from '@/components/PageTransition';
 import BottomNavigation from './BottomNavigation';
+import OfflineBanner from '@/components/OfflineBanner';
 import { useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -23,6 +24,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <SidebarProvider defaultOpen={false}>
+      <OfflineBanner />
       <NavigationProgress />
       <div className="min-h-screen flex w-full bg-background relative overflow-x-hidden">
         {/* Ambient glow effects - reduced on mobile for performance */}
