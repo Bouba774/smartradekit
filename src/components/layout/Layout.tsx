@@ -9,6 +9,9 @@ import { useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAutoPrefetch } from '@/hooks/useDataPrefetch';
+import { useTrades } from '@/hooks/useTrades';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useSmartNotifications, getNotificationPermission } from '@/hooks/useSmartNotifications';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -21,6 +24,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   
   // Auto-prefetch data for faster navigation
   useAutoPrefetch();
+
+  // Notifications intelligentes (tourne en arrière-plan sur toutes les pages)
+  const { trades } = useTrades();
+  const { language } = useLanguage();
+  useSmartNotifications({
+    trades,
+    language,
+    enabled: getNotificationPermission() === 'granted',
+  });
 
   return (
     <SidebarProvider defaultOpen={false}>
