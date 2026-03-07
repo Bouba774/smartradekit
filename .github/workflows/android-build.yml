@@ -1,0 +1,58 @@
+name: Build Smart Trade Kit APK (Signed)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+
+      - name: Configure Gradle
+        run: |
+          echo "org.gradle.jvmargs=-Xmx4096m" >> android-app/gradle.properties
+          echo "android.useAndroidX=true" >> android-app/gradle.properties
+
+      - name: Generate Keystore + keystore.properties
+        run: |
+          cd android-app
+          keytool -genkey -v \
+            -keystore release.keystore \
+            -storepass SmartTradeKit2026 \
+            -alias smarttradekit \
+            -keypass SmartTradeKit2026 \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Smart Trade Kit, OU=Mobile, O=SmartTradeKit, L=Paris, S=IDF, C=FR"
+
+          cat > keystore.properties << 'EOF'
+          storeFile=../release.keystore
+          storePassword=SmartTradeKit2026
+          keyAlias=smarttradekit
+          keyPassword=SmartTradeKit2026
+          EOF
+
+      - name: Build Release APK
+        working-directory: android-app
+        run: |
+          chmod +x gradlew
+          ./gradlew clean assembleRelease --no-daemon --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartTradeKit-APK
+          path: android-app/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
