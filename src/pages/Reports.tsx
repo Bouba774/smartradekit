@@ -465,4 +465,38 @@ const Reports: React.FC = () => {
                         {sessionInfo[language as 'fr' | 'en']}
                       </span>
                       {isActive && (
-                        <span className="text-[10px] 
+                        <span className="text-[10px] bg-profit/20 text-profit px-1.5 py-0.5 rounded-full font-medium animate-pulse">
+                          LIVE
+                        </span>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">{language === 'fr' ? 'Trades' : 'Trades'}</span>
+                        <span className="font-medium text-foreground">{session.trades}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">Win Rate</span>
+                        <span className={cn("font-medium", session.winRate >= 50 ? "text-profit" : "text-loss")}>
+                          {session.winRate.toFixed(0)}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">P/L</span>
+                        <span className={cn("font-medium", session.pnl >= 0 ? "text-profit" : "text-loss")}>
+                          {session.pnl >= 0 ? '+' : ''}{formatAmount(session.pnl)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default Reports;
