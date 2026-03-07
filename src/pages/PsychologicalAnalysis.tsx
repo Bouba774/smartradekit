@@ -610,9 +610,9 @@ const PsychologicalAnalysis: React.FC = () => {
                 </h3>
               </div>
               <div className="space-y-3">
-                {emotionalMemory.patterns.map((pattern, idx) => (
+                {emotionalMemory.warnings.map((warning, idx) => (
                   <div key={idx} className="p-3 rounded-lg bg-muted/30">
-                    <p className="text-sm text-foreground">{pattern.insight}</p>
+                    <p className="text-sm text-foreground">{warning.message}</p>
                   </div>
                 ))}
               </div>
