@@ -104,11 +104,7 @@ const AddTrade: React.FC = () => {
   const [date, setDate] = useState<Date>(new Date());
   const [entryTime, setEntryTime] = useState(() => format(new Date(), 'HH:mm'));
   const [exitDate, setExitDate] = useState<Date | undefined>();
-  const [exitTime, setExitTime] = useState(() => {
-    const d = new Date();
-    d.setHours(d.getHours() + 1);
-    return format(d, 'HH:mm');
-  });
+  const [exitTime, setExitTime] = useState('');
   const [direction, setDirection] = useState<'buy' | 'sell'>('buy');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [assetSearch, setAssetSearch] = useState('');
@@ -553,9 +549,8 @@ const AddTrade: React.FC = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="py-4 space-y-6 max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="py-4 max-w-4xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
             {t('addTrade')}
@@ -564,385 +559,656 @@ const AddTrade: React.FC = () => {
             {t('registerNewTrade')}
           </p>
         </div>
-        <div className="w-12 h-12 rounded-lg bg-gradient-primary flex items-center justify-center shadow-neon">
-          <Sparkles className="w-6 h-6 text-primary-foreground" />
-        </div>
-      </div>
-
-      {/* Pending Data Banner */}
-      {hasPendingData && (
-        <div className="glass-card p-3 border-primary/30 bg-primary/5 flex items-center justify-between animate-fade-in">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-primary" />
-            <span className="text-sm text-foreground">
-              {language === 'fr' ? 'Données pré-remplies depuis la calculatrice' : 'Pre-filled data from calculator'}
-            </span>
-          </div>
-          <Button variant="ghost" size="sm" onClick={clearPendingData}>
+        {hasPendingData && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={clearPendingData}
+            className="gap-2 text-muted-foreground hover:text-loss"
+          >
             <Trash2 className="w-4 h-4" />
+            {language === 'fr' ? 'Effacer' : 'Clear'}
           </Button>
-        </div>
-      )}
-
-      {/* Direction */}
-      <div className="glass-card p-4 animate-fade-in">
-        <Label className="text-foreground font-medium mb-3 block">{t('direction')}</Label>
-        <div className="grid grid-cols-2 gap-3">
-          <Button
-            type="button"
-            variant={direction === 'buy' ? 'default' : 'outline'}
-            className={cn(direction === 'buy' && 'bg-profit hover:bg-profit/90 text-white')}
-            onClick={() => setDirection('buy')}
-          >
-            <TrendingUp className="w-4 h-4 mr-2" />
-            {t('buy')} / Long
-          </Button>
-          <Button
-            type="button"
-            variant={direction === 'sell' ? 'default' : 'outline'}
-            className={cn(direction === 'sell' && 'bg-loss hover:bg-loss/90 text-white')}
-            onClick={() => setDirection('sell')}
-          >
-            <TrendingDown className="w-4 h-4 mr-2" />
-            {t('sell')} / Short
-          </Button>
-        </div>
+        )}
       </div>
 
-      {/* Asset Selection */}
-      <div className="glass-card p-4 animate-fade-in">
-        <Label className="text-foreground font-medium mb-3 block">
-          {t('asset')} <HelpTooltip tooltip={tradeFormTooltips.asset} size="sm" />
-        </Label>
-        <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder={language === 'fr' ? 'Rechercher un actif...' : 'Search asset...'}
-            value={assetSearch}
-            onChange={(e) => setAssetSearch(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        {/* Favorites */}
-        {filteredFavorites.length > 0 && (
-          <div className="mb-3">
-            <span className="text-xs text-muted-foreground mb-2 block">
-              <Star className="w-3 h-3 inline mr-1 text-yellow-500" />
-              {language === 'fr' ? 'Favoris' : 'Favorites'}
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {filteredFavorites.map(asset => (
-                <Badge
-                  key={asset}
-                  variant={formData.asset === asset ? 'default' : 'outline'}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Date & Direction */}
+        <div className="glass-card p-6 space-y-4 animate-fade-in">
+          <h3 className="font-display font-semibold text-foreground">{t('basicInformation')}</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Date Picker */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5">
+                <Label>{t('dateTime')}</Label>
+                <HelpTooltip tooltip={tradeFormTooltips.dateTime} size="sm" />
+              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, 'PPP', { locale }) : t('select')}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-card border-border">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={(d) => d && setDate(d)}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Direction */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5">
+                <Label>{t('direction')}</Label>
+                <HelpTooltip tooltip={tradeFormTooltips.direction} size="sm" />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={direction === 'buy' ? 'default' : 'outline'}
                   className={cn(
-                    "cursor-pointer transition-all",
-                    formData.asset === asset && "bg-primary text-primary-foreground"
+                    "flex-1 gap-2",
+                    direction === 'buy' && "bg-profit hover:bg-profit/90 text-profit-foreground"
                   )}
-                  onClick={() => { handleInputChange('asset', asset); setCustomAsset(''); }}
+                  onClick={() => setDirection('buy')}
                 >
-                  {asset}
+                  <TrendingUp className="w-4 h-4" />
+                  {t('buy')}
+                </Button>
+                <Button
+                  type="button"
+                  variant={direction === 'sell' ? 'default' : 'outline'}
+                  className={cn(
+                    "flex-1 gap-2",
+                    direction === 'sell' && "bg-loss hover:bg-loss/90 text-loss-foreground"
+                  )}
+                  onClick={() => setDirection('sell')}
+                >
+                  <TrendingDown className="w-4 h-4" />
+                  {t('sell')}
+                </Button>
+              </div>
+            </div>
+
+            {/* Time */}
+            <div className="space-y-2">
+              <Label>{t('hour')}</Label>
+              <Input 
+                type="time" 
+                value={entryTime}
+                onChange={(e) => setEntryTime(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Asset Selection with Search */}
+        <div className="glass-card p-6 space-y-4 animate-fade-in" style={{ animationDelay: '50ms' }}>
+          <h3 className="font-display font-semibold text-foreground">{t('assetSelection')}</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Asset Select with integrated search */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5">
+                <Label>{t('asset')}</Label>
+                <HelpTooltip tooltip={tradeFormTooltips.instrument} size="sm" />
+              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className="w-full justify-between font-normal"
+                  >
+                    {formData.asset || customAsset || t('selectAsset')}
+                    <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0 bg-popover border-border" align="start">
+                  <div className="p-2 border-b border-border">
+                    <Input
+                      placeholder={t('searchAsset')}
+                      value={assetSearch}
+                      onChange={(e) => setAssetSearch(e.target.value)}
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="max-h-60 overflow-y-auto">
+                    {/* Favorites section */}
+                    {filteredFavorites.length > 0 && (
+                      <div>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-yellow-500 bg-yellow-500/10 sticky top-0 flex items-center gap-1">
+                          <Star className="w-3 h-3 fill-yellow-500" />
+                          {language === 'fr' ? 'Favoris' : 'Favorites'}
+                        </div>
+                        {filteredFavorites.map(asset => (
+                          <div key={`fav-${asset}`} className="flex items-center">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavorite(asset);
+                              }}
+                              className="p-2 hover:bg-accent/50 transition-colors"
+                            >
+                              <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                            </button>
+                            <button
+                              type="button"
+                              className={cn(
+                                "flex-1 px-2 py-2 text-left text-sm hover:bg-accent transition-colors",
+                                formData.asset === asset && "bg-accent text-accent-foreground"
+                              )}
+                              onClick={() => {
+                                handleInputChange('asset', asset);
+                                setCustomAsset('');
+                                setAssetSearch('');
+                              }}
+                            >
+                              {asset}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {/* Categories */}
+                    {Object.entries(filteredAssets).map(([category, assets]) => (
+                      <div key={category}>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-primary bg-primary/10 sticky top-0">
+                          {category}
+                        </div>
+                        {assets.map(asset => (
+                          <div key={asset} className="flex items-center">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavorite(asset);
+                              }}
+                              className="p-2 hover:bg-accent/50 transition-colors"
+                            >
+                              <Star className={cn(
+                                "w-4 h-4",
+                                isFavorite(asset) ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground"
+                              )} />
+                            </button>
+                            <button
+                              type="button"
+                              className={cn(
+                                "flex-1 px-2 py-2 text-left text-sm hover:bg-accent transition-colors",
+                                formData.asset === asset && "bg-accent text-accent-foreground"
+                              )}
+                              onClick={() => {
+                                handleInputChange('asset', asset);
+                                setCustomAsset('');
+                                setAssetSearch('');
+                              }}
+                            >
+                              {asset}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                    {Object.keys(filteredAssets).length === 0 && filteredFavorites.length === 0 && (
+                      <div className="p-3 text-sm text-muted-foreground text-center">
+                        {language === 'fr' ? 'Aucun actif trouvé' : 'No asset found'}
+                      </div>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Custom Asset Input */}
+            <div className="space-y-2">
+              <Label>{t('customAsset')}</Label>
+              <Input
+                placeholder="Ex: CUSTOM/USD"
+                value={customAsset}
+                onChange={(e) => {
+                  setCustomAsset(e.target.value);
+                  if (e.target.value) handleInputChange('asset', '');
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Trading Details */}
+        <div className="glass-card p-6 space-y-4 animate-fade-in" style={{ animationDelay: '100ms' }}>
+          <h3 className="font-display font-semibold text-foreground">{t('tradeDetails')}</h3>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5">
+                <Label>{t('entryPrice')}</Label>
+                <HelpTooltip tooltip={tradeFormTooltips.entryPrice} size="sm" />
+              </div>
+              <Input
+                type="number"
+                step="any"
+                placeholder="1.0850"
+                value={formData.entryPrice}
+                onChange={(e) => handleInputChange('entryPrice', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5">
+                <Label>{t('stopLoss')}</Label>
+                <HelpTooltip tooltip={tradeFormTooltips.stopLoss} size="sm" />
+              </div>
+              <Input
+                type="number"
+                step="any"
+                placeholder="1.0800"
+                value={formData.stopLoss}
+                onChange={(e) => handleInputChange('stopLoss', e.target.value)}
+                className="border-loss/30 focus:border-loss"
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5">
+                <Label>{t('takeProfit')}</Label>
+                <HelpTooltip tooltip={tradeFormTooltips.takeProfit} size="sm" />
+              </div>
+              <Input
+                type="number"
+                step="any"
+                placeholder="1.0950"
+                value={formData.takeProfit}
+                onChange={(e) => handleInputChange('takeProfit', e.target.value)}
+                className="border-profit/30 focus:border-profit"
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5">
+                <Label>{t('lotSize')}</Label>
+                <HelpTooltip tooltip={tradeFormTooltips.lotSize} size="sm" />
+              </div>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="0.10"
+                value={formData.lotSize}
+                onChange={(e) => handleInputChange('lotSize', e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Exit Section */}
+          <div className={cn(
+            "space-y-4 p-4 rounded-lg border",
+            estimatedDuration && !estimatedDuration.isValid 
+              ? "bg-loss/10 border-loss/50" 
+              : "bg-secondary/30 border-border"
+          )}>
+            {/* Duration Indicator */}
+            {estimatedDuration && (
+              <div className={cn(
+                "flex items-center gap-2 p-3 rounded-lg text-sm font-medium",
+                estimatedDuration.isValid 
+                  ? "bg-primary/10 text-primary border border-primary/20" 
+                  : "bg-loss/20 text-loss border border-loss/30"
+              )}>
+                {estimatedDuration.isValid ? (
+                  <>
+                    <Clock className="w-4 h-4" />
+                    <span>
+                      {language === 'fr' ? 'Durée estimée :' : 'Estimated duration:'} {estimatedDuration.formatted}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>
+                      {language === 'fr' 
+                        ? 'Erreur : La sortie est antérieure à l\'entrée' 
+                        : 'Error: Exit is before entry'}
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === 'fr' ? 'Date de Sortie' : 'Exit Date'}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !exitDate && "text-muted-foreground",
+                        estimatedDuration && !estimatedDuration.isValid && "border-loss text-loss"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {exitDate ? format(exitDate, 'dd/MM/yy', { locale }) : (language === 'fr' ? 'Date sortie' : 'Exit date')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-card border-border">
+                    <Calendar
+                      mode="single"
+                      selected={exitDate}
+                      onSelect={setExitDate}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label>{language === 'fr' ? 'Heure de Sortie' : 'Exit Time'}</Label>
+                <Input 
+                  type="time" 
+                  value={exitTime}
+                  onChange={(e) => setExitTime(e.target.value)}
+                  className={cn(
+                    "w-full",
+                    estimatedDuration && !estimatedDuration.isValid && "border-loss text-loss"
+                  )}
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === 'fr' ? 'Méthode de Sortie' : 'Exit Method'}</Label>
+                <Select value={exitMethod} onValueChange={(v: 'sl' | 'tp' | 'manual') => setExitMethod(v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border">
+                    <SelectItem value="manual">{language === 'fr' ? 'Personnalisé' : 'Manual'}</SelectItem>
+                    <SelectItem value="sl">{language === 'fr' ? 'Lié au SL' : 'Linked to SL'}</SelectItem>
+                    <SelectItem value="tp">{language === 'fr' ? 'Lié au TP' : 'Linked to TP'}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>{language === 'fr' ? 'Prix de Sortie' : 'Exit Price'}</Label>
+                <Input
+                  type="number"
+                  step="any"
+                  placeholder={
+                    exitMethod === 'sl' ? (formData.stopLoss || 'SL') :
+                    exitMethod === 'tp' ? (formData.takeProfit || 'TP') : '1.0900'
+                  }
+                  value={
+                    exitMethod === 'sl' ? formData.stopLoss :
+                    exitMethod === 'tp' ? formData.takeProfit : formData.exitPrice
+                  }
+                  onChange={(e) => {
+                    if (exitMethod === 'manual') {
+                      handleInputChange('exitPrice', e.target.value);
+                    }
+                  }}
+                  disabled={exitMethod !== 'manual'}
+                  className={cn(
+                    exitMethod !== 'manual' && "bg-muted cursor-not-allowed"
+                  )}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Capital & Risk Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>{t('capital')} ({getCurrencySymbol()})</Label>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="10000"
+                value={formData.capital}
+                onChange={(e) => handleCapitalChange(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5">
+                <Label>{t('risk')}</Label>
+                <HelpTooltip tooltip={tradeFormTooltips.riskPercent} size="sm" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="relative">
+                  <Input
+                    type="number"
+                    step="0.1"
+                    placeholder="1.0"
+                    value={formData.risk}
+                    onChange={(e) => handleRiskPercentChange(e.target.value)}
+                    className="pr-6"
+                  />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">%</span>
+                </div>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="100"
+                    value={formData.riskCash}
+                    onChange={(e) => handleRiskCashChange(e.target.value)}
+                    className="pr-6"
+                  />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">{getCurrencySymbol()}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* PnL & Setup Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5">
+                <Label>{t('pnl')} ({getCurrencySymbol()})</Label>
+                <HelpTooltip tooltip={tradeFormTooltips.pnl} size="sm" />
+              </div>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="150.00"
+                value={formData.pnl}
+                onChange={(e) => handleInputChange('pnl', e.target.value)}
+                className={cn(
+                  parseFloat(formData.pnl) > 0 && "border-profit/50 focus:border-profit",
+                  parseFloat(formData.pnl) < 0 && "border-loss/50 focus:border-loss"
+                )}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                {t('setup')}
+                {suggestedSetups.length > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    ({suggestedSetups.length} {language === 'fr' ? 'suggestions' : 'suggestions'})
+                  </span>
+                )}
+              </Label>
+              <Input
+                placeholder={language === 'fr' ? 'Ex: Breakout, Pullback...' : 'Ex: Breakout, Pullback...'}
+                value={customSetup}
+                onChange={(e) => setCustomSetup(e.target.value)}
+                list="setup-suggestions"
+              />
+              {suggestedSetups.length > 0 && (
+                <datalist id="setup-suggestions">
+                  {suggestedSetups.map(setup => (
+                    <option key={setup} value={setup} />
+                  ))}
+                </datalist>
+              )}
+            </div>
+          </div>
+
+          {/* Timeframe Row */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              {t('timeframe')}
+              {suggestedTimeframes.length > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  (+{suggestedTimeframes.length} {language === 'fr' ? 'perso' : 'custom'})
+                </span>
+              )}
+            </Label>
+            <Select
+              value={formData.timeframe || customTimeframe}
+              onValueChange={(v) => {
+                if (v === 'custom') {
+                  handleInputChange('timeframe', '');
+                } else {
+                  handleInputChange('timeframe', v);
+                  setCustomTimeframe('');
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={language === 'fr' ? 'Sélectionner' : 'Select'} />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border">
+                {TIMEFRAMES.map(tf => (
+                  <SelectItem key={tf} value={tf}>{tf}</SelectItem>
+                ))}
+                {suggestedTimeframes.length > 0 && (
+                  <>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-primary bg-primary/10 mt-1">
+                      {language === 'fr' ? 'Récemment utilisés' : 'Recently used'}
+                    </div>
+                    {suggestedTimeframes.map(tf => (
+                      <SelectItem key={tf} value={tf}>{tf}</SelectItem>
+                    ))}
+                  </>
+                )}
+                <SelectItem value="custom">{language === 'fr' ? '+ Autre...' : '+ Other...'}</SelectItem>
+              </SelectContent>
+            </Select>
+            {(formData.timeframe === '' && !TIMEFRAMES.includes(customTimeframe)) && customTimeframe === '' && (
+              <Input
+                placeholder={language === 'fr' ? 'Timeframe personnalisée' : 'Custom timeframe'}
+                value={customTimeframe}
+                onChange={(e) => setCustomTimeframe(e.target.value)}
+                list="timeframe-suggestions"
+                className="mt-2"
+              />
+            )}
+            {suggestedTimeframes.length > 0 && (
+              <datalist id="timeframe-suggestions">
+                {suggestedTimeframes.map(tf => (
+                  <option key={tf} value={tf} />
+                ))}
+              </datalist>
+            )}
+          </div>
+        </div>
+
+        {/* Psychology */}
+        <div className="glass-card p-6 space-y-4 animate-fade-in" style={{ animationDelay: '200ms' }}>
+          <h3 className="font-display font-semibold text-foreground">Analyse Psychologique</h3>
+          
+          <div className="space-y-2">
+            <Label>{t('emotion')}</Label>
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              {EMOTIONS.map(emotion => (
+                <Button
+                  key={emotion.value}
+                  type="button"
+                  variant={formData.emotion === emotion.value ? 'default' : 'outline'}
+                  size="sm"
+                  className={cn(
+                    "gap-2 flex-shrink-0 whitespace-nowrap",
+                    formData.emotion === emotion.value && "bg-primary hover:bg-primary/90"
+                  )}
+                  onClick={() => handleInputChange('emotion', emotion.value)}
+                >
+                  <span>{emotion.emoji}</span>
+                  {language === 'fr' ? emotion.labelFr : emotion.labelEn}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>{t('tags')}</Label>
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              {TAGS.map(tag => (
+                <Badge
+                  key={tag.value}
+                  variant={selectedTags.includes(tag.value) ? 'default' : 'outline'}
+                  className={cn(
+                    "cursor-pointer transition-all flex-shrink-0 whitespace-nowrap",
+                    selectedTags.includes(tag.value) && "bg-primary hover:bg-primary/90"
+                  )}
+                  onClick={() => toggleTag(tag.value)}
+                >
+                  {language === 'fr' ? tag.labelFr : tag.labelEn}
                 </Badge>
               ))}
             </div>
           </div>
-        )}
-        {/* Asset Categories */}
-        <div className="space-y-3 max-h-[200px] overflow-y-auto">
-          {Object.entries(filteredAssets).map(([category, assets]) => (
-            <div key={category}>
-              <span className="text-xs text-muted-foreground font-medium">{category}</span>
-              <div className="flex flex-wrap gap-1.5 mt-1">
-                {assets.map(asset => (
-                  <Badge
-                    key={asset}
-                    variant={formData.asset === asset ? 'default' : 'outline'}
-                    className={cn(
-                      "cursor-pointer text-xs transition-all",
-                      formData.asset === asset && "bg-primary text-primary-foreground"
-                    )}
-                    onClick={() => { handleInputChange('asset', asset); setCustomAsset(''); }}
-                  >
-                    {asset}
-                    <button
-                      type="button"
-                      className="ml-1"
-                      onClick={(e) => { e.stopPropagation(); toggleFavorite(asset); }}
-                    >
-                      <Star className={cn("w-3 h-3", isFavorite(asset) ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground")} />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          ))}
         </div>
-        {/* Custom Asset */}
-        <Input
-          placeholder={language === 'fr' ? 'Ou saisir un actif personnalisé...' : 'Or enter custom asset...'}
-          value={customAsset}
-          onChange={(e) => { setCustomAsset(e.target.value); if (e.target.value) handleInputChange('asset', ''); }}
-          className="mt-3"
-        />
-      </div>
 
-      {/* Dates & Times */}
-      <div className="glass-card p-4 animate-fade-in">
-        <Label className="text-foreground font-medium mb-3 block">
-          {language === 'fr' ? 'Date & Heure' : 'Date & Time'}
-        </Label>
-        <div className="grid grid-cols-2 gap-3">
-          {/* Entry Date */}
-          <div>
-            <Label className="text-xs text-muted-foreground">{language === 'fr' ? 'Entrée' : 'Entry'}</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-start text-left font-normal mt-1">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {format(date, 'dd/MM/yyyy', { locale })}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar mode="single" selected={date} onSelect={(d) => d && setDate(d)} locale={locale} />
-              </PopoverContent>
-            </Popover>
-            <Input type="time" value={entryTime} onChange={(e) => setEntryTime(e.target.value)} className="mt-2" />
+        {/* Notes & Images */}
+        <div className="glass-card p-6 space-y-4 animate-fade-in" style={{ animationDelay: '300ms' }}>
+          <h3 className="font-display font-semibold text-foreground">Notes & Captures</h3>
+          
+          <div className="space-y-2">
+            <Label>{t('notes')}</Label>
+            <Textarea
+              placeholder="Décrivez votre analyse, votre stratégie, ce que vous avez appris..."
+              value={formData.notes}
+              onChange={(e) => handleInputChange('notes', e.target.value)}
+              className="min-h-[100px]"
+            />
           </div>
-          {/* Exit Date */}
-          <div>
-            <Label className="text-xs text-muted-foreground">{language === 'fr' ? 'Sortie' : 'Exit'}</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-start text-left font-normal mt-1">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {exitDate ? format(exitDate, 'dd/MM/yyyy', { locale }) : (language === 'fr' ? 'Optionnel' : 'Optional')}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar mode="single" selected={exitDate} onSelect={(d) => setExitDate(d || undefined)} locale={locale} />
-              </PopoverContent>
-            </Popover>
-            <Input type="time" value={exitTime} onChange={(e) => setExitTime(e.target.value)} className="mt-2" />
+
+          <div className="space-y-2">
+            <Label>{language === 'fr' ? 'Médias (images, vidéos, audio)' : 'Media (images, videos, audio)'}</Label>
+            <TradeMediaUploader
+              mediaItems={mediaItems}
+              onMediaChange={setMediaItems}
+              onError={handleMediaError}
+            />
           </div>
         </div>
-        {/* Duration estimate */}
-        {estimatedDuration && (
-          <div className={cn("mt-2 flex items-center gap-2 text-xs", estimatedDuration.isValid ? "text-muted-foreground" : "text-loss")}>
-            <Clock className="w-3 h-3" />
-            {estimatedDuration.isValid
-              ? `${language === 'fr' ? 'Durée estimée' : 'Estimated duration'}: ${estimatedDuration.formatted}`
-              : (language === 'fr' ? 'Date de sortie antérieure à l\'entrée' : 'Exit date is before entry')}
-          </div>
-        )}
-      </div>
 
-      {/* Prices */}
-      <div className="glass-card p-4 animate-fade-in">
-        <Label className="text-foreground font-medium mb-3 block">
-          {language === 'fr' ? 'Prix' : 'Prices'}
-        </Label>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label className="text-xs text-muted-foreground">
-              {t('entryPrice')} * <HelpTooltip tooltip={tradeFormTooltips.entryPrice} size="sm" />
-            </Label>
-            <Input type="number" step="any" value={formData.entryPrice} onChange={(e) => handleInputChange('entryPrice', e.target.value)} required />
+        {/* Submit */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 border border-primary/30">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium text-primary">{t('score')}: {calculateQualityScore()}/100</span>
           </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">
-              {t('exitPrice')} <HelpTooltip tooltip={tradeFormTooltips.exitPrice} size="sm" />
-            </Label>
-            <Input type="number" step="any" value={formData.exitPrice} onChange={(e) => handleInputChange('exitPrice', e.target.value)} />
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">
-              Stop Loss <HelpTooltip tooltip={tradeFormTooltips.stopLoss} size="sm" />
-            </Label>
-            <Input type="number" step="any" value={formData.stopLoss} onChange={(e) => handleInputChange('stopLoss', e.target.value)} />
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">
-              Take Profit <HelpTooltip tooltip={tradeFormTooltips.takeProfit} size="sm" />
-            </Label>
-            <Input type="number" step="any" value={formData.takeProfit} onChange={(e) => handleInputChange('takeProfit', e.target.value)} />
+          <div className="flex gap-4">
+            <Button type="button" variant="outline" disabled={isSubmitting}>
+              {t('cancel')}
+            </Button>
+            <Button type="submit" className="gap-2 bg-gradient-primary hover:opacity-90" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              {isSubmitting ? 'Enregistrement...' : t('saveTrade')}
+            </Button>
           </div>
         </div>
-        {/* Exit Method */}
-        {(formData.stopLoss || formData.takeProfit) && (
-          <div className="mt-3">
-            <Label className="text-xs text-muted-foreground mb-2 block">{language === 'fr' ? 'Méthode de sortie' : 'Exit Method'}</Label>
-            <div className="flex gap-2">
-              {(['manual', 'sl', 'tp'] as const).map(method => (
-                <Button
-                  key={method}
-                  type="button"
-                  size="sm"
-                  variant={exitMethod === method ? 'default' : 'outline'}
-                  onClick={() => setExitMethod(method)}
-                >
-                  {method === 'manual' ? (language === 'fr' ? 'Manuel' : 'Manual') : method.toUpperCase()}
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Lot Size & PnL */}
-      <div className="glass-card p-4 animate-fade-in">
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label className="text-xs text-muted-foreground">
-              {t('lotSize')} * <HelpTooltip tooltip={tradeFormTooltips.lotSize} size="sm" />
-            </Label>
-            <Input type="number" step="any" value={formData.lotSize} onChange={(e) => handleInputChange('lotSize', e.target.value)} required />
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">
-              PnL ({getCurrencySymbol()}) <HelpTooltip tooltip={tradeFormTooltips.pnl} size="sm" />
-            </Label>
-            <Input type="number" step="any" value={formData.pnl} onChange={(e) => handleInputChange('pnl', e.target.value)} />
-          </div>
-        </div>
-      </div>
-
-      {/* Risk Management */}
-      <div className="glass-card p-4 animate-fade-in">
-        <Label className="text-foreground font-medium mb-3 block">
-          {language === 'fr' ? 'Gestion du risque' : 'Risk Management'}
-        </Label>
-        <div className="grid grid-cols-3 gap-3">
-          <div>
-            <Label className="text-xs text-muted-foreground">{language === 'fr' ? 'Capital' : 'Capital'}</Label>
-            <Input type="number" step="any" value={formData.capital} onChange={(e) => handleCapitalChange(e.target.value)} />
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">{language === 'fr' ? 'Risque %' : 'Risk %'}</Label>
-            <Input type="number" step="any" value={formData.risk} onChange={(e) => handleRiskPercentChange(e.target.value)} />
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">{language === 'fr' ? 'Risque $' : 'Risk $'}</Label>
-            <Input type="number" step="any" value={formData.riskCash} onChange={(e) => handleRiskCashChange(e.target.value)} />
-          </div>
-        </div>
-      </div>
-
-      {/* Setup & Timeframe */}
-      <div className="glass-card p-4 animate-fade-in">
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <div>
-            <Label className="text-xs text-muted-foreground">Setup</Label>
-            <Select value={formData.setup} onValueChange={(v) => handleInputChange('setup', v)}>
-              <SelectTrigger><SelectValue placeholder={language === 'fr' ? 'Choisir...' : 'Select...'} /></SelectTrigger>
-              <SelectContent>
-                {suggestedSetups.map(s => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input placeholder={language === 'fr' ? 'Setup personnalisé...' : 'Custom setup...'} value={customSetup} onChange={(e) => setCustomSetup(e.target.value)} className="mt-2" />
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">Timeframe</Label>
-            <Select value={formData.timeframe} onValueChange={(v) => handleInputChange('timeframe', v)}>
-              <SelectTrigger><SelectValue placeholder={language === 'fr' ? 'Choisir...' : 'Select...'} /></SelectTrigger>
-              <SelectContent>
-                {TIMEFRAMES.map(tf => (
-                  <SelectItem key={tf} value={tf}>{tf}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input placeholder={language === 'fr' ? 'TF personnalisé...' : 'Custom TF...'} value={customTimeframe} onChange={(e) => setCustomTimeframe(e.target.value)} className="mt-2" />
-          </div>
-        </div>
-      </div>
-
-      {/* Emotions */}
-      <div className="glass-card p-4 animate-fade-in">
-        <Label className="text-foreground font-medium mb-3 block">{t('emotions')}</Label>
-        <div className="flex flex-wrap gap-2">
-          {EMOTIONS.map(emotion => (
-            <Badge
-              key={emotion.value}
-              variant={formData.emotion === emotion.value ? 'default' : 'outline'}
-              className={cn("cursor-pointer transition-all", formData.emotion === emotion.value && "bg-primary text-primary-foreground")}
-              onClick={() => handleInputChange('emotion', formData.emotion === emotion.value ? '' : emotion.value)}
-            >
-              {emotion.emoji} {language === 'fr' ? emotion.labelFr : emotion.labelEn}
-            </Badge>
-          ))}
-        </div>
-      </div>
-
-      {/* Tags */}
-      <div className="glass-card p-4 animate-fade-in">
-        <Label className="text-foreground font-medium mb-3 block">Tags</Label>
-        <div className="flex flex-wrap gap-2">
-          {TAGS.map(tag => (
-            <Badge
-              key={tag.value}
-              variant={selectedTags.includes(tag.value) ? 'default' : 'outline'}
-              className={cn("cursor-pointer transition-all text-xs", selectedTags.includes(tag.value) && "bg-primary text-primary-foreground")}
-              onClick={() => toggleTag(tag.value)}
-            >
-              {language === 'fr' ? tag.labelFr : tag.labelEn}
-            </Badge>
-          ))}
-        </div>
-      </div>
-
-      {/* Notes */}
-      <div className="glass-card p-4 animate-fade-in">
-        <Label className="text-foreground font-medium mb-3 block">{t('notes')}</Label>
-        <Textarea
-          placeholder={language === 'fr' ? 'Notes sur ce trade...' : 'Trade notes...'}
-          value={formData.notes}
-          onChange={(e) => handleInputChange('notes', e.target.value)}
-          rows={3}
-        />
-      </div>
-
-      {/* Media */}
-      <div className="glass-card p-4 animate-fade-in">
-        <Label className="text-foreground font-medium mb-3 block">
-          {language === 'fr' ? 'Médias' : 'Media'}
-        </Label>
-        <TradeMediaUploader
-          mediaItems={mediaItems}
-          onMediaChange={setMediaItems}
-          onError={handleMediaError}
-        />
-      </div>
-
-      {/* Quality Score */}
-      {(formData.setup || formData.stopLoss || selectedTags.length > 0) && (
-        <div className="glass-card p-4 animate-fade-in">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">{language === 'fr' ? 'Score qualité' : 'Quality Score'}</span>
-            <span className={cn(
-              "font-display font-bold text-lg",
-              calculateQualityScore() >= 70 ? "text-profit" : calculateQualityScore() >= 40 ? "text-primary" : "text-loss"
-            )}>
-              {calculateQualityScore()}/100
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Submit */}
-      <Button
-        type="submit"
-        className="w-full bg-gradient-primary hover:opacity-90 font-display text-lg py-6"
-        disabled={isSubmitting || (!formData.asset && !customAsset) || !formData.entryPrice || !formData.lotSize}
-      >
-        {isSubmitting ? (
-          <Loader2 className="w-5 h-5 animate-spin mr-2" />
-        ) : (
-          <Save className="w-5 h-5 mr-2" />
-        )}
-        {isSubmitting ? (language === 'fr' ? 'Enregistrement...' : 'Saving...') : t('saveTrade')}
-      </Button>
-    </form>
+      </form>
+    </div>
   );
 };
 

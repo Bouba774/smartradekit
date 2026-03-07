@@ -12,16 +12,6 @@ import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
-
-// Normalisation des émotions stockées en DB vers les labels français
-const EMOTION_NORMALIZE: Record<string, string> = {
-  'calm': 'Calme', 'confident': 'Confiant', 'stressed': 'Stressé',
-  'impulsive': 'Impulsif', 'fearful': 'Craintif', 'greedy': 'Avide',
-  'patient': 'Patient', 'focused': 'Concentré', 'euphoric': 'Euphorique',
-  'anxious': 'Anxieux', 'frustrated': 'Frustré', 'neutral': 'Neutre',
-  'doubtful': 'Hésitant', 'disciplined': 'Discipliné',
-  'overconfident': 'Trop confiant', 'tired': 'Fatigué',
-};
 import {
   Brain,
   TrendingUp,
@@ -69,8 +59,7 @@ const PsychologicalAnalysis: React.FC = () => {
     const stats: Record<string, { wins: number; losses: number; trades: number }> = {};
     
     trades.forEach(trade => {
-      const raw = trade.emotions || 'neutral';
-      const emotion = EMOTION_NORMALIZE[raw] || EMOTION_NORMALIZE[raw.toLowerCase()] || raw;
+      const emotion = trade.emotions || 'Neutre';
       if (!stats[emotion]) stats[emotion] = { wins: 0, losses: 0, trades: 0 };
       stats[emotion].trades++;
       if (trade.result === 'win') stats[emotion].wins++;
@@ -91,7 +80,7 @@ const PsychologicalAnalysis: React.FC = () => {
 
     const counts: Record<string, number> = {};
     trades.forEach(trade => {
-      const emotion = EMOTION_NORMALIZE[trade.emotions || 'neutral'] || EMOTION_NORMALIZE[(trade.emotions || '').toLowerCase()] || trade.emotions || 'Neutre';
+      const emotion = trade.emotions || 'Neutre';
       counts[emotion] = (counts[emotion] || 0) + 1;
     });
 
@@ -154,7 +143,7 @@ const PsychologicalAnalysis: React.FC = () => {
       const tradeDate = parseISO(trade.trade_date);
       if (isWithinInterval(tradeDate, { start: weekStart, end: weekEnd })) {
         const dayIndex = getDay(tradeDate);
-        const emotion = EMOTION_NORMALIZE[trade.emotions || 'neutral'] || EMOTION_NORMALIZE[(trade.emotions || '').toLowerCase()] || trade.emotions || 'Neutre';
+        const emotion = trade.emotions || 'Neutre';
         allEmotions.add(emotion);
         dayData[dayIndex][emotion] = (dayData[dayIndex][emotion] || 0) + 1;
         dayTotals[dayIndex]++;
@@ -489,162 +478,389 @@ const PsychologicalAnalysis: React.FC = () => {
             {/* Trader Profile */}
             <div className="glass-card p-6 animate-fade-in" style={{ animationDelay: '100ms' }}>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <User className="w-5 h-5 text-primary" />
+                <div className="w-10 h-10 rounded-lg bg-secondary/50 flex items-center justify-center">
+                  <User className="w-5 h-5 text-foreground" />
                 </div>
                 <h3 className="font-display font-semibold text-foreground">
-                  {pt.traderProfile}
+                  {language === 'fr' ? 'Profil psychologique' : 'Psychological Profile'}
                 </h3>
               </div>
               {traderProfile ? (
-                <div className="space-y-3">
+                <>
                   <div className="text-center mb-4">
-                    <span className="text-3xl">{traderProfile.icon}</span>
-                    <h4 className="font-semibold text-foreground mt-2">{traderProfile.label}</h4>
+                    <div className="text-4xl mb-2">{traderProfile.icon}</div>
+                    <h4 className="font-display font-bold text-lg text-foreground">{traderProfile.label}</h4>
                     <p className="text-sm text-muted-foreground mt-1">{traderProfile.description}</p>
                   </div>
-                  <div className="space-y-2">
-                    {traderProfile.characteristics.map((c, i) => (
-                      <div key={i} className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-foreground">{c.name}</span>
-                          <span className="text-muted-foreground">{c.value}%</span>
-                        </div>
-                        <Progress value={c.value} className="h-1.5" />
-                      </div>
-                    ))}
+                  <div className="h-[180px] mb-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadarChart data={traderProfile.characteristics}>
+                        <PolarGrid stroke="hsl(var(--border))" />
+                        <PolarAngleAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
+                        <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
+                        <Radar name="Score" dataKey="value" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.4} />
+                      </RadarChart>
+                    </ResponsiveContainer>
                   </div>
-                  {traderProfile.advice.length > 0 && (
-                    <div className="space-y-2 mt-3">
-                      <span className="text-xs text-muted-foreground font-medium">
-                        {language === 'fr' ? 'Conseils' : 'Advice'}
-                      </span>
-                      {traderProfile.advice.map((a, i) => (
-                        <div key={i} className="flex items-start gap-2 text-sm">
-                          <Lightbulb className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                          <span className="text-foreground">{a}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                </>
               ) : (
-                <p className="text-center text-sm text-muted-foreground">
-                  {language === 'fr' ? 'Ajoutez plus de trades pour obtenir votre profil' : 'Add more trades to get your profile'}
-                </p>
+                <div className="text-center py-8">
+                  <User className="w-12 h-12 mx-auto text-muted-foreground/50 mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    {language === 'fr' ? 'Minimum 5 trades requis' : 'Minimum 5 trades required'}
+                  </p>
+                </div>
               )}
             </div>
           </div>
 
-          {/* Emotion Distribution */}
-          <div className="glass-card p-6 animate-fade-in">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                <Heart className="w-5 h-5 text-primary" />
-              </div>
-              <h3 className="font-display font-semibold text-foreground">
-                {pt.emotionDistribution}
-              </h3>
-            </div>
-            {emotionDistribution.length > 0 ? (
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={emotionDistribution} cx="50%" cy="50%" outerRadius={100} dataKey="value" nameKey="name" label={({ name, value }) => `${name} ${value}%`}>
-                      {emotionDistribution.map((entry, index) => (
-                        <Cell key={index} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <p className="text-center text-sm text-muted-foreground py-8">
-                {language === 'fr' ? 'Aucune donnée' : 'No data'}
-              </p>
-            )}
-          </div>
-
-          {/* Emotion Performance */}
-          <div className="glass-card p-6 animate-fade-in">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                <Brain className="w-5 h-5 text-primary" />
-              </div>
-              <h3 className="font-display font-semibold text-foreground">
-                {pt.emotionPerformance}
-              </h3>
-            </div>
-            {emotionStats.length > 0 ? (
-              <div className="space-y-3">
-                {emotionStats.slice(0, 8).map((stat) => (
-                  <div key={stat.emotion} className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-foreground font-medium">{stat.emotion}</span>
-                      <span className="text-muted-foreground">{stat.trades} trades</span>
-                    </div>
-                    <div className="flex gap-1 h-2">
-                      <div className="bg-profit/60 rounded-l" style={{ width: `${stat.wins}%` }} />
-                      <div className="bg-loss/60 rounded-r" style={{ width: `${stat.losses}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center text-sm text-muted-foreground py-8">
-                {language === 'fr' ? 'Aucune donnée' : 'No data'}
-              </p>
-            )}
-          </div>
-
-          {/* Emotional Memory */}
-          {emotionalMemory && emotionalMemory.warnings.length > 0 && (
-            <div className="glass-card p-6 animate-fade-in">
+          {/* Trader Profile Advice */}
+          {traderProfile && (
+            <div className="glass-card p-6 animate-fade-in" style={{ animationDelay: '150ms' }}>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
                   <Lightbulb className="w-5 h-5 text-primary" />
                 </div>
                 <h3 className="font-display font-semibold text-foreground">
-                  {pt.emotionalMemory}
+                  {language === 'fr' ? 'Conseils personnalisés' : 'Personalized Advice'}
                 </h3>
               </div>
-              <div className="space-y-3">
-                {emotionalMemory.warnings.map((warning, idx) => (
-                  <div key={idx} className="p-3 rounded-lg bg-muted/30">
-                    <p className="text-sm text-foreground">{warning.message}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {traderProfile.advice.map((advice, idx) => (
+                  <div key={idx} className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-foreground">{advice}</p>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Weekly Emotion Trends */}
-          {weeklyEmotionsByType.chartData.length > 0 && (
-            <div className="glass-card p-6 animate-fade-in">
+          {/* Emotional Memory Section */}
+          {(emotionalMemory.warnings.length > 0 || emotionalMemory.insights.length > 0) && (
+            <div className="glass-card p-6 animate-fade-in" style={{ animationDelay: '200ms' }}>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-primary" />
+                <div className="w-10 h-10 rounded-lg bg-secondary/50 flex items-center justify-center">
+                  <Heart className="w-5 h-5 text-loss" />
                 </div>
                 <h3 className="font-display font-semibold text-foreground">
-                  {pt.weeklyEmotions}
+                  {language === 'fr' ? 'Mémoire émotionnelle' : 'Emotional Memory'}
                 </h3>
               </div>
-              <div className="h-[250px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={weeklyEmotionsByType.chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="day" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
-                    <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
-                    <Tooltip />
-                    {weeklyEmotionsByType.emotions.map((emotion) => (
-                      <Bar key={emotion.name} dataKey={emotion.name} stackId="a" fill={emotion.color} />
-                    ))}
-                  </BarChart>
-                </ResponsiveContainer>
+              
+              {/* Warnings */}
+              {emotionalMemory.warnings.length > 0 && (
+                <div className="space-y-2 mb-4">
+                  {emotionalMemory.warnings.map((warning, idx) => (
+                    <div 
+                      key={idx} 
+                      className={cn(
+                        "flex items-start gap-2 p-3 rounded-lg",
+                        warning.severity === 'danger' ? "bg-loss/10 border border-loss/30" :
+                        warning.severity === 'warning' ? "bg-yellow-500/10 border border-yellow-500/30" :
+                        "bg-primary/10 border border-primary/30"
+                      )}
+                    >
+                      <ShieldAlert className={cn(
+                        "w-4 h-4 mt-0.5 flex-shrink-0",
+                        warning.severity === 'danger' ? "text-loss" :
+                        warning.severity === 'warning' ? "text-yellow-500" : "text-primary"
+                      )} />
+                      <p className="text-sm text-foreground">{warning.message}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Best/Worst Emotions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {emotionalMemory.bestEmotion && (
+                  <div className="p-4 rounded-lg bg-profit/10 border border-profit/30">
+                    <p className="text-xs text-muted-foreground mb-1">
+                      {language === 'fr' ? 'Meilleure émotion' : 'Best emotion'}
+                    </p>
+                    <p className="font-display font-bold text-profit text-lg">{emotionalMemory.bestEmotion}</p>
+                  </div>
+                )}
+                {emotionalMemory.emotionToAvoid && (
+                  <div className="p-4 rounded-lg bg-loss/10 border border-loss/30">
+                    <p className="text-xs text-muted-foreground mb-1">
+                      {language === 'fr' ? 'Émotion à éviter' : 'Emotion to avoid'}
+                    </p>
+                    <p className="font-display font-bold text-loss text-lg">{emotionalMemory.emotionToAvoid}</p>
+                  </div>
+                )}
               </div>
+
+              {/* Insights */}
+              {emotionalMemory.insights.length > 0 && (
+                <div className="space-y-2">
+                  {emotionalMemory.insights.map((insight, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <Lightbulb className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>{insight}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
+
+          {/* Discipline Score */}
+          <div className="glass-card p-6 animate-fade-in" style={{ animationDelay: '250ms' }}>
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="flex-shrink-0">
+                <GaugeChart
+                  value={disciplineBreakdown.score}
+                  max={100}
+                  label={language === 'fr' ? 'Discipline' : 'Discipline'}
+                  size="lg"
+                  variant="primary"
+                />
+              </div>
+              <div className="flex-1 w-full">
+                <h3 className="font-display font-semibold text-foreground mb-4">
+                  {t('disciplineFactors')}
+                </h3>
+                <div className="space-y-4">
+                  {disciplineBreakdown.factors.map((factor) => {
+                    const Icon = factor.icon;
+                    return (
+                      <div key={factor.name}>
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <Icon className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm text-foreground">{factor.name}</span>
+                          </div>
+                          <span className={cn(
+                            "text-sm font-medium",
+                            factor.score >= 80 ? "text-profit" :
+                            factor.score >= 60 ? "text-primary" : "text-loss"
+                          )}>
+                            {factor.score}%
+                          </span>
+                        </div>
+                        <Progress
+                          value={factor.score}
+                          className={cn(
+                            "h-2",
+                            factor.score >= 80 ? "[&>div]:bg-profit" :
+                            factor.score >= 60 ? "[&>div]:bg-primary" : "[&>div]:bg-loss"
+                          )}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Emotion Stats Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Winrate by Emotion */}
+            <div className="glass-card p-6 animate-fade-in" style={{ animationDelay: '300ms' }}>
+              <h3 className="font-display font-semibold text-foreground mb-4">
+                {t('winrateByEmotion')}
+              </h3>
+              {emotionStats.length > 0 ? (
+                <div className="h-[250px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={emotionStats} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis type="number" domain={[0, 100]} stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <YAxis dataKey="emotion" type="category" stroke="hsl(var(--muted-foreground))" fontSize={12} width={80} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--popover))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                        }}
+                        formatter={(value: number) => [`${value}%`, '']}
+                      />
+                      <Bar dataKey="wins" fill="hsl(var(--profit))" name={t('gains')} radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+                  {t('noData')}
+                </div>
+              )}
+            </div>
+
+            {/* Emotion Distribution */}
+            <div className="glass-card p-6 animate-fade-in" style={{ animationDelay: '350ms' }}>
+              <h3 className="font-display font-semibold text-foreground mb-4">
+                {t('emotionDistributionChart')}
+              </h3>
+              {emotionDistribution.length > 0 ? (
+                <>
+                  <div className="h-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={emotionDistribution}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={2}
+                          dataKey="value"
+                        >
+                          {emotionDistribution.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--popover))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                          }}
+                          formatter={(value: number) => [`${value}%`, '']}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-3 mt-2">
+                    {emotionDistribution.map((emotion) => (
+                      <div key={emotion.name} className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: emotion.color }} />
+                        <span className="text-xs text-muted-foreground">{emotion.name} ({emotion.value}%)</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="h-[200px] flex items-center justify-center text-muted-foreground">
+                  {t('noData')}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Weekly Emotion Trend */}
+          <div className="glass-card p-6 animate-fade-in" style={{ animationDelay: '400ms' }}>
+            <h3 className="font-display font-semibold text-foreground mb-4">
+              {t('weeklyEmotionTrends')}
+            </h3>
+            {weeklyEmotionsByType.emotions.length > 0 ? (
+              <>
+                <div className="h-[250px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={weeklyEmotionsByType.chartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} domain={[0, 100]} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--popover))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                        }}
+                        formatter={(value: number) => [`${value}%`, '']}
+                      />
+                      {weeklyEmotionsByType.emotions.map((emotion) => (
+                        <Line
+                          key={emotion.name}
+                          type="monotone"
+                          dataKey={emotion.name}
+                          stroke={emotion.color}
+                          strokeWidth={2}
+                          dot={{ fill: emotion.color, r: 3 }}
+                          name={emotion.name}
+                        />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex flex-wrap justify-center gap-4 mt-4">
+                  {weeklyEmotionsByType.emotions.map((emotion) => (
+                    <div key={emotion.name} className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: emotion.color }} />
+                      <span className="text-xs text-muted-foreground">{emotion.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+                {t('noData')}
+              </div>
+            )}
+          </div>
+
+          {/* Emotion Performance Cards */}
+          {emotionStats.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {emotionStats.slice(0, 4).map((stat, index) => (
+                <div
+                  key={stat.emotion}
+                  className="glass-card p-4 animate-fade-in"
+                  style={{ animationDelay: `${450 + index * 50}ms` }}
+                >
+                  <p className="text-sm text-muted-foreground mb-2">{stat.emotion}</p>
+                  <p className={cn(
+                    "font-display text-2xl font-bold",
+                    stat.wins >= 60 ? "text-profit" : stat.wins >= 40 ? "text-primary" : "text-loss"
+                  )}>
+                    {stat.wins}%
+                  </p>
+                  <p className="text-xs text-muted-foreground">{stat.trades} trades</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Mental Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Positives */}
+            <div className="glass-card p-6 animate-fade-in" style={{ animationDelay: '600ms' }}>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-profit/20 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-profit" />
+                </div>
+                <h3 className="font-display font-semibold text-foreground">
+                  {t('positiveSigns')}
+                </h3>
+              </div>
+              <div className="space-y-3">
+                {mentalSummary.positives.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-2 p-3 rounded-lg bg-profit/10 border border-profit/30"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-profit mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-foreground">{item}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Negatives */}
+            <div className="glass-card p-6 animate-fade-in" style={{ animationDelay: '650ms' }}>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-loss/20 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-loss" />
+                </div>
+                <h3 className="font-display font-semibold text-foreground">
+                  {t('areasToImprove')}
+                </h3>
+              </div>
+              <div className="space-y-3">
+                {mentalSummary.negatives.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-2 p-3 rounded-lg bg-loss/10 border border-loss/30"
+                  >
+                    <AlertTriangle className="w-4 h-4 text-loss mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-foreground">{item}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </>
       )}
     </div>
