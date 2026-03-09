@@ -265,8 +265,8 @@ const Dashboard: React.FC = () => {
       />
 
       {/* Welcome Message */}
-      <div className="glass-card p-4 sm:p-6 bg-gradient-to-r from-primary/10 to-profit/10 border-primary/30">
-        <h1 className="font-display text-lg sm:text-2xl md:text-3xl font-bold text-foreground truncate">
+      <div className="glass-card p-3 sm:p-4 bg-gradient-to-r from-primary/10 to-profit/10 border-primary/30">
+        <h1 className="font-display text-base sm:text-xl md:text-2xl font-bold text-foreground truncate">
           {t('welcome')} {userNickname} 👋
         </h1>
       </div>
