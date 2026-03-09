@@ -228,7 +228,7 @@
   }
   
   .stat-card {
-    @apply glass-card p-4 relative overflow-hidden;
+    @apply glass-card p-3 relative overflow-hidden;
   }
   
   .gauge-container {

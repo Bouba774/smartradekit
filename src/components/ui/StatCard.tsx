@@ -64,7 +64,7 @@ const StatCard: React.FC<StatCardProps> = ({
       
       <div className="flex items-end justify-between">
         <p className={cn(
-          "text-2xl font-display font-bold",
+          "text-xl font-display font-bold",
           valueStyles[variant]
         )}>
           {value}
