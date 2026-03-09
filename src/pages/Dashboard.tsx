@@ -300,7 +300,7 @@ const Dashboard: React.FC = () => {
       {/* Section: Statistiques Principales */}
       <div>
         <SectionHeader icon={Activity} title={t('mainStatistics')} delay={100} />
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
           <StatCard
             title={t('totalTransactions')}
             value={stats.totalTrades}
