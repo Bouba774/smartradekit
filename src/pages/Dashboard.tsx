@@ -557,7 +557,7 @@ const Dashboard: React.FC = () => {
       {/* Section: Séries & Risque */}
       <div>
         <SectionHeader icon={Flame} title={t('streaks')} delay={1250} />
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <StatCard
             title={t('maxWinStreak')}
             value={stats.longestWinStreak}
