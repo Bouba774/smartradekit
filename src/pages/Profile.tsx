@@ -711,43 +711,51 @@ const Profile: React.FC = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-loss">
               <Lock className="w-5 h-5" />
-              {language === 'fr' ? 'Vérification du mot de passe' : 'Password verification'}
+              {isOAuthUser
+                ? (language === 'fr' ? 'Confirmer l\'action' : 'Confirm action')
+                : (language === 'fr' ? 'Vérification du mot de passe' : 'Password verification')}
             </DialogTitle>
             <DialogDescription>
-              {language === 'fr' 
-                ? 'Entrez votre mot de passe pour confirmer cette action.' 
-                : 'Enter your password to confirm this action.'}
+              {isOAuthUser
+                ? (language === 'fr' 
+                    ? 'Vous êtes connecté via Google. Confirmez cette action irréversible.' 
+                    : 'You are signed in via Google. Confirm this irreversible action.')
+                : (language === 'fr' 
+                    ? 'Entrez votre mot de passe pour confirmer cette action.' 
+                    : 'Enter your password to confirm this action.')}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <div className="relative">
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                value={passwordInput}
-                onChange={(e) => {
-                  setPasswordInput(e.target.value);
-                  setPasswordError('');
-                }}
-                placeholder={language === 'fr' ? 'Votre mot de passe' : 'Your password'}
-                className={passwordError ? 'border-loss' : ''}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && passwordInput) {
-                    handlePasswordVerification();
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+          {!isOAuthUser && (
+            <div className="py-4">
+              <div className="relative">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  value={passwordInput}
+                  onChange={(e) => {
+                    setPasswordInput(e.target.value);
+                    setPasswordError('');
+                  }}
+                  placeholder={language === 'fr' ? 'Votre mot de passe' : 'Your password'}
+                  className={passwordError ? 'border-loss' : ''}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && passwordInput) {
+                      handlePasswordVerification();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {passwordError && (
+                <p className="text-sm text-loss mt-2">{passwordError}</p>
+              )}
             </div>
-            {passwordError && (
-              <p className="text-sm text-loss mt-2">{passwordError}</p>
-            )}
-          </div>
+          )}
           <DialogFooter className="gap-2 sm:gap-0">
             <Button
               variant="outline"
@@ -764,7 +772,7 @@ const Profile: React.FC = () => {
             <Button
               variant="destructive"
               onClick={handlePasswordVerification}
-              disabled={!passwordInput || isVerifyingPassword}
+              disabled={(!isOAuthUser && !passwordInput) || isVerifyingPassword}
             >
               {isVerifyingPassword 
                 ? (language === 'fr' ? 'Vérification...' : 'Verifying...') 
