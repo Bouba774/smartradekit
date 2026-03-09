@@ -789,12 +789,12 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Results Distribution */}
-        <div className="glass-card p-6">
-          <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Target className="w-5 h-5 text-primary" />
+        <div className="glass-card p-3 sm:p-4">
+          <h3 className="font-display text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+            <Target className="w-4 h-4 text-primary" />
             {t('resultsLabel')}
           </h3>
-          <div className="h-48">
+          <div className="h-36">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
