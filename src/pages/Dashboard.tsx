@@ -346,7 +346,7 @@ const Dashboard: React.FC = () => {
       {/* Section: Positions */}
       <div>
         <SectionHeader icon={ArrowUpDown} title={t('positions')} delay={400} />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <StatCard
             title={t('buyPositions')}
             value={stats.buyPositions}
