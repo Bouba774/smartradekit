@@ -211,21 +211,53 @@ const Profile: React.FC = () => {
     }
   };
 
+  // Check if user signed up with OAuth (Google, etc.)
+  const isOAuthUser = React.useMemo(() => {
+    const provider = user?.app_metadata?.provider;
+    return provider && provider !== 'email';
+  }, [user]);
+
   // Password verification for destructive actions
   const handlePasswordVerification = async () => {
-    if (!user?.email || !passwordInput) return;
+    if (!user?.email) return;
+    
+    // For OAuth users, skip password verification
+    if (isOAuthUser) {
+      setShowPasswordConfirm(false);
+      setPasswordInput('');
+      
+      if (pendingAction === 'deleteData') {
+        await executeDeleteAllData();
+      } else if (pendingAction === 'deleteAccount') {
+        await executeDeleteAccount();
+      }
+      
+      setPendingAction(null);
+      return;
+    }
+
+    if (!passwordInput) return;
     
     setIsVerifyingPassword(true);
     setPasswordError('');
     
     try {
-      // Try to sign in with the password to verify it
-      const { error } = await supabase.auth.signInWithPassword({
+      // Use reauthentication to verify password without creating a new session
+      const { error } = await supabase.rpc('check_rate_limit', {
+        p_identifier: user.email,
+        p_attempt_type: 'delete_verify',
+        p_max_attempts: 5,
+        p_window_minutes: 15,
+        p_block_minutes: 30,
+      });
+
+      // Verify password by attempting sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: user.email,
         password: passwordInput,
       });
       
-      if (error) {
+      if (signInError) {
         setPasswordError(language === 'fr' ? 'Mot de passe incorrect' : 'Incorrect password');
         triggerFeedback('error');
         return;
