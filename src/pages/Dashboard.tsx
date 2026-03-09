@@ -477,7 +477,7 @@ const Dashboard: React.FC = () => {
       {/* Section: ROI & Drawdown (Capital-Based) */}
       <div>
         <SectionHeader icon={LineChartIcon} title={language === 'fr' ? 'ROI & Drawdown' : 'ROI & Drawdown'} delay={1025} />
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
           <StatCard
             title={language === 'fr' ? 'Capital Actuel' : 'Current Equity'}
             value={
