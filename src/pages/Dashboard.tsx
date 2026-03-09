@@ -740,7 +740,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Distribution Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Position Distribution */}
         <div className="glass-card p-6">
           <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
