@@ -49,9 +49,9 @@ const StatCard: React.FC<StatCardProps> = ({
         className
       )}
     >
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between mb-1.5">
         <div className="flex items-center gap-1.5">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium leading-tight">
             {title}
           </p>
           {tooltip && (
@@ -64,7 +64,7 @@ const StatCard: React.FC<StatCardProps> = ({
       
       <div className="flex items-end justify-between">
         <p className={cn(
-          "text-2xl font-display font-bold",
+          "text-xl font-display font-bold",
           valueStyles[variant]
         )}>
           {value}

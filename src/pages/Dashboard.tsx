@@ -247,16 +247,16 @@ const Dashboard: React.FC = () => {
 
   // Section header component
   const SectionHeader = ({ icon: Icon, title }: { icon: any; title: string; delay?: number }) => (
-    <div className="flex items-center gap-2 mb-4">
-      <div className="p-2 rounded-lg bg-primary/20 border border-primary/30">
-        <Icon className="w-5 h-5 text-primary" />
+    <div className="flex items-center gap-2 mb-2">
+      <div className="p-1.5 rounded-md bg-primary/20 border border-primary/30">
+        <Icon className="w-4 h-4 text-primary" />
       </div>
-      <h2 className="font-display text-lg font-bold text-foreground">{title}</h2>
+      <h2 className="font-display text-base font-bold text-foreground">{title}</h2>
     </div>
   );
 
   return (
-    <div className="space-y-6 py-4 w-full max-w-full overflow-x-hidden">
+    <div className="space-y-4 py-2 w-full max-w-full overflow-x-hidden">
       {/* Initial Capital Prompt Dialog */}
       <InitialCapitalPrompt
         open={capitalPromptOpen}
@@ -265,8 +265,8 @@ const Dashboard: React.FC = () => {
       />
 
       {/* Welcome Message */}
-      <div className="glass-card p-4 sm:p-6 bg-gradient-to-r from-primary/10 to-profit/10 border-primary/30">
-        <h1 className="font-display text-lg sm:text-2xl md:text-3xl font-bold text-foreground truncate">
+      <div className="glass-card p-3 sm:p-4 bg-gradient-to-r from-primary/10 to-profit/10 border-primary/30">
+        <h1 className="font-display text-base sm:text-xl md:text-2xl font-bold text-foreground truncate">
           {t('welcome')} {userNickname} 👋
         </h1>
       </div>
@@ -300,7 +300,7 @@ const Dashboard: React.FC = () => {
       {/* Section: Statistiques Principales */}
       <div>
         <SectionHeader icon={Activity} title={t('mainStatistics')} delay={100} />
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
           <StatCard
             title={t('totalTransactions')}
             value={stats.totalTrades}
@@ -346,7 +346,7 @@ const Dashboard: React.FC = () => {
       {/* Section: Positions */}
       <div>
         <SectionHeader icon={ArrowUpDown} title={t('positions')} delay={400} />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <StatCard
             title={t('buyPositions')}
             value={stats.buyPositions}
@@ -383,7 +383,7 @@ const Dashboard: React.FC = () => {
       {/* Section: Profits & Pertes */}
       <div>
         <SectionHeader icon={DollarSign} title={t('profitsAndLosses')} delay={650} />
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
           <StatCard
             title={t('bestProfit')}
             value={<ConfidentialValue>{formatAmount(stats.bestProfit)}</ConfidentialValue>}
@@ -438,7 +438,7 @@ const Dashboard: React.FC = () => {
       {/* Section: Indicateurs de Performance */}
       <div>
         <SectionHeader icon={Zap} title={t('performanceIndicators')} delay={1000} />
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
           <StatCard
             title={t('netProfit')}
             value={<ConfidentialValue>{formatAmount(stats.netProfit)}</ConfidentialValue>}
@@ -477,7 +477,7 @@ const Dashboard: React.FC = () => {
       {/* Section: ROI & Drawdown (Capital-Based) */}
       <div>
         <SectionHeader icon={LineChartIcon} title={language === 'fr' ? 'ROI & Drawdown' : 'ROI & Drawdown'} delay={1025} />
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
           <StatCard
             title={language === 'fr' ? 'Capital Actuel' : 'Current Equity'}
             value={
@@ -557,7 +557,7 @@ const Dashboard: React.FC = () => {
       {/* Section: Séries & Risque */}
       <div>
         <SectionHeader icon={Flame} title={t('streaks')} delay={1250} />
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <StatCard
             title={t('maxWinStreak')}
             value={stats.longestWinStreak}
@@ -580,7 +580,7 @@ const Dashboard: React.FC = () => {
       {/* Section: Durée */}
       <div>
         <SectionHeader icon={Timer} title={t('tradeDuration')} delay={1400} />
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <StatCard
             title={t('avgTradeDuration')}
             value={stats.avgTradeDuration}
@@ -599,12 +599,12 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Equity Curve - Enhanced */}
-        <div className="glass-card p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display font-semibold text-foreground flex items-center gap-2">
-              <Activity className="w-5 h-5 text-primary" />
+        <div className="glass-card p-3 sm:p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Activity className="w-4 h-4 text-primary" />
               {t('equityCurve')}
             </h3>
             {capitalInfo.capitalDefined && (
@@ -613,7 +613,7 @@ const Dashboard: React.FC = () => {
               </span>
             )}
           </div>
-          <div className="h-64">
+          <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={equityData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <defs>
@@ -702,12 +702,12 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Monthly Performance */}
-        <div className="glass-card p-4 sm:p-6">
-          <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-primary" />
+        <div className="glass-card p-3 sm:p-4">
+          <h3 className="font-display text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+            <Calendar className="w-4 h-4 text-primary" />
             {t('monthlyPerformance')}
           </h3>
-          <div className="h-64">
+          <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.5} />
@@ -740,14 +740,14 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Distribution Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Position Distribution */}
-        <div className="glass-card p-6">
-          <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-            <ArrowUpDown className="w-5 h-5 text-primary" />
+        <div className="glass-card p-3 sm:p-4">
+          <h3 className="font-display text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+            <ArrowUpDown className="w-4 h-4 text-primary" />
             {t('positionDistribution')}
           </h3>
-          <div className="h-48">
+          <div className="h-36">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -789,12 +789,12 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Results Distribution */}
-        <div className="glass-card p-6">
-          <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Target className="w-5 h-5 text-primary" />
+        <div className="glass-card p-3 sm:p-4">
+          <h3 className="font-display text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+            <Target className="w-4 h-4 text-primary" />
             {t('resultsLabel')}
           </h3>
-          <div className="h-48">
+          <div className="h-36">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -840,12 +840,12 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Market Distribution - Enhanced */}
-        <div className="glass-card p-6">
-          <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-            <PieChartIcon className="w-5 h-5 text-primary" />
+        <div className="glass-card p-3 sm:p-4">
+          <h3 className="font-display text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+            <PieChartIcon className="w-4 h-4 text-primary" />
             {language === 'fr' ? 'Répartition par Marché' : 'Market Distribution'}
           </h3>
-          <div className="h-48">
+          <div className="h-36">
             {marketDistribution.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -903,12 +903,12 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Radar Performance */}
-        <div className="glass-card p-6">
-          <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-primary" />
+        <div className="glass-card p-3 sm:p-4">
+          <h3 className="font-display text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+            <Zap className="w-4 h-4 text-primary" />
             {t('overview')}
           </h3>
-          <div className="h-48">
+          <div className="h-36">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radarData}>
                 <PolarGrid stroke="hsl(var(--border))" />
@@ -935,12 +935,12 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Gauges */}
-      <div className="glass-card p-6">
-        <h3 className="font-display font-semibold text-foreground mb-6 flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-primary" />
+      <div className="glass-card p-4">
+        <h3 className="font-display text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5">
+          <BarChart3 className="w-4 h-4 text-primary" />
           {t('keyIndicators')}
         </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 justify-items-center">
+        <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-3 justify-items-center">
           <GaugeChart
             value={stats.winrate}
             displayValue={`${round1(clamp(stats.winrate, 0, 100))}`}
