@@ -256,7 +256,7 @@ const Dashboard: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6 py-4 w-full max-w-full overflow-x-hidden">
+    <div className="space-y-4 py-2 w-full max-w-full overflow-x-hidden">
       {/* Initial Capital Prompt Dialog */}
       <InitialCapitalPrompt
         open={capitalPromptOpen}
