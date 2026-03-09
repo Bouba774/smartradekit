@@ -438,7 +438,7 @@ const Dashboard: React.FC = () => {
       {/* Section: Indicateurs de Performance */}
       <div>
         <SectionHeader icon={Zap} title={t('performanceIndicators')} delay={1000} />
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
           <StatCard
             title={t('netProfit')}
             value={<ConfidentialValue>{formatAmount(stats.netProfit)}</ConfidentialValue>}
