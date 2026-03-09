@@ -383,7 +383,7 @@ const Dashboard: React.FC = () => {
       {/* Section: Profits & Pertes */}
       <div>
         <SectionHeader icon={DollarSign} title={t('profitsAndLosses')} delay={650} />
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
           <StatCard
             title={t('bestProfit')}
             value={<ConfidentialValue>{formatAmount(stats.bestProfit)}</ConfidentialValue>}
