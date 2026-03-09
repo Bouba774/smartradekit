@@ -935,12 +935,12 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Gauges */}
-      <div className="glass-card p-6">
-        <h3 className="font-display font-semibold text-foreground mb-6 flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-primary" />
+      <div className="glass-card p-4">
+        <h3 className="font-display text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5">
+          <BarChart3 className="w-4 h-4 text-primary" />
           {t('keyIndicators')}
         </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 justify-items-center">
+        <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-3 justify-items-center">
           <GaugeChart
             value={stats.winrate}
             displayValue={`${round1(clamp(stats.winrate, 0, 100))}`}
