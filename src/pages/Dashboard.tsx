@@ -613,7 +613,7 @@ const Dashboard: React.FC = () => {
               </span>
             )}
           </div>
-          <div className="h-64">
+          <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={equityData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <defs>
