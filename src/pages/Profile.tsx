@@ -211,21 +211,53 @@ const Profile: React.FC = () => {
     }
   };
 
+  // Check if user signed up with OAuth (Google, etc.)
+  const isOAuthUser = React.useMemo(() => {
+    const provider = user?.app_metadata?.provider;
+    return provider && provider !== 'email';
+  }, [user]);
+
   // Password verification for destructive actions
   const handlePasswordVerification = async () => {
-    if (!user?.email || !passwordInput) return;
+    if (!user?.email) return;
+    
+    // For OAuth users, skip password verification
+    if (isOAuthUser) {
+      setShowPasswordConfirm(false);
+      setPasswordInput('');
+      
+      if (pendingAction === 'deleteData') {
+        await executeDeleteAllData();
+      } else if (pendingAction === 'deleteAccount') {
+        await executeDeleteAccount();
+      }
+      
+      setPendingAction(null);
+      return;
+    }
+
+    if (!passwordInput) return;
     
     setIsVerifyingPassword(true);
     setPasswordError('');
     
     try {
-      // Try to sign in with the password to verify it
-      const { error } = await supabase.auth.signInWithPassword({
+      // Use reauthentication to verify password without creating a new session
+      const { error } = await supabase.rpc('check_rate_limit', {
+        p_identifier: user.email,
+        p_attempt_type: 'delete_verify',
+        p_max_attempts: 5,
+        p_window_minutes: 15,
+        p_block_minutes: 30,
+      });
+
+      // Verify password by attempting sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: user.email,
         password: passwordInput,
       });
       
-      if (error) {
+      if (signInError) {
         setPasswordError(language === 'fr' ? 'Mot de passe incorrect' : 'Incorrect password');
         triggerFeedback('error');
         return;
@@ -292,7 +324,12 @@ const Profile: React.FC = () => {
     setPendingAction('deleteData');
     setPasswordInput('');
     setPasswordError('');
-    setShowPasswordConfirm(true);
+    if (isOAuthUser) {
+      // For OAuth users, show confirmation dialog but skip password
+      setShowPasswordConfirm(true);
+    } else {
+      setShowPasswordConfirm(true);
+    }
   };
 
   const executeDeleteAccount = async () => {
@@ -674,43 +711,51 @@ const Profile: React.FC = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-loss">
               <Lock className="w-5 h-5" />
-              {language === 'fr' ? 'Vérification du mot de passe' : 'Password verification'}
+              {isOAuthUser
+                ? (language === 'fr' ? 'Confirmer l\'action' : 'Confirm action')
+                : (language === 'fr' ? 'Vérification du mot de passe' : 'Password verification')}
             </DialogTitle>
             <DialogDescription>
-              {language === 'fr' 
-                ? 'Entrez votre mot de passe pour confirmer cette action.' 
-                : 'Enter your password to confirm this action.'}
+              {isOAuthUser
+                ? (language === 'fr' 
+                    ? 'Vous êtes connecté via Google. Confirmez cette action irréversible.' 
+                    : 'You are signed in via Google. Confirm this irreversible action.')
+                : (language === 'fr' 
+                    ? 'Entrez votre mot de passe pour confirmer cette action.' 
+                    : 'Enter your password to confirm this action.')}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <div className="relative">
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                value={passwordInput}
-                onChange={(e) => {
-                  setPasswordInput(e.target.value);
-                  setPasswordError('');
-                }}
-                placeholder={language === 'fr' ? 'Votre mot de passe' : 'Your password'}
-                className={passwordError ? 'border-loss' : ''}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && passwordInput) {
-                    handlePasswordVerification();
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+          {!isOAuthUser && (
+            <div className="py-4">
+              <div className="relative">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  value={passwordInput}
+                  onChange={(e) => {
+                    setPasswordInput(e.target.value);
+                    setPasswordError('');
+                  }}
+                  placeholder={language === 'fr' ? 'Votre mot de passe' : 'Your password'}
+                  className={passwordError ? 'border-loss' : ''}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && passwordInput) {
+                      handlePasswordVerification();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {passwordError && (
+                <p className="text-sm text-loss mt-2">{passwordError}</p>
+              )}
             </div>
-            {passwordError && (
-              <p className="text-sm text-loss mt-2">{passwordError}</p>
-            )}
-          </div>
+          )}
           <DialogFooter className="gap-2 sm:gap-0">
             <Button
               variant="outline"
@@ -727,7 +772,7 @@ const Profile: React.FC = () => {
             <Button
               variant="destructive"
               onClick={handlePasswordVerification}
-              disabled={!passwordInput || isVerifyingPassword}
+              disabled={(!isOAuthUser && !passwordInput) || isVerifyingPassword}
             >
               {isVerifyingPassword 
                 ? (language === 'fr' ? 'Vérification...' : 'Verifying...') 
