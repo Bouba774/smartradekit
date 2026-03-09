@@ -638,6 +638,16 @@ const Dashboard: React.FC = () => {
                   stroke="hsl(var(--muted-foreground))" 
                   fontSize={10} 
                   width={55}
+                  domain={[
+                    (dataMin: number) => {
+                      const padding = Math.max((dataMin) * 0.02, 50);
+                      return Math.floor((dataMin - padding) / 100) * 100;
+                    },
+                    (dataMax: number) => {
+                      const padding = Math.max((dataMax) * 0.02, 50);
+                      return Math.ceil((dataMax + padding) / 100) * 100;
+                    }
+                  ]}
                   tickFormatter={(val) => val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val.toString()}
                   tickLine={false}
                   axisLine={false}
