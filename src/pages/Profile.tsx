@@ -324,7 +324,12 @@ const Profile: React.FC = () => {
     setPendingAction('deleteData');
     setPasswordInput('');
     setPasswordError('');
-    setShowPasswordConfirm(true);
+    if (isOAuthUser) {
+      // For OAuth users, show confirmation dialog but skip password
+      setShowPasswordConfirm(true);
+    } else {
+      setShowPasswordConfirm(true);
+    }
   };
 
   const executeDeleteAccount = async () => {
