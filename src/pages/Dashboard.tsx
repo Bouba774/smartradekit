@@ -580,7 +580,7 @@ const Dashboard: React.FC = () => {
       {/* Section: Durée */}
       <div>
         <SectionHeader icon={Timer} title={t('tradeDuration')} delay={1400} />
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <StatCard
             title={t('avgTradeDuration')}
             value={stats.avgTradeDuration}
