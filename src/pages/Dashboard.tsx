@@ -601,10 +601,10 @@ const Dashboard: React.FC = () => {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Equity Curve - Enhanced */}
-        <div className="glass-card p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display font-semibold text-foreground flex items-center gap-2">
-              <Activity className="w-5 h-5 text-primary" />
+        <div className="glass-card p-3 sm:p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Activity className="w-4 h-4 text-primary" />
               {t('equityCurve')}
             </h3>
             {capitalInfo.capitalDefined && (
