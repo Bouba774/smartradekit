@@ -78,6 +78,29 @@
       </div>
     </div>
     <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+    <script>
+      (function() {
+        var taglines = {
+          en: 'Your Ultimate Trading Companion',
+          fr: 'Votre Compagnon de Trading Ultime',
+          es: 'Tu Compañero de Trading Definitivo',
+          pt: 'Seu Companheiro de Trading Definitivo',
+          de: 'Ihr Ultimativer Trading-Begleiter',
+          ar: 'رفيقك المثالي في التداول',
+          tr: 'Nihai Trading Yoldaşınız',
+          it: 'Il Tuo Compagno di Trading Definitivo'
+        };
+        var loadingTexts = {
+          en: 'Loading...', fr: 'Chargement...', es: 'Cargando...', pt: 'Carregando...',
+          de: 'Laden...', ar: '...جار التحميل', tr: 'Yükleniyor...', it: 'Caricamento...'
+        };
+        var lang = (localStorage.getItem('language') || navigator.language?.slice(0,2) || 'en');
+        var el = document.getElementById('splash-tagline');
+        if (el && taglines[lang]) el.textContent = taglines[lang];
+        var loader = document.querySelector('#initial-loader p:last-of-type');
+        if (loader && loadingTexts[lang]) loader.textContent = loadingTexts[lang];
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="./src/main.tsx"></script>
     <script>
