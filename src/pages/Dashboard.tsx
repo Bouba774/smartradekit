@@ -10,7 +10,7 @@ import { useInitialCapital } from '@/hooks/useInitialCapital';
 import { useSettings } from '@/hooks/useSettings';
 import { APP_VERSION } from '@/lib/version';
 import { getAssetCategory } from '@/data/assets';
-import { mainStatsTooltips, timeTooltips, streaksTooltips, gaugeTooltips, advancedTooltips } from '@/data/helpTooltips';
+import { mainStatsTooltips, timeTooltips, streaksTooltips } from '@/data/helpTooltips';
 import StatCard from '@/components/ui/StatCard';
 import GaugeChart from '@/components/ui/GaugeChart';
 import TradeFocusMode from '@/components/TradeFocusMode';
