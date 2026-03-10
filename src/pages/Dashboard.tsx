@@ -10,9 +10,9 @@ import { useInitialCapital } from '@/hooks/useInitialCapital';
 import { useSettings } from '@/hooks/useSettings';
 import { APP_VERSION } from '@/lib/version';
 import { getAssetCategory } from '@/data/assets';
-import { mainStatsTooltips, timeTooltips, streaksTooltips, gaugeTooltips, advancedTooltips } from '@/data/helpTooltips';
+import { mainStatsTooltips, timeTooltips, streaksTooltips } from '@/data/helpTooltips';
 import StatCard from '@/components/ui/StatCard';
-import GaugeChart from '@/components/ui/GaugeChart';
+
 import TradeFocusMode from '@/components/TradeFocusMode';
 import ConfidentialValue from '@/components/ConfidentialValue';
 import HelpTooltip from '@/components/ui/HelpTooltip';
@@ -177,7 +177,7 @@ const Dashboard: React.FC = () => {
     { name: t('breakeven'), value: stats.breakevenTrades || 0.1, actualValue: stats.breakevenTrades, color: 'hsl(var(--muted-foreground))' },
   ];
 
-  // Market distribution data
+  // Market distribution data - show all individual markets, no "Other" grouping
   const marketDistribution = React.useMemo(() => {
     if (trades.length === 0) return [];
     
@@ -185,7 +185,7 @@ const Dashboard: React.FC = () => {
     
     trades.forEach(trade => {
       const category = getAssetCategory(trade.asset);
-      // Group categories for cleaner display
+      // Use the actual category name, no grouping into "Other"
       let marketGroup = category;
       if (category.startsWith('Forex')) {
         marketGroup = 'Forex';
@@ -210,8 +210,17 @@ const Dashboard: React.FC = () => {
       'Stocks': 'hsl(217, 91%, 60%)',
       'Métaux': 'hsl(48, 96%, 53%)',
       'Énergies': 'hsl(25, 95%, 53%)',
-      'Other': 'hsl(220, 9%, 46%)',
+      'Matières premières': 'hsl(30, 80%, 50%)',
+      'ETF': 'hsl(280, 70%, 55%)',
+      'Obligations': 'hsl(190, 60%, 50%)',
     };
+    
+    // Generate colors for any categories not in the predefined list
+    const fallbackColors = [
+      'hsl(160, 70%, 45%)', 'hsl(320, 70%, 55%)', 'hsl(60, 80%, 45%)',
+      'hsl(200, 80%, 50%)', 'hsl(100, 60%, 45%)', 'hsl(350, 65%, 55%)',
+    ];
+    let fallbackIndex = 0;
 
     return Object.entries(marketCounts)
       .map(([name, data]) => ({
@@ -219,7 +228,7 @@ const Dashboard: React.FC = () => {
         value: data.count,
         pnl: data.pnl,
         percentage: Math.round((data.count / total) * 100),
-        color: marketColors[name] || marketColors['Other'],
+        color: marketColors[name] || fallbackColors[fallbackIndex++ % fallbackColors.length],
       }))
       .sort((a, b) => b.value - a.value);
   }, [trades]);
@@ -749,15 +758,15 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Distribution Charts */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Distribution Charts - Full size */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Position Distribution */}
         <div className="glass-card p-3 sm:p-4">
           <h3 className="font-display text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
             <ArrowUpDown className="w-4 h-4 text-primary" />
             {t('positionDistribution')}
           </h3>
-          <div className="h-36">
+          <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -804,7 +813,7 @@ const Dashboard: React.FC = () => {
             <Target className="w-4 h-4 text-primary" />
             {t('resultsLabel')}
           </h3>
-          <div className="h-36">
+          <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -849,13 +858,17 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
+      </div>
+
+      {/* Market Distribution & Radar - Full size */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Market Distribution - Enhanced */}
         <div className="glass-card p-3 sm:p-4">
           <h3 className="font-display text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
             <PieChartIcon className="w-4 h-4 text-primary" />
             {language === 'fr' ? 'Répartition par Marché' : 'Market Distribution'}
           </h3>
-          <div className="h-36">
+          <div className="h-48">
             {marketDistribution.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -918,7 +931,7 @@ const Dashboard: React.FC = () => {
             <Zap className="w-4 h-4 text-primary" />
             {t('overview')}
           </h3>
-          <div className="h-36">
+          <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radarData}>
                 <PolarGrid stroke="hsl(var(--border))" />
@@ -944,57 +957,6 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Gauges */}
-      <div className="glass-card p-4">
-        <h3 className="font-display text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5">
-          <BarChart3 className="w-4 h-4 text-primary" />
-          {t('keyIndicators')}
-        </h3>
-        <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-3 justify-items-center">
-          <GaugeChart
-            value={stats.winrate}
-            displayValue={`${round1(clamp(stats.winrate, 0, 100))}`}
-            label={t('winrate')}
-            variant={stats.winrate >= 60 ? 'profit' : stats.winrate >= 40 ? 'primary' : 'loss'}
-            tooltip={gaugeTooltips.winrateGauge}
-          />
-          <GaugeChart
-            value={stats.profitFactor * 25}
-            displayValue={stats.profitFactorDisplay}
-            label={t('profitFactor')}
-            variant={stats.profitFactor >= 1.5 ? 'profit' : stats.profitFactor >= 1 ? 'primary' : 'loss'}
-            tooltip={gaugeTooltips.profitFactorGauge}
-          />
-          <GaugeChart
-            value={stats.avgRiskReward * 25}
-            displayValue={stats.avgRiskRewardDisplay}
-            label={t('avgRiskReward')}
-            variant={stats.avgRiskReward >= 1.5 ? 'profit' : stats.avgRiskReward >= 1 ? 'primary' : 'loss'}
-            tooltip="Ratio risque/rendement moyen réellement obtenu sur vos trades."
-          />
-          <GaugeChart
-            value={stats.expectancy >= 0 ? stats.expectancy * 10 : 0}
-            displayValue={`${stats.expectancy >= 0 ? round1(stats.expectancy) : 0}`}
-            label={t('expectancy')}
-            variant={stats.expectancy > 0 ? 'profit' : 'loss'}
-            tooltip={gaugeTooltips.expectancyGauge}
-          />
-          <GaugeChart
-            value={100 - stats.maxDrawdownPercent}
-            displayValue={`${round1(clamp(100 - stats.maxDrawdownPercent, 0, 100))}`}
-            label={t('securityIndicator')}
-            variant={stats.maxDrawdownPercent <= 10 ? 'profit' : stats.maxDrawdownPercent <= 20 ? 'primary' : 'loss'}
-            tooltip="Score de sécurité basé sur votre drawdown maximum. Plus ce score est élevé, meilleure est votre gestion du risque."
-          />
-          <GaugeChart
-            value={stats.longestWinStreak * 15}
-            displayValue={`${stats.longestWinStreak}`}
-            label={t('consistency')}
-            variant="primary"
-            tooltip={advancedTooltips.consistency}
-          />
-        </div>
-      </div>
 
     </div>
   );

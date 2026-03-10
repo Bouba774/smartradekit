@@ -127,7 +127,8 @@ export const getAssetCategory = (asset: string): string => {
   for (const [category, assets] of Object.entries(ASSET_CATEGORIES)) {
     if (assets.includes(asset)) return category;
   }
-  return 'Other';
+  // Return the asset name itself instead of generic "Other"
+  return asset;
 };
 
 // Get pip size for an asset
