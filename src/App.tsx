@@ -270,7 +270,9 @@ const AppContent = () => {
         <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Public landing page - redirects to dashboard if logged in */}
-            <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Landing />} />
+            <Route path="/" element={
+              authLoading ? null : user ? <Navigate to="/dashboard" replace /> : <Landing />
+            } />
             
             {/* Auth pages */}
             <Route path="/auth" element={<Auth />} />
