@@ -948,57 +948,6 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Gauges */}
-      <div className="glass-card p-4">
-        <h3 className="font-display text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5">
-          <BarChart3 className="w-4 h-4 text-primary" />
-          {t('keyIndicators')}
-        </h3>
-        <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-3 justify-items-center">
-          <GaugeChart
-            value={stats.winrate}
-            displayValue={`${round1(clamp(stats.winrate, 0, 100))}`}
-            label={t('winrate')}
-            variant={stats.winrate >= 60 ? 'profit' : stats.winrate >= 40 ? 'primary' : 'loss'}
-            tooltip={gaugeTooltips.winrateGauge}
-          />
-          <GaugeChart
-            value={stats.profitFactor * 25}
-            displayValue={stats.profitFactorDisplay}
-            label={t('profitFactor')}
-            variant={stats.profitFactor >= 1.5 ? 'profit' : stats.profitFactor >= 1 ? 'primary' : 'loss'}
-            tooltip={gaugeTooltips.profitFactorGauge}
-          />
-          <GaugeChart
-            value={stats.avgRiskReward * 25}
-            displayValue={stats.avgRiskRewardDisplay}
-            label={t('avgRiskReward')}
-            variant={stats.avgRiskReward >= 1.5 ? 'profit' : stats.avgRiskReward >= 1 ? 'primary' : 'loss'}
-            tooltip="Ratio risque/rendement moyen réellement obtenu sur vos trades."
-          />
-          <GaugeChart
-            value={stats.expectancy >= 0 ? stats.expectancy * 10 : 0}
-            displayValue={`${stats.expectancy >= 0 ? round1(stats.expectancy) : 0}`}
-            label={t('expectancy')}
-            variant={stats.expectancy > 0 ? 'profit' : 'loss'}
-            tooltip={gaugeTooltips.expectancyGauge}
-          />
-          <GaugeChart
-            value={100 - stats.maxDrawdownPercent}
-            displayValue={`${round1(clamp(100 - stats.maxDrawdownPercent, 0, 100))}`}
-            label={t('securityIndicator')}
-            variant={stats.maxDrawdownPercent <= 10 ? 'profit' : stats.maxDrawdownPercent <= 20 ? 'primary' : 'loss'}
-            tooltip="Score de sécurité basé sur votre drawdown maximum. Plus ce score est élevé, meilleure est votre gestion du risque."
-          />
-          <GaugeChart
-            value={stats.longestWinStreak * 15}
-            displayValue={`${stats.longestWinStreak}`}
-            label={t('consistency')}
-            variant="primary"
-            tooltip={advancedTooltips.consistency}
-          />
-        </div>
-      </div>
 
     </div>
   );
