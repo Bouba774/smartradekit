@@ -849,13 +849,17 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
+      </div>
+
+      {/* Market Distribution & Radar - Full size */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Market Distribution - Enhanced */}
         <div className="glass-card p-3 sm:p-4">
           <h3 className="font-display text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
             <PieChartIcon className="w-4 h-4 text-primary" />
             {language === 'fr' ? 'Répartition par Marché' : 'Market Distribution'}
           </h3>
-          <div className="h-36">
+          <div className="h-48">
             {marketDistribution.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
