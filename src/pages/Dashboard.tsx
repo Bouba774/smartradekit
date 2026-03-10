@@ -922,7 +922,7 @@ const Dashboard: React.FC = () => {
             <Zap className="w-4 h-4 text-primary" />
             {t('overview')}
           </h3>
-          <div className="h-36">
+          <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radarData}>
                 <PolarGrid stroke="hsl(var(--border))" />
