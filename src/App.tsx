@@ -118,7 +118,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 // Component to conditionally render layout
 const AppContent = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { 
     isLocked, 
     unlockApp, 
