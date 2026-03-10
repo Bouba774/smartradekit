@@ -232,15 +232,15 @@ const AppContent = () => {
     clearLockCooldown();
   }, [clearLockCooldown]);
 
-  // Hide splash screen once security state is resolved
+  // Hide splash screen once both auth and security state are resolved
   useEffect(() => {
-    if (!securityLoading) {
+    if (!securityLoading && !authLoading) {
       window.dispatchEvent(new Event('app-ready'));
     }
-  }, [securityLoading]);
+  }, [securityLoading, authLoading]);
 
-  if (securityLoading) {
-    return null; // Keep splash screen visible
+  if (securityLoading || authLoading) {
+    return null; // Keep splash screen visible until fully resolved
   }
 
   // Show lock screen if locked and user is authenticated with PIN configured
