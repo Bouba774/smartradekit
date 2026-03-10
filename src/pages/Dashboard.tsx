@@ -12,7 +12,7 @@ import { APP_VERSION } from '@/lib/version';
 import { getAssetCategory } from '@/data/assets';
 import { mainStatsTooltips, timeTooltips, streaksTooltips } from '@/data/helpTooltips';
 import StatCard from '@/components/ui/StatCard';
-import GaugeChart from '@/components/ui/GaugeChart';
+
 import TradeFocusMode from '@/components/TradeFocusMode';
 import ConfidentialValue from '@/components/ConfidentialValue';
 import HelpTooltip from '@/components/ui/HelpTooltip';
