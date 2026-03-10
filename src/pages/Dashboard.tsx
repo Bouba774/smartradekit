@@ -177,7 +177,7 @@ const Dashboard: React.FC = () => {
     { name: t('breakeven'), value: stats.breakevenTrades || 0.1, actualValue: stats.breakevenTrades, color: 'hsl(var(--muted-foreground))' },
   ];
 
-  // Market distribution data
+  // Market distribution data - show all individual markets, no "Other" grouping
   const marketDistribution = React.useMemo(() => {
     if (trades.length === 0) return [];
     
@@ -185,7 +185,7 @@ const Dashboard: React.FC = () => {
     
     trades.forEach(trade => {
       const category = getAssetCategory(trade.asset);
-      // Group categories for cleaner display
+      // Use the actual category name, no grouping into "Other"
       let marketGroup = category;
       if (category.startsWith('Forex')) {
         marketGroup = 'Forex';
@@ -210,8 +210,17 @@ const Dashboard: React.FC = () => {
       'Stocks': 'hsl(217, 91%, 60%)',
       'Métaux': 'hsl(48, 96%, 53%)',
       'Énergies': 'hsl(25, 95%, 53%)',
-      'Other': 'hsl(220, 9%, 46%)',
+      'Matières premières': 'hsl(30, 80%, 50%)',
+      'ETF': 'hsl(280, 70%, 55%)',
+      'Obligations': 'hsl(190, 60%, 50%)',
     };
+    
+    // Generate colors for any categories not in the predefined list
+    const fallbackColors = [
+      'hsl(160, 70%, 45%)', 'hsl(320, 70%, 55%)', 'hsl(60, 80%, 45%)',
+      'hsl(200, 80%, 50%)', 'hsl(100, 60%, 45%)', 'hsl(350, 65%, 55%)',
+    ];
+    let fallbackIndex = 0;
 
     return Object.entries(marketCounts)
       .map(([name, data]) => ({
@@ -219,7 +228,7 @@ const Dashboard: React.FC = () => {
         value: data.count,
         pnl: data.pnl,
         percentage: Math.round((data.count / total) * 100),
-        color: marketColors[name] || marketColors['Other'],
+        color: marketColors[name] || fallbackColors[fallbackIndex++ % fallbackColors.length],
       }))
       .sort((a, b) => b.value - a.value);
   }, [trades]);
