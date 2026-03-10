@@ -712,26 +712,28 @@ export function parseJSONFile(content: string): ParseResult {
  * Convert parsed MT trades to app trade format
  */
 export function convertToAppTrades(mtTrades: ParsedMTTrade[], userId: string): any[] {
-  return mtTrades
-    .filter(mt => mt.closeTime !== null)
-    .map(mt => {
-      let result: 'win' | 'loss' | 'breakeven' = 'breakeven';
-      if (mt.profit > 0) result = 'win';
-      else if (mt.profit < 0) result = 'loss';
+  return mtTrades.map(mt => {
+      let result: 'win' | 'loss' | 'breakeven' | 'pending' = mt.closeTime ? 'breakeven' : 'pending';
+      if (mt.closeTime) {
+        if (mt.profit > 0) result = 'win';
+        else if (mt.profit < 0) result = 'loss';
+      }
+      
+      const totalPL = mt.profit + mt.swap + mt.commission;
       
       return {
         user_id: userId,
         asset: mt.symbol,
         direction: mt.type === 'buy' ? 'long' : 'short',
         entry_price: mt.openPrice,
-        exit_price: mt.closePrice || mt.openPrice,
+        exit_price: mt.closePrice || (mt.closeTime ? mt.openPrice : null),
         lot_size: mt.volume,
         stop_loss: mt.stopLoss,
         take_profit: mt.takeProfit,
-        profit_loss: mt.profit + mt.swap + mt.commission,
+        profit_loss: mt.closeTime ? totalPL : null,
         result,
         trade_date: mt.openTime.toISOString(),
-        exit_timestamp: mt.closeTime?.toISOString(),
+        exit_timestamp: mt.closeTime?.toISOString() || null,
         notes: `Imported from MetaTrader - Ticket #${mt.ticket}${mt.comment ? ` - ${mt.comment}` : ''}`
       };
     });
