@@ -118,7 +118,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 // Component to conditionally render layout
 const AppContent = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { 
     isLocked, 
     unlockApp, 
@@ -232,15 +232,15 @@ const AppContent = () => {
     clearLockCooldown();
   }, [clearLockCooldown]);
 
-  // Hide splash screen once security state is resolved
+  // Hide splash screen once both auth and security state are resolved
   useEffect(() => {
-    if (!securityLoading) {
+    if (!securityLoading && !authLoading) {
       window.dispatchEvent(new Event('app-ready'));
     }
-  }, [securityLoading]);
+  }, [securityLoading, authLoading]);
 
-  if (securityLoading) {
-    return null; // Keep splash screen visible
+  if (securityLoading || authLoading) {
+    return null; // Keep splash screen visible until fully resolved
   }
 
   // Show lock screen if locked and user is authenticated with PIN configured
@@ -270,7 +270,9 @@ const AppContent = () => {
         <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Public landing page - redirects to dashboard if logged in */}
-            <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Landing />} />
+            <Route path="/" element={
+              authLoading ? null : user ? <Navigate to="/dashboard" replace /> : <Landing />
+            } />
             
             {/* Auth pages */}
             <Route path="/auth" element={<Auth />} />
