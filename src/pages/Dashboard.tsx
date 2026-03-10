@@ -749,15 +749,15 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Distribution Charts */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Distribution Charts - Full size */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Position Distribution */}
         <div className="glass-card p-3 sm:p-4">
           <h3 className="font-display text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
             <ArrowUpDown className="w-4 h-4 text-primary" />
             {t('positionDistribution')}
           </h3>
-          <div className="h-36">
+          <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
