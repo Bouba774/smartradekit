@@ -55,7 +55,7 @@ const ScreenshotCarousel: React.FC<ScreenshotCarouselProps> = ({ screenshots }) 
   // Auto-scroll with pause on interaction
   useEffect(() => {
     if (!emblaApi) return;
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     
     const startAutoPlay = () => {
       interval = setInterval(() => {

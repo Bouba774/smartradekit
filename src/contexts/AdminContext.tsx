@@ -81,9 +81,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [sessionExpiresAt, setSessionExpiresAt] = useState<Date | null>(null);
   
   // Timer refs
-  const sessionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const sessionCheckRef = useRef<NodeJS.Timeout | null>(null);
+  const sessionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const warningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sessionCheckRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasWarnedRef = useRef(false);
 
   // Invalider les queries admin
