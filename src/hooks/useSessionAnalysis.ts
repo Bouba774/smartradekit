@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { Trade } from '@/hooks/useTrades';
-import { parseISO, getHours } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { getNYHour } from '@/lib/timezone';
 import { 
   useSessionSettings, 
   SessionType, 
-  utcToNYTime,
   SessionMode,
   DEFAULT_SESSION_SETTINGS 
 } from './useSessionSettings';
@@ -52,7 +52,7 @@ export const useSessionAnalysis = (
   trades: Trade[],
   language: string = 'fr'
 ): SessionAnalysis => {
-  const { settings, getSessionForDate } = useSessionSettings();
+  const { settings, getSessionForHour } = useSessionSettings();
   
   return useMemo(() => {
     const { mode } = settings;
@@ -74,10 +74,12 @@ export const useSessionAnalysis = (
       sessionData[session] = { trades: [], pnl: 0, wins: 0, losses: 0 };
     });
 
-    // Categorize trades by session using NY Time reference
+    // Categorize trades by session using NY Time from user-entered trade_date
     trades.forEach(trade => {
       const tradeDate = parseISO(trade.trade_date);
-      const session = getSessionForDate(tradeDate);
+      // Use Intl API for accurate NY hour conversion
+      const nyHour = getNYHour(tradeDate);
+      const session = getSessionForHour(nyHour);
       
       // Ensure session exists in our data structure
       if (!sessionData[session]) {
@@ -162,7 +164,7 @@ export const useSessionAnalysis = (
       totalBySession,
       mode,
     };
-  }, [trades, language, settings, getSessionForDate]);
+  }, [trades, language, settings, getSessionForHour]);
 };
 
 // Legacy export for backward compatibility

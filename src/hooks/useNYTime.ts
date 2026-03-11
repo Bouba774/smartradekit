@@ -3,7 +3,6 @@ import { useSessionSettings, SessionType } from './useSessionSettings';
 import { 
   getNYHour, 
   getNYMinute, 
-  getKillzoneForNYHour,
   SESSION_LABELS,
   getTradingDayStart,
   getTradingDayEnd,
@@ -35,13 +34,8 @@ export const useNYTime = (refreshInterval = 1000): NYTimeInfo => {
     const nyMinute = getNYMinute(now);
     const nyTime = getNYTime(now);
     
-    // Determine session based on mode
-    let currentSession: SessionType;
-    if (settings.mode === 'killzones') {
-      currentSession = getKillzoneForNYHour(nyHour);
-    } else {
-      currentSession = getSessionForHour(nyHour);
-    }
+    // Always use user-configured session settings (respects custom killzone hours)
+    const currentSession: SessionType = getSessionForHour(nyHour);
     
     // Format time string
     const formattedTime = `${nyHour.toString().padStart(2, '0')}:${nyMinute.toString().padStart(2, '0')}`;
