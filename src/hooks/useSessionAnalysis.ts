@@ -164,7 +164,7 @@ export const useSessionAnalysis = (
       totalBySession,
       mode,
     };
-  }, [trades, language, settings, getSessionForDate]);
+  }, [trades, language, settings, getSessionForHour]);
 };
 
 // Legacy export for backward compatibility

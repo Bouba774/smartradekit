@@ -3,7 +3,6 @@ import { useSessionSettings, SessionType } from './useSessionSettings';
 import { 
   getNYHour, 
   getNYMinute, 
-  getKillzoneForNYHour,
   SESSION_LABELS,
   getTradingDayStart,
   getTradingDayEnd,
