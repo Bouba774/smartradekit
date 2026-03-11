@@ -51,7 +51,7 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [lockCooldownEnd, setLockCooldownEnd] = useState<number | null>(null);
   
   const isSavingRef = useRef(false);
-  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const backgroundTimeRef = useRef<number>(0);
 
   // Initialize failed attempts from sessionStorage
