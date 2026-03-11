@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { Trade } from '@/hooks/useTrades';
-import { parseISO, getHours } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { getNYHour } from '@/lib/timezone';
 import { 
   useSessionSettings, 
   SessionType, 
-  utcToNYTime,
   SessionMode,
   DEFAULT_SESSION_SETTINGS 
 } from './useSessionSettings';
