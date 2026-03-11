@@ -97,7 +97,7 @@
         var lang = (localStorage.getItem('language') || navigator.language?.slice(0,2) || 'en');
         var el = document.getElementById('splash-tagline');
         if (el && taglines[lang]) el.textContent = taglines[lang];
-        var loader = document.querySelector('#initial-loader p:last-of-type');
+        var loader = document.getElementById('splash-loading');
         if (loader && loadingTexts[lang]) loader.textContent = loadingTexts[lang];
       })();
     </script>
