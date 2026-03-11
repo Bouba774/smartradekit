@@ -52,7 +52,7 @@ export const useSessionAnalysis = (
   trades: Trade[],
   language: string = 'fr'
 ): SessionAnalysis => {
-  const { settings, getSessionForDate } = useSessionSettings();
+  const { settings, getSessionForHour } = useSessionSettings();
   
   return useMemo(() => {
     const { mode } = settings;
