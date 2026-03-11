@@ -76,7 +76,7 @@ const Dashboard: React.FC = () => {
   const { trades, isLoading } = useTrades();
   const { formatAmount, currency } = useCurrency();
   const { isEnabled: focusEnabled, toggle: toggleFocus } = useTradeFocus();
-  const { capitalInfo, showPrompt, dismissPrompt } = useInitialCapital();
+  const { capitalInfo, showPrompt, dismissPrompt, isLoading: capitalIsLoading } = useInitialCapital();
   const { settings } = useSettings();
   
   // Get initial capital for equity curve and stats
