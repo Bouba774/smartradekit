@@ -76,7 +76,7 @@ const Dashboard: React.FC = () => {
   const { trades, isLoading } = useTrades();
   const { formatAmount, currency } = useCurrency();
   const { isEnabled: focusEnabled, toggle: toggleFocus } = useTradeFocus();
-  const { capitalInfo, showPrompt, dismissPrompt } = useInitialCapital();
+  const { capitalInfo, showPrompt, dismissPrompt, isLoading: capitalIsLoading } = useInitialCapital();
   const { settings } = useSettings();
   
   // Get initial capital for equity curve and stats
@@ -281,7 +281,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Capital not defined notice */}
-      {!capitalInfo.capitalDefined && trades.length > 0 && (
+      {!isLoading && !capitalIsLoading && !capitalInfo.capitalDefined && trades.length > 0 && (
         <div 
           className="glass-card p-4 flex items-center gap-3 border-yellow-500/30 bg-yellow-500/5 cursor-pointer hover:border-yellow-500/50 transition-colors"
           onClick={() => setCapitalPromptOpen(true)}
@@ -304,7 +304,7 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* No data message */}
-      {trades.length === 0 && <NoDataMessage />}
+      {!isLoading && trades.length === 0 && <NoDataMessage />}
 
       {/* Section: Statistiques Principales */}
       <div>
