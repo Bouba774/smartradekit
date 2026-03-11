@@ -74,10 +74,12 @@ export const useSessionAnalysis = (
       sessionData[session] = { trades: [], pnl: 0, wins: 0, losses: 0 };
     });
 
-    // Categorize trades by session using NY Time reference
+    // Categorize trades by session using NY Time from user-entered trade_date
     trades.forEach(trade => {
       const tradeDate = parseISO(trade.trade_date);
-      const session = getSessionForDate(tradeDate);
+      // Use Intl API for accurate NY hour conversion
+      const nyHour = getNYHour(tradeDate);
+      const session = getSessionForHour(nyHour);
       
       // Ensure session exists in our data structure
       if (!sessionData[session]) {
