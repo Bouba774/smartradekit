@@ -304,7 +304,7 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* No data message */}
-      {trades.length === 0 && <NoDataMessage />}
+      {!isLoading && trades.length === 0 && <NoDataMessage />}
 
       {/* Section: Statistiques Principales */}
       <div>
