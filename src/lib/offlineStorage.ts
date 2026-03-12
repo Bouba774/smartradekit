@@ -3,7 +3,7 @@
  * Persists React Query cache and pending mutations for full offline support.
  */
 import { get, set, del, keys, createStore } from 'idb-keyval';
-
+import type { PersistedClient, Persister } from '@tanstack/react-query-persist-client';
 // Dedicated stores
 const queryStore = createStore('stk-query-cache', 'queries');
 const mutationStore = createStore('stk-mutations', 'pending');
