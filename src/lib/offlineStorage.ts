@@ -10,12 +10,12 @@ const mutationStore = createStore('stk-mutations', 'pending');
 
 // =========== Query Cache Persistence ===========
 
-export const idbPersister = {
-  persistClient: async (client: unknown) => {
+export const idbPersister: Persister = {
+  persistClient: async (client: PersistedClient) => {
     await set('reactQueryClient', client, queryStore);
   },
-  restoreClient: async (): Promise<unknown> => {
-    return await get('reactQueryClient', queryStore);
+  restoreClient: async (): Promise<PersistedClient | undefined> => {
+    return await get<PersistedClient>('reactQueryClient', queryStore);
   },
   removeClient: async () => {
     await del('reactQueryClient', queryStore);
