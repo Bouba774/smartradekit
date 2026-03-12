@@ -70,11 +70,25 @@ const Journal: React.FC = () => {
   const [newItemLabel, setNewItemLabel] = useState('');
   const [isAddingNew, setIsAddingNew] = useState(false);
 
+  // Get user's custom checklist template from localStorage (persists across dates)
+  const getUserChecklistTemplate = (): ChecklistItem[] => {
+    try {
+      const saved = localStorage.getItem('user_checklist_template');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((item: ChecklistItem) => ({ ...item, checked: false }));
+        }
+      }
+    } catch { /* ignore */ }
+    return DEFAULT_CHECKLIST.map(i => ({ ...i, checked: false }));
+  };
+
   // Load data for selected date
   useEffect(() => {
     const entry = getEntryByDate(selectedDate);
     if (entry) {
-      setChecklist(entry.checklist.length > 0 ? entry.checklist : DEFAULT_CHECKLIST.map(i => ({ ...i, checked: false })));
+      setChecklist(entry.checklist.length > 0 ? entry.checklist : getUserChecklistTemplate());
       setObjectives(entry.daily_objective || '');
       setLessons(entry.lessons || '');
       // Parse notes JSON if available
@@ -89,8 +103,8 @@ const Journal: React.FC = () => {
       // Load saved rating
       setRating(entry.rating || 0);
     } else {
-      // Reset to defaults for new date
-      setChecklist(DEFAULT_CHECKLIST.map(i => ({ ...i, checked: false })));
+      // Reset to user's custom template for new date
+      setChecklist(getUserChecklistTemplate());
       setObjectives('');
       setLessons('');
       setMistakes('');
@@ -135,14 +149,24 @@ const Journal: React.FC = () => {
     setEditingLabel(item.label);
   };
 
+  // Save checklist structure as user's persistent template
+  const saveChecklistTemplate = (items: ChecklistItem[]) => {
+    const template = items.map(item => ({ id: item.id, label: item.label, checked: false }));
+    localStorage.setItem('user_checklist_template', JSON.stringify(template));
+  };
+
   const saveEdit = () => {
     if (!editingLabel.trim()) {
       toast.error(t('labelEmpty'));
       return;
     }
-    setChecklist(prev => prev.map(item =>
-      item.id === editingId ? { ...item, label: editingLabel.trim() } : item
-    ));
+    setChecklist(prev => {
+      const updated = prev.map(item =>
+        item.id === editingId ? { ...item, label: editingLabel.trim() } : item
+      );
+      saveChecklistTemplate(updated);
+      return updated;
+    });
     setEditingId(null);
     setEditingLabel('');
   };
@@ -153,7 +177,11 @@ const Journal: React.FC = () => {
   };
 
   const deleteItem = (id: string) => {
-    setChecklist(prev => prev.filter(item => item.id !== id));
+    setChecklist(prev => {
+      const updated = prev.filter(item => item.id !== id);
+      saveChecklistTemplate(updated);
+      return updated;
+    });
   };
 
   const addNewItem = () => {
@@ -166,7 +194,11 @@ const Journal: React.FC = () => {
       label: newItemLabel.trim(),
       checked: false,
     };
-    setChecklist(prev => [...prev, newItem]);
+    setChecklist(prev => {
+      const updated = [...prev, newItem];
+      saveChecklistTemplate(updated);
+      return updated;
+    });
     setNewItemLabel('');
     setIsAddingNew(false);
   };
