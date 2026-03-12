@@ -194,7 +194,11 @@ const Journal: React.FC = () => {
       label: newItemLabel.trim(),
       checked: false,
     };
-    setChecklist(prev => [...prev, newItem]);
+    setChecklist(prev => {
+      const updated = [...prev, newItem];
+      saveChecklistTemplate(updated);
+      return updated;
+    });
     setNewItemLabel('');
     setIsAddingNew(false);
   };
