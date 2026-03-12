@@ -429,7 +429,7 @@ const App = () => {
 
   return (
     <AppErrorBoundary>
-      <QueryClientProvider client={queryClient}>
+      <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
         <ThemeProvider>
           <AuthProvider>
             <LanguageProvider>
@@ -447,7 +447,7 @@ const App = () => {
             </LanguageProvider>
           </AuthProvider>
         </ThemeProvider>
-      </QueryClientProvider>
+      </PersistQueryClientProvider>
     </AppErrorBoundary>
   );
 };
