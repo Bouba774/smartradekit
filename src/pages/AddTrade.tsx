@@ -369,11 +369,11 @@ const AddTrade: React.FC = () => {
   const calculateQualityScore = () => {
     let score = 0;
     if (formData.setup) score += 20;
-    if (!selectedTags.includes('FOMO')) score += 20;
+    if (!selectedTags.includes('fomo')) score += 20;
     if (formData.stopLoss) score += 20;
     if (parseFloat(formData.risk) <= 2) score += 10;
-    if (selectedTags.includes('Plan Respecté')) score += 20;
-    if (!selectedTags.includes('Revenge Trading')) score += 10;
+    if (selectedTags.includes('plan_followed')) score += 20;
+    if (!selectedTags.includes('revenge_trading')) score += 10;
     return score;
   };
 

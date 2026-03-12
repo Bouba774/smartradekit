@@ -70,11 +70,25 @@ const Journal: React.FC = () => {
   const [newItemLabel, setNewItemLabel] = useState('');
   const [isAddingNew, setIsAddingNew] = useState(false);
 
+  // Get user's custom checklist template from localStorage (persists across dates)
+  const getUserChecklistTemplate = (): ChecklistItem[] => {
+    try {
+      const saved = localStorage.getItem('user_checklist_template');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((item: ChecklistItem) => ({ ...item, checked: false }));
+        }
+      }
+    } catch { /* ignore */ }
+    return DEFAULT_CHECKLIST.map(i => ({ ...i, checked: false }));
+  };
+
   // Load data for selected date
   useEffect(() => {
     const entry = getEntryByDate(selectedDate);
     if (entry) {
-      setChecklist(entry.checklist.length > 0 ? entry.checklist : DEFAULT_CHECKLIST.map(i => ({ ...i, checked: false })));
+      setChecklist(entry.checklist.length > 0 ? entry.checklist : getUserChecklistTemplate());
       setObjectives(entry.daily_objective || '');
       setLessons(entry.lessons || '');
       // Parse notes JSON if available
@@ -89,8 +103,8 @@ const Journal: React.FC = () => {
       // Load saved rating
       setRating(entry.rating || 0);
     } else {
-      // Reset to defaults for new date
-      setChecklist(DEFAULT_CHECKLIST.map(i => ({ ...i, checked: false })));
+      // Reset to user's custom template for new date
+      setChecklist(getUserChecklistTemplate());
       setObjectives('');
       setLessons('');
       setMistakes('');
