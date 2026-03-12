@@ -85,15 +85,29 @@ const PageLoader = () => <PageSkeleton type="default" />;
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 10, // 10 minutes - increased for better performance
-      gcTime: 1000 * 60 * 60, // 60 minutes - longer cache retention
-      retry: 1,
+      staleTime: 1000 * 60 * 10, // 10 minutes
+      gcTime: 1000 * 60 * 60 * 24, // 24 hours - keep cache for offline
+      retry: navigator.onLine ? 1 : 0, // Don't retry when offline
       refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      refetchOnMount: false, // Prevent refetch when component mounts if data exists
+      refetchOnReconnect: true, // Refetch when coming back online
+      refetchOnMount: false,
+      networkMode: 'offlineFirst', // Use cache first, then network
+    },
+    mutations: {
+      networkMode: 'offlineFirst',
     },
   },
 });
+
+// Persist options for IndexedDB
+const persistOptions = {
+  persister: idbPersister,
+  maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+  buster: 'v1',
+};
+
+// Initialize offline sync engine
+initOfflineSync();
 
 // Constants for brute force protection
 const MAX_PIN_ATTEMPTS = 5;
