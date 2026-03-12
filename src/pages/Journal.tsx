@@ -149,14 +149,24 @@ const Journal: React.FC = () => {
     setEditingLabel(item.label);
   };
 
+  // Save checklist structure as user's persistent template
+  const saveChecklistTemplate = (items: ChecklistItem[]) => {
+    const template = items.map(item => ({ id: item.id, label: item.label, checked: false }));
+    localStorage.setItem('user_checklist_template', JSON.stringify(template));
+  };
+
   const saveEdit = () => {
     if (!editingLabel.trim()) {
       toast.error(t('labelEmpty'));
       return;
     }
-    setChecklist(prev => prev.map(item =>
-      item.id === editingId ? { ...item, label: editingLabel.trim() } : item
-    ));
+    setChecklist(prev => {
+      const updated = prev.map(item =>
+        item.id === editingId ? { ...item, label: editingLabel.trim() } : item
+      );
+      saveChecklistTemplate(updated);
+      return updated;
+    });
     setEditingId(null);
     setEditingLabel('');
   };
@@ -167,7 +177,11 @@ const Journal: React.FC = () => {
   };
 
   const deleteItem = (id: string) => {
-    setChecklist(prev => prev.filter(item => item.id !== id));
+    setChecklist(prev => {
+      const updated = prev.filter(item => item.id !== id);
+      saveChecklistTemplate(updated);
+      return updated;
+    });
   };
 
   const addNewItem = () => {
