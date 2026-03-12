@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
+import { offlineMutationQueue } from '@/lib/offlineStorage';
 
 interface ChecklistItem {
   id: string;
@@ -63,14 +64,6 @@ export const useJournalEntries = () => {
     }) => {
       if (!user) throw new Error('User not authenticated');
 
-      // Check if entry exists
-      const { data: existing } = await supabase
-        .from('journal_entries')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('entry_date', entry.entry_date)
-        .single();
-
       const entryData = {
         user_id: user.id,
         entry_date: entry.entry_date,
@@ -81,12 +74,32 @@ export const useJournalEntries = () => {
         rating: entry.rating ?? null,
       };
 
+      // Check if entry exists in local cache
+      const existingEntry = entries.find(e => e.entry_date === entry.entry_date);
+
+      if (!navigator.onLine) {
+        await offlineMutationQueue.add({
+          type: 'upsertJournal',
+          payload: {
+            ...entryData,
+            existingId: existingEntry?.id || null,
+          },
+        });
+        return {
+          ...entryData,
+          id: existingEntry?.id || crypto.randomUUID(),
+          checklist: entry.checklist || [],
+          created_at: existingEntry?.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+      }
+
       let result;
-      if (existing) {
+      if (existingEntry) {
         const { data, error } = await supabase
           .from('journal_entries')
           .update(entryData)
-          .eq('id', existing.id)
+          .eq('id', existingEntry.id)
           .select()
           .single();
         if (error) throw error;
@@ -103,14 +116,55 @@ export const useJournalEntries = () => {
 
       return result;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['journal-entries', user?.id] });
+    onMutate: async (newEntry) => {
+      if (!user) return;
+      await queryClient.cancelQueries({ queryKey: ['journal-entries', user.id] });
+      const previous = queryClient.getQueryData<JournalEntry[]>(['journal-entries', user.id]);
+      
+      const existingEntry = previous?.find(e => e.entry_date === newEntry.entry_date);
+      const optimistic: JournalEntry = {
+        id: existingEntry?.id || crypto.randomUUID(),
+        user_id: user.id,
+        entry_date: newEntry.entry_date,
+        checklist: newEntry.checklist || [],
+        daily_objective: newEntry.daily_objective || null,
+        lessons: newEntry.lessons || null,
+        notes: newEntry.notes || null,
+        rating: newEntry.rating ?? null,
+        created_at: existingEntry?.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      
+      queryClient.setQueryData<JournalEntry[]>(['journal-entries', user.id], (old = []) => {
+        const filtered = old.filter(e => e.entry_date !== newEntry.entry_date);
+        return [optimistic, ...filtered].sort((a, b) => b.entry_date.localeCompare(a.entry_date));
+      });
+      
+      return { previous };
+    },
+    onError: (_err, _entry, context) => {
+      if (context?.previous && user) {
+        queryClient.setQueryData(['journal-entries', user.id], context.previous);
+      }
+    },
+    onSettled: () => {
+      if (navigator.onLine) {
+        queryClient.invalidateQueries({ queryKey: ['journal-entries', user?.id] });
+      }
     },
   });
 
   const deleteEntry = useMutation({
     mutationFn: async (entryId: string) => {
       if (!user) throw new Error('User not authenticated');
+
+      if (!navigator.onLine) {
+        await offlineMutationQueue.add({
+          type: 'deleteJournal',
+          payload: { id: entryId },
+        });
+        return;
+      }
 
       const { error } = await supabase
         .from('journal_entries')
@@ -120,8 +174,26 @@ export const useJournalEntries = () => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['journal-entries', user?.id] });
+    onMutate: async (entryId) => {
+      if (!user) return;
+      await queryClient.cancelQueries({ queryKey: ['journal-entries', user.id] });
+      const previous = queryClient.getQueryData<JournalEntry[]>(['journal-entries', user.id]);
+      
+      queryClient.setQueryData<JournalEntry[]>(['journal-entries', user.id], (old = []) =>
+        old.filter(e => e.id !== entryId)
+      );
+      
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous && user) {
+        queryClient.setQueryData(['journal-entries', user.id], context.previous);
+      }
+    },
+    onSettled: () => {
+      if (navigator.onLine) {
+        queryClient.invalidateQueries({ queryKey: ['journal-entries', user?.id] });
+      }
     },
   });
 

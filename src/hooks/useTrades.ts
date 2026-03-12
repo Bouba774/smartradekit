@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { offlineMutationQueue } from '@/lib/offlineStorage';
 
 export interface Trade {
   id: string;
@@ -25,7 +26,6 @@ export interface Trade {
   trade_date: string;
   created_at: string;
   updated_at: string;
-  // New fields for exit tracking
   exit_timestamp: string | null;
   exit_method: 'sl' | 'tp' | 'manual' | null;
   duration_seconds: number | null;
@@ -57,22 +57,65 @@ export const useTrades = () => {
     mutationFn: async (trade: Omit<Trade, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
       if (!user) throw new Error('Not authenticated');
 
+      const tradeWithUser = { ...trade, user_id: user.id };
+
+      if (!navigator.onLine) {
+        // Queue for later sync
+        const tempId = crypto.randomUUID();
+        await offlineMutationQueue.add({
+          type: 'addTrade',
+          payload: tradeWithUser as unknown as Record<string, unknown>,
+        });
+        return { ...tradeWithUser, id: tempId, created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as Trade;
+      }
+
       const { data, error } = await supabase
         .from('trades')
-        .insert({ ...trade, user_id: user.id })
+        .insert(tradeWithUser)
         .select()
         .single();
 
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['trades', user?.id] });
+    onMutate: async (newTrade) => {
+      if (!user) return;
+      await queryClient.cancelQueries({ queryKey: ['trades', user.id] });
+      const previous = queryClient.getQueryData<Trade[]>(['trades', user.id]);
+      
+      const optimistic: Trade = {
+        ...newTrade,
+        id: crypto.randomUUID(),
+        user_id: user.id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      
+      queryClient.setQueryData<Trade[]>(['trades', user.id], (old = []) => [optimistic, ...old]);
+      return { previous };
+    },
+    onError: (_err, _newTrade, context) => {
+      if (context?.previous && user) {
+        queryClient.setQueryData(['trades', user.id], context.previous);
+      }
+    },
+    onSettled: () => {
+      if (navigator.onLine) {
+        queryClient.invalidateQueries({ queryKey: ['trades', user?.id] });
+      }
     }
   });
 
   const updateTrade = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Trade> & { id: string }) => {
+      if (!navigator.onLine) {
+        await offlineMutationQueue.add({
+          type: 'updateTrade',
+          payload: { id, ...updates } as unknown as Record<string, unknown>,
+        });
+        return { id, ...updates } as Trade;
+      }
+
       const { data, error } = await supabase
         .from('trades')
         .update(updates)
@@ -83,13 +126,38 @@ export const useTrades = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['trades', user?.id] });
+    onMutate: async (updatedTrade) => {
+      if (!user) return;
+      await queryClient.cancelQueries({ queryKey: ['trades', user.id] });
+      const previous = queryClient.getQueryData<Trade[]>(['trades', user.id]);
+      
+      queryClient.setQueryData<Trade[]>(['trades', user.id], (old = []) =>
+        old.map(t => t.id === updatedTrade.id ? { ...t, ...updatedTrade } : t)
+      );
+      return { previous };
+    },
+    onError: (_err, _trade, context) => {
+      if (context?.previous && user) {
+        queryClient.setQueryData(['trades', user.id], context.previous);
+      }
+    },
+    onSettled: () => {
+      if (navigator.onLine) {
+        queryClient.invalidateQueries({ queryKey: ['trades', user?.id] });
+      }
     }
   });
 
   const deleteTrade = useMutation({
     mutationFn: async (id: string) => {
+      if (!navigator.onLine) {
+        await offlineMutationQueue.add({
+          type: 'deleteTrade',
+          payload: { id },
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('trades')
         .delete()
@@ -97,8 +165,25 @@ export const useTrades = () => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['trades', user?.id] });
+    onMutate: async (id) => {
+      if (!user) return;
+      await queryClient.cancelQueries({ queryKey: ['trades', user.id] });
+      const previous = queryClient.getQueryData<Trade[]>(['trades', user.id]);
+      
+      queryClient.setQueryData<Trade[]>(['trades', user.id], (old = []) =>
+        old.filter(t => t.id !== id)
+      );
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous && user) {
+        queryClient.setQueryData(['trades', user.id], context.previous);
+      }
+    },
+    onSettled: () => {
+      if (navigator.onLine) {
+        queryClient.invalidateQueries({ queryKey: ['trades', user?.id] });
+      }
     }
   });
 

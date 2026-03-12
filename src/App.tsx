@@ -2,7 +2,8 @@ import React, { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, useQueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { BrowserRouter, HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -19,6 +20,8 @@ import { useSessionTracking } from "@/hooks/useSessionTracking";
 import ChunkErrorBoundary from "@/components/ChunkErrorBoundary";
 import { usePrefetchOnAuth } from "@/hooks/useRoutePrefetch";
 import PageSkeleton from "@/components/ui/PageSkeleton";
+import { idbPersister } from "@/lib/offlineStorage";
+import { initOfflineSync, syncPendingMutations } from "@/lib/offlineSync";
 // Critical pages loaded immediately
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
@@ -82,15 +85,29 @@ const PageLoader = () => <PageSkeleton type="default" />;
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 10, // 10 minutes - increased for better performance
-      gcTime: 1000 * 60 * 60, // 60 minutes - longer cache retention
-      retry: 1,
+      staleTime: 1000 * 60 * 10, // 10 minutes
+      gcTime: 1000 * 60 * 60 * 24, // 24 hours - keep cache for offline
+      retry: navigator.onLine ? 1 : 0, // Don't retry when offline
       refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      refetchOnMount: false, // Prevent refetch when component mounts if data exists
+      refetchOnReconnect: true, // Refetch when coming back online
+      refetchOnMount: false,
+      networkMode: 'offlineFirst', // Use cache first, then network
+    },
+    mutations: {
+      networkMode: 'offlineFirst',
     },
   },
 });
+
+// Persist options for IndexedDB
+const persistOptions = {
+  persister: idbPersister,
+  maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+  buster: 'v1',
+};
+
+// Initialize offline sync engine
+initOfflineSync();
 
 // Constants for brute force protection
 const MAX_PIN_ATTEMPTS = 5;
@@ -119,6 +136,17 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 // Component to conditionally render layout
 const AppContent = () => {
   const { user, loading: authLoading } = useAuth();
+  const qc = useQueryClient();
+
+  // Sync offline mutations when coming back online
+  useEffect(() => {
+    const handleSyncComplete = () => {
+      qc.invalidateQueries({ queryKey: ['trades'] });
+      qc.invalidateQueries({ queryKey: ['journal-entries'] });
+    };
+    window.addEventListener('offline-sync-complete', handleSyncComplete);
+    return () => window.removeEventListener('offline-sync-complete', handleSyncComplete);
+  }, [qc]);
   const { 
     isLocked, 
     unlockApp, 
@@ -412,7 +440,7 @@ const App = () => {
 
   return (
     <AppErrorBoundary>
-      <QueryClientProvider client={queryClient}>
+      <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
         <ThemeProvider>
           <AuthProvider>
             <LanguageProvider>
@@ -430,7 +458,7 @@ const App = () => {
             </LanguageProvider>
           </AuthProvider>
         </ThemeProvider>
-      </QueryClientProvider>
+      </PersistQueryClientProvider>
     </AppErrorBoundary>
   );
 };
