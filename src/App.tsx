@@ -20,6 +20,8 @@ import { useSessionTracking } from "@/hooks/useSessionTracking";
 import ChunkErrorBoundary from "@/components/ChunkErrorBoundary";
 import { usePrefetchOnAuth } from "@/hooks/useRoutePrefetch";
 import PageSkeleton from "@/components/ui/PageSkeleton";
+import { idbPersister } from "@/lib/offlineStorage";
+import { initOfflineSync, syncPendingMutations } from "@/lib/offlineSync";
 // Critical pages loaded immediately
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
