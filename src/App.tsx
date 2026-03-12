@@ -136,6 +136,17 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 // Component to conditionally render layout
 const AppContent = () => {
   const { user, loading: authLoading } = useAuth();
+  const qc = useQueryClient();
+
+  // Sync offline mutations when coming back online
+  useEffect(() => {
+    const handleSyncComplete = () => {
+      qc.invalidateQueries({ queryKey: ['trades'] });
+      qc.invalidateQueries({ queryKey: ['journal-entries'] });
+    };
+    window.addEventListener('offline-sync-complete', handleSyncComplete);
+    return () => window.removeEventListener('offline-sync-complete', handleSyncComplete);
+  }, [qc]);
   const { 
     isLocked, 
     unlockApp, 
