@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => ({
        },
       workbox: {
           navigateFallbackDenylist: [/^\/~oauth/],
-          globPatterns: ["**/*.{js,css,html,ico,png,jpg,svg,woff2}"],
+          globPatterns: ["**/*.{js,css,html,ico,png,jpg,svg,woff2,mp3,mp4}"],
           skipWaiting: true,
           clientsClaim: true,
           cleanupOutdatedCaches: true,
@@ -65,6 +65,27 @@ export default defineConfig(({ mode }) => ({
              options: {
                cacheName: "gstatic-fonts-cache",
                expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+             },
+           },
+           {
+             // Cache Supabase REST API responses (trades, journal, settings, etc.)
+             urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
+             handler: "NetworkFirst",
+             options: {
+               cacheName: "supabase-api-cache",
+               expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 },
+               networkTimeoutSeconds: 5,
+               cacheableResponse: { statuses: [0, 200] },
+             },
+           },
+           {
+             // Cache Supabase storage (user images, media)
+             urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/v1\/.*/i,
+             handler: "CacheFirst",
+             options: {
+               cacheName: "supabase-storage-cache",
+               expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+               cacheableResponse: { statuses: [0, 200] },
              },
            },
          ],
