@@ -238,7 +238,7 @@ const Calculator: React.FC = () => {
   }
 
   return (
-    <div className="py-4 max-w-2xl mx-auto px-4">
+    <div className="py-4 max-w-2xl mx-auto px-5 sm:px-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>

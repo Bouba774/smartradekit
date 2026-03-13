@@ -9,7 +9,7 @@ import { useTradeFocus } from '@/hooks/useTradeFocus';
 import { useInitialCapital } from '@/hooks/useInitialCapital';
 import { useSettings } from '@/hooks/useSettings';
 import { APP_VERSION } from '@/lib/version';
-import { getAssetCategory } from '@/data/assets';
+import { getAssetCategory, getMarketGroup } from '@/data/assets';
 import { mainStatsTooltips, timeTooltips, streaksTooltips } from '@/data/helpTooltips';
 import StatCard from '@/components/ui/StatCard';
 
