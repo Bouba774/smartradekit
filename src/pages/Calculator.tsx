@@ -230,7 +230,7 @@ const Calculator: React.FC = () => {
   // Loading state
   if (!settingsLoaded) {
     return (
-      <div className="py-4 max-w-2xl mx-auto space-y-6 px-4">
+      <div className="py-4 max-w-2xl mx-auto space-y-6 px-5 sm:px-8">
         <Skeleton className="h-12 w-64" />
         <Skeleton className="h-[400px] w-full" />
       </div>
