@@ -884,9 +884,9 @@ const Dashboard: React.FC = () => {
 
       </div>
 
-      {/* Market Distribution & Radar - Full size */}
+      {/* Market Distribution & Pair Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Market Distribution - Enhanced */}
+        {/* Market Distribution (Forex, Crypto, Indices...) */}
         <div className="glass-card p-3 sm:p-4">
           <h3 className="font-display text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
             <PieChartIcon className="w-4 h-4 text-primary" />
@@ -934,7 +934,6 @@ const Dashboard: React.FC = () => {
               </div>
             )}
           </div>
-          {/* Enhanced legend with percentages */}
           <div className="grid grid-cols-2 gap-2 mt-3">
             {marketDistribution.map((market) => (
               <div key={market.name} className="flex items-center gap-2 text-xs">
@@ -949,7 +948,71 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Radar Performance */}
+        {/* Pair Distribution (EURUSD, GBPUSD, XAUUSD...) */}
+        <div className="glass-card p-3 sm:p-4">
+          <h3 className="font-display text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+            <PieChartIcon className="w-4 h-4 text-primary" />
+            {language === 'fr' ? 'Répartition par Paire' : 'Pair Distribution'}
+          </h3>
+          <div className="h-48">
+            {pairDistribution.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pairDistribution}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={35}
+                    outerRadius={65}
+                    paddingAngle={3}
+                    dataKey="value"
+                    strokeWidth={2}
+                    stroke="hsl(var(--background))"
+                  >
+                    {pairDistribution.map((entry, index) => (
+                      <Cell key={`pair-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    }}
+                    formatter={(value: number, name: string, props: any) => {
+                      const entry = props.payload;
+                      return [
+                        `${value} trades (${entry.percentage}%) - P&L: ${entry.pnl >= 0 ? '+' : ''}${formatAmount(entry.pnl)}`,
+                        name
+                      ];
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                {t('noDataYet')}
+              </div>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-2 mt-3">
+            {pairDistribution.map((pair) => (
+              <div key={pair.name} className="flex items-center gap-2 text-xs">
+                <div 
+                  className="w-2.5 h-2.5 rounded-full shrink-0" 
+                  style={{ backgroundColor: pair.color }} 
+                />
+                <span className="text-muted-foreground truncate">{pair.name}</span>
+                <span className="ml-auto font-medium text-foreground">{pair.percentage}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Radar Performance */}
+      <div className="grid grid-cols-1 gap-4">
         <div className="glass-card p-3 sm:p-4">
           <h3 className="font-display text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
             <Zap className="w-4 h-4 text-primary" />
