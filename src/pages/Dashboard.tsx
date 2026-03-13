@@ -177,29 +177,19 @@ const Dashboard: React.FC = () => {
     { name: t('breakeven'), value: stats.breakevenTrades || 0.1, actualValue: stats.breakevenTrades, color: 'hsl(var(--muted-foreground))' },
   ];
 
-  // Market distribution data - show all individual markets, no "Other" grouping
+  // Market distribution data - by broad market group (Forex, Crypto, Indices, etc.)
   const marketDistribution = React.useMemo(() => {
     if (trades.length === 0) return [];
     
     const marketCounts: { [key: string]: { count: number; pnl: number } } = {};
     
     trades.forEach(trade => {
-      const category = getAssetCategory(trade.asset);
-      // Use the actual category name, no grouping into "Other"
-      let marketGroup = category;
-      if (category.startsWith('Forex')) {
-        marketGroup = 'Forex';
-      } else if (category.startsWith('Indices')) {
-        marketGroup = 'Indices';
-      } else if (category.startsWith('Actions')) {
-        marketGroup = 'Stocks';
+      const group = getMarketGroup(trade.asset);
+      if (!marketCounts[group]) {
+        marketCounts[group] = { count: 0, pnl: 0 };
       }
-      
-      if (!marketCounts[marketGroup]) {
-        marketCounts[marketGroup] = { count: 0, pnl: 0 };
-      }
-      marketCounts[marketGroup].count += 1;
-      marketCounts[marketGroup].pnl += trade.profit_loss || 0;
+      marketCounts[group].count += 1;
+      marketCounts[group].pnl += trade.profit_loss || 0;
     });
 
     const total = trades.length;
@@ -207,7 +197,7 @@ const Dashboard: React.FC = () => {
       'Forex': 'hsl(45, 93%, 47%)',
       'Crypto': 'hsl(142, 71%, 45%)',
       'Indices': 'hsl(0, 84%, 60%)',
-      'Stocks': 'hsl(217, 91%, 60%)',
+      'Actions': 'hsl(217, 91%, 60%)',
       'Métaux': 'hsl(48, 96%, 53%)',
       'Énergies': 'hsl(25, 95%, 53%)',
       'Matières premières': 'hsl(30, 80%, 50%)',
@@ -215,7 +205,6 @@ const Dashboard: React.FC = () => {
       'Obligations': 'hsl(190, 60%, 50%)',
     };
     
-    // Generate colors for any categories not in the predefined list
     const fallbackColors = [
       'hsl(160, 70%, 45%)', 'hsl(320, 70%, 55%)', 'hsl(60, 80%, 45%)',
       'hsl(200, 80%, 50%)', 'hsl(100, 60%, 45%)', 'hsl(350, 65%, 55%)',
@@ -229,6 +218,41 @@ const Dashboard: React.FC = () => {
         pnl: data.pnl,
         percentage: Math.round((data.count / total) * 100),
         color: marketColors[name] || fallbackColors[fallbackIndex++ % fallbackColors.length],
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [trades]);
+
+  // Pair/asset distribution - by individual asset (EURUSD, GBPUSD, etc.)
+  const pairDistribution = React.useMemo(() => {
+    if (trades.length === 0) return [];
+    
+    const pairCounts: { [key: string]: { count: number; pnl: number } } = {};
+    
+    trades.forEach(trade => {
+      const asset = trade.asset;
+      if (!pairCounts[asset]) {
+        pairCounts[asset] = { count: 0, pnl: 0 };
+      }
+      pairCounts[asset].count += 1;
+      pairCounts[asset].pnl += trade.profit_loss || 0;
+    });
+
+    const total = trades.length;
+    const pairColors = [
+      'hsl(142, 71%, 45%)', 'hsl(330, 80%, 55%)', 'hsl(45, 93%, 47%)',
+      'hsl(217, 91%, 60%)', 'hsl(0, 84%, 60%)', 'hsl(280, 70%, 55%)',
+      'hsl(25, 95%, 53%)', 'hsl(190, 60%, 50%)', 'hsl(160, 70%, 45%)',
+      'hsl(60, 80%, 45%)', 'hsl(320, 70%, 55%)', 'hsl(100, 60%, 45%)',
+      'hsl(200, 80%, 50%)', 'hsl(350, 65%, 55%)', 'hsl(48, 96%, 53%)',
+    ];
+
+    return Object.entries(pairCounts)
+      .map(([name, data], index) => ({
+        name,
+        value: data.count,
+        pnl: data.pnl,
+        percentage: Math.round((data.count / total) * 100),
+        color: pairColors[index % pairColors.length],
       }))
       .sort((a, b) => b.value - a.value);
   }, [trades]);
