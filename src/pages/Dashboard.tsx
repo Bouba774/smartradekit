@@ -9,7 +9,7 @@ import { useTradeFocus } from '@/hooks/useTradeFocus';
 import { useInitialCapital } from '@/hooks/useInitialCapital';
 import { useSettings } from '@/hooks/useSettings';
 import { APP_VERSION } from '@/lib/version';
-import { getAssetCategory } from '@/data/assets';
+import { getAssetCategory, getMarketGroup } from '@/data/assets';
 import { mainStatsTooltips, timeTooltips, streaksTooltips } from '@/data/helpTooltips';
 import StatCard from '@/components/ui/StatCard';
 
@@ -177,29 +177,19 @@ const Dashboard: React.FC = () => {
     { name: t('breakeven'), value: stats.breakevenTrades || 0.1, actualValue: stats.breakevenTrades, color: 'hsl(var(--muted-foreground))' },
   ];
 
-  // Market distribution data - show all individual markets, no "Other" grouping
+  // Market distribution data - by broad market group (Forex, Crypto, Indices, etc.)
   const marketDistribution = React.useMemo(() => {
     if (trades.length === 0) return [];
     
     const marketCounts: { [key: string]: { count: number; pnl: number } } = {};
     
     trades.forEach(trade => {
-      const category = getAssetCategory(trade.asset);
-      // Use the actual category name, no grouping into "Other"
-      let marketGroup = category;
-      if (category.startsWith('Forex')) {
-        marketGroup = 'Forex';
-      } else if (category.startsWith('Indices')) {
-        marketGroup = 'Indices';
-      } else if (category.startsWith('Actions')) {
-        marketGroup = 'Stocks';
+      const group = getMarketGroup(trade.asset);
+      if (!marketCounts[group]) {
+        marketCounts[group] = { count: 0, pnl: 0 };
       }
-      
-      if (!marketCounts[marketGroup]) {
-        marketCounts[marketGroup] = { count: 0, pnl: 0 };
-      }
-      marketCounts[marketGroup].count += 1;
-      marketCounts[marketGroup].pnl += trade.profit_loss || 0;
+      marketCounts[group].count += 1;
+      marketCounts[group].pnl += trade.profit_loss || 0;
     });
 
     const total = trades.length;
@@ -207,7 +197,7 @@ const Dashboard: React.FC = () => {
       'Forex': 'hsl(45, 93%, 47%)',
       'Crypto': 'hsl(142, 71%, 45%)',
       'Indices': 'hsl(0, 84%, 60%)',
-      'Stocks': 'hsl(217, 91%, 60%)',
+      'Actions': 'hsl(217, 91%, 60%)',
       'Métaux': 'hsl(48, 96%, 53%)',
       'Énergies': 'hsl(25, 95%, 53%)',
       'Matières premières': 'hsl(30, 80%, 50%)',
@@ -215,7 +205,6 @@ const Dashboard: React.FC = () => {
       'Obligations': 'hsl(190, 60%, 50%)',
     };
     
-    // Generate colors for any categories not in the predefined list
     const fallbackColors = [
       'hsl(160, 70%, 45%)', 'hsl(320, 70%, 55%)', 'hsl(60, 80%, 45%)',
       'hsl(200, 80%, 50%)', 'hsl(100, 60%, 45%)', 'hsl(350, 65%, 55%)',
@@ -229,6 +218,41 @@ const Dashboard: React.FC = () => {
         pnl: data.pnl,
         percentage: Math.round((data.count / total) * 100),
         color: marketColors[name] || fallbackColors[fallbackIndex++ % fallbackColors.length],
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [trades]);
+
+  // Pair/asset distribution - by individual asset (EURUSD, GBPUSD, etc.)
+  const pairDistribution = React.useMemo(() => {
+    if (trades.length === 0) return [];
+    
+    const pairCounts: { [key: string]: { count: number; pnl: number } } = {};
+    
+    trades.forEach(trade => {
+      const asset = trade.asset;
+      if (!pairCounts[asset]) {
+        pairCounts[asset] = { count: 0, pnl: 0 };
+      }
+      pairCounts[asset].count += 1;
+      pairCounts[asset].pnl += trade.profit_loss || 0;
+    });
+
+    const total = trades.length;
+    const pairColors = [
+      'hsl(142, 71%, 45%)', 'hsl(330, 80%, 55%)', 'hsl(45, 93%, 47%)',
+      'hsl(217, 91%, 60%)', 'hsl(0, 84%, 60%)', 'hsl(280, 70%, 55%)',
+      'hsl(25, 95%, 53%)', 'hsl(190, 60%, 50%)', 'hsl(160, 70%, 45%)',
+      'hsl(60, 80%, 45%)', 'hsl(320, 70%, 55%)', 'hsl(100, 60%, 45%)',
+      'hsl(200, 80%, 50%)', 'hsl(350, 65%, 55%)', 'hsl(48, 96%, 53%)',
+    ];
+
+    return Object.entries(pairCounts)
+      .map(([name, data], index) => ({
+        name,
+        value: data.count,
+        pnl: data.pnl,
+        percentage: Math.round((data.count / total) * 100),
+        color: pairColors[index % pairColors.length],
       }))
       .sort((a, b) => b.value - a.value);
   }, [trades]);
@@ -860,9 +884,9 @@ const Dashboard: React.FC = () => {
 
       </div>
 
-      {/* Market Distribution & Radar - Full size */}
+      {/* Market Distribution & Pair Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Market Distribution - Enhanced */}
+        {/* Market Distribution (Forex, Crypto, Indices...) */}
         <div className="glass-card p-3 sm:p-4">
           <h3 className="font-display text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
             <PieChartIcon className="w-4 h-4 text-primary" />
@@ -910,7 +934,6 @@ const Dashboard: React.FC = () => {
               </div>
             )}
           </div>
-          {/* Enhanced legend with percentages */}
           <div className="grid grid-cols-2 gap-2 mt-3">
             {marketDistribution.map((market) => (
               <div key={market.name} className="flex items-center gap-2 text-xs">
@@ -925,7 +948,71 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Radar Performance */}
+        {/* Pair Distribution (EURUSD, GBPUSD, XAUUSD...) */}
+        <div className="glass-card p-3 sm:p-4">
+          <h3 className="font-display text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+            <PieChartIcon className="w-4 h-4 text-primary" />
+            {language === 'fr' ? 'Répartition par Paire' : 'Pair Distribution'}
+          </h3>
+          <div className="h-48">
+            {pairDistribution.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pairDistribution}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={35}
+                    outerRadius={65}
+                    paddingAngle={3}
+                    dataKey="value"
+                    strokeWidth={2}
+                    stroke="hsl(var(--background))"
+                  >
+                    {pairDistribution.map((entry, index) => (
+                      <Cell key={`pair-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    }}
+                    formatter={(value: number, name: string, props: any) => {
+                      const entry = props.payload;
+                      return [
+                        `${value} trades (${entry.percentage}%) - P&L: ${entry.pnl >= 0 ? '+' : ''}${formatAmount(entry.pnl)}`,
+                        name
+                      ];
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                {t('noDataYet')}
+              </div>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-2 mt-3">
+            {pairDistribution.map((pair) => (
+              <div key={pair.name} className="flex items-center gap-2 text-xs">
+                <div 
+                  className="w-2.5 h-2.5 rounded-full shrink-0" 
+                  style={{ backgroundColor: pair.color }} 
+                />
+                <span className="text-muted-foreground truncate">{pair.name}</span>
+                <span className="ml-auto font-medium text-foreground">{pair.percentage}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Radar Performance */}
+      <div className="grid grid-cols-1 gap-4">
         <div className="glass-card p-3 sm:p-4">
           <h3 className="font-display text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
             <Zap className="w-4 h-4 text-primary" />

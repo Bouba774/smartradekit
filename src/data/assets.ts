@@ -122,13 +122,28 @@ export const CONTRACT_SIZES: { [key: string]: { size: number; unit: string } } =
   'USOIL': { size: 1000, unit: 'barrels' },
 };
 
-// Get asset category
+// Get asset category (detailed, e.g. "Forex Majors", "Indices US")
 export const getAssetCategory = (asset: string): string => {
   for (const [category, assets] of Object.entries(ASSET_CATEGORIES)) {
     if (assets.includes(asset)) return category;
   }
   // Return the asset name itself instead of generic "Other"
   return asset;
+};
+
+// Get broad market group (e.g. "Forex", "Indices", "Actions")
+export const getMarketGroup = (asset: string): string => {
+  const category = getAssetCategory(asset);
+  if (category.startsWith('Forex')) return 'Forex';
+  if (category.startsWith('Indices')) return 'Indices';
+  if (category.startsWith('Actions')) return 'Actions';
+  if (category === 'Crypto') return 'Crypto';
+  if (category === 'Métaux') return 'Métaux';
+  if (category === 'Énergies') return 'Énergies';
+  if (category === 'ETF') return 'ETF';
+  if (category === 'Obligations') return 'Obligations';
+  if (category === 'Matières premières') return 'Matières premières';
+  return category;
 };
 
 // Get pip size for an asset

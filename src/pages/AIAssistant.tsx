@@ -313,7 +313,7 @@ const AIAssistant: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full bg-background px-3 sm:px-6">
       {/* Header */}
       <div className="bg-gradient-primary p-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
