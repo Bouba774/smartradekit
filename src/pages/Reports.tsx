@@ -248,56 +248,14 @@ const Reports: React.FC = () => {
 
       {/* Period Selector */}
       <div className="glass-card p-4 animate-fade-in">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 p-1 rounded-lg bg-secondary/50">
-            <Button
-              variant={viewMode === 'week' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('week')}
-              className={cn(viewMode === 'week' && 'bg-primary text-primary-foreground')}
-            >
-              {t('week')}
-            </Button>
-            <Button
-              variant={viewMode === 'month' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('month')}
-              className={cn(viewMode === 'month' && 'bg-primary text-primary-foreground')}
-            >
-              {t('month')}
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={() => navigatePeriod('prev')}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="min-w-[200px] gap-2 font-display">
-                  <CalendarIcon className="w-4 h-4" />
-                  {formatPeriod()}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 bg-popover border-border" align="center">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => {
-                    if (date) {
-                      setSelectedDate(date);
-                      setCalendarOpen(false);
-                    }
-                  }}
-                  locale={locale}
-                />
-              </PopoverContent>
-            </Popover>
-            <Button variant="outline" size="icon" onClick={() => navigatePeriod('next')}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
+        <PeriodFilter
+          period={period}
+          setPeriod={setPeriod}
+          customStart={customStart}
+          customEnd={customEnd}
+          setCustomStart={setCustomStart}
+          setCustomEnd={setCustomEnd}
+        />
       </div>
 
       {hasNoData ? (
