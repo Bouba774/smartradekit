@@ -48,7 +48,7 @@ import {
 } from 'lucide-react';
 import GaugeChart from '@/components/ui/GaugeChart';
 
-type ViewMode = 'week' | 'month';
+
 
 const DAYS_FR = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 const DAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
