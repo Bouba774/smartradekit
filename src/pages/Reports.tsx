@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTrades } from '@/hooks/useTrades';
 import { useCurrency } from '@/hooks/useCurrency';
+import { usePeriodFilter } from '@/hooks/usePeriodFilter';
+import PeriodFilter from '@/components/PeriodFilter';
 import { ConfidentialValue } from '@/components/ConfidentialValue';
 import { useSessionAnalysis } from '@/hooks/useSessionAnalysis';
 import { useStrategyAnalysis } from '@/hooks/useStrategyAnalysis';
@@ -46,7 +48,7 @@ import {
 } from 'lucide-react';
 import GaugeChart from '@/components/ui/GaugeChart';
 
-type ViewMode = 'week' | 'month';
+
 
 const DAYS_FR = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 const DAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -84,48 +86,17 @@ const SESSION_NAMES: Record<string, { fr: string; en: string; color: string }> =
 
 const Reports: React.FC = () => {
   const { language, t } = useLanguage();
-  const { trades, isLoading } = useTrades();
+  const { trades: allTrades, isLoading } = useTrades();
   const { formatAmount } = useCurrency();
   const locale = language === 'fr' ? fr : enUS;
   
-  const [viewMode, setViewMode] = useState<ViewMode>('week');
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [calendarOpen, setCalendarOpen] = useState(false);
-
-  const periodStart = viewMode === 'week' 
-    ? startOfWeek(selectedDate, { weekStartsOn: 1 })
-    : startOfMonth(selectedDate);
-  const periodEnd = viewMode === 'week'
-    ? endOfWeek(selectedDate, { weekStartsOn: 1 })
-    : endOfMonth(selectedDate);
-
-  const navigatePeriod = (direction: 'prev' | 'next') => {
-    if (viewMode === 'week') {
-      setSelectedDate(prev => {
-        const newDate = new Date(prev);
-        newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
-        return newDate;
-      });
-    } else {
-      setSelectedDate(prev => direction === 'next' ? addMonths(prev, 1) : subMonths(prev, 1));
-    }
-  };
-
-  const formatPeriod = () => {
-    if (viewMode === 'week') {
-      return `${format(periodStart, 'd MMM', { locale })} - ${format(periodEnd, 'd MMM yyyy', { locale })}`;
-    }
-    return format(selectedDate, 'MMMM yyyy', { locale });
-  };
+  const { period, setPeriod, customStart, customEnd, setCustomStart, setCustomEnd, filterByPeriod } = usePeriodFilter('week');
 
   // Filter trades for selected period
   const periodTrades = useMemo(() => {
-    if (!trades) return [];
-    return trades.filter(trade => {
-      const tradeDate = parseISO(trade.trade_date);
-      return isWithinInterval(tradeDate, { start: periodStart, end: periodEnd });
-    });
-  }, [trades, periodStart, periodEnd]);
+    if (!allTrades) return [];
+    return filterByPeriod(allTrades);
+  }, [allTrades, filterByPeriod]);
 
   // Use new analysis hooks
   const sessionAnalysis = useSessionAnalysis(periodTrades, language);
@@ -256,7 +227,7 @@ const Reports: React.FC = () => {
     );
   }
 
-  const hasNoData = !trades || trades.length === 0;
+  const hasNoData = !allTrades || allTrades.length === 0;
 
   return (
     <div className="py-4 space-y-6">
@@ -277,56 +248,14 @@ const Reports: React.FC = () => {
 
       {/* Period Selector */}
       <div className="glass-card p-4 animate-fade-in">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 p-1 rounded-lg bg-secondary/50">
-            <Button
-              variant={viewMode === 'week' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('week')}
-              className={cn(viewMode === 'week' && 'bg-primary text-primary-foreground')}
-            >
-              {t('week')}
-            </Button>
-            <Button
-              variant={viewMode === 'month' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('month')}
-              className={cn(viewMode === 'month' && 'bg-primary text-primary-foreground')}
-            >
-              {t('month')}
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={() => navigatePeriod('prev')}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="min-w-[200px] gap-2 font-display">
-                  <CalendarIcon className="w-4 h-4" />
-                  {formatPeriod()}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 bg-popover border-border" align="center">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => {
-                    if (date) {
-                      setSelectedDate(date);
-                      setCalendarOpen(false);
-                    }
-                  }}
-                  locale={locale}
-                />
-              </PopoverContent>
-            </Popover>
-            <Button variant="outline" size="icon" onClick={() => navigatePeriod('next')}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
+        <PeriodFilter
+          period={period}
+          setPeriod={setPeriod}
+          customStart={customStart}
+          customEnd={customEnd}
+          setCustomStart={setCustomStart}
+          setCustomEnd={setCustomEnd}
+        />
       </div>
 
       {hasNoData ? (
@@ -964,7 +893,7 @@ const Reports: React.FC = () => {
           </div>
 
           {/* AI Summary */}
-          <AIDailySummaryCard trades={trades} />
+          <AIDailySummaryCard trades={periodTrades} />
 
           {/* Daily PnL */}
           <div className="glass-card p-6 animate-fade-in">

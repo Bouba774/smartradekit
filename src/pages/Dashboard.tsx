@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChallenges } from '@/hooks/useChallenges';
@@ -8,6 +8,8 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { useTradeFocus } from '@/hooks/useTradeFocus';
 import { useInitialCapital } from '@/hooks/useInitialCapital';
 import { useSettings } from '@/hooks/useSettings';
+import { usePeriodFilter } from '@/hooks/usePeriodFilter';
+import PeriodFilter from '@/components/PeriodFilter';
 import { APP_VERSION } from '@/lib/version';
 import { getAssetCategory, getMarketGroup } from '@/data/assets';
 import { mainStatsTooltips, timeTooltips, streaksTooltips } from '@/data/helpTooltips';
@@ -73,11 +75,15 @@ const Dashboard: React.FC = () => {
   const { t, language } = useLanguage();
   const { profile } = useAuth();
   const { currentLevel } = useChallenges();
-  const { trades, isLoading } = useTrades();
+  const { trades: allTrades, isLoading } = useTrades();
   const { formatAmount, currency } = useCurrency();
   const { isEnabled: focusEnabled, toggle: toggleFocus } = useTradeFocus();
   const { capitalInfo, showPrompt, dismissPrompt, isLoading: capitalIsLoading } = useInitialCapital();
   const { settings } = useSettings();
+  const { period, setPeriod, customStart, customEnd, setCustomStart, setCustomEnd, filterByPeriod } = usePeriodFilter('all');
+  
+  // Filter trades by selected period
+  const trades = useMemo(() => filterByPeriod(allTrades), [allTrades, filterByPeriod]);
   
   // Get initial capital for equity curve and stats
   const initialCapital = capitalInfo.capitalDefined && capitalInfo.capital ? capitalInfo.capital : 10000;
@@ -304,7 +310,17 @@ const Dashboard: React.FC = () => {
         </h1>
       </div>
 
-      {/* Capital not defined notice */}
+      {/* Period Filter */}
+      <div className="glass-card p-3 animate-fade-in">
+        <PeriodFilter
+          period={period}
+          setPeriod={setPeriod}
+          customStart={customStart}
+          customEnd={customEnd}
+          setCustomStart={setCustomStart}
+          setCustomEnd={setCustomEnd}
+        />
+      </div>
       {!isLoading && !capitalIsLoading && !capitalInfo.capitalDefined && trades.length > 0 && (
         <div 
           className="glass-card p-4 flex items-center gap-3 border-yellow-500/30 bg-yellow-500/5 cursor-pointer hover:border-yellow-500/50 transition-colors"

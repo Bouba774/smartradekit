@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTrades } from '@/hooks/useTrades';
+import { usePeriodFilter } from '@/hooks/usePeriodFilter';
+import PeriodFilter from '@/components/PeriodFilter';
 import { useExecutionQuality } from '@/hooks/useExecutionQuality';
 import { useTraderProfile } from '@/hooks/useTraderProfile';
 import { useMentalFatigue } from '@/hooks/useMentalFatigue';
@@ -39,9 +41,13 @@ import type { Language } from '@/lib/i18n';
 
 const PsychologicalAnalysis: React.FC = () => {
   const { language, t } = useLanguage();
-  const { trades, isLoading } = useTrades();
+  const { trades: allTrades, isLoading } = useTrades();
+  const { period, setPeriod, customStart, customEnd, setCustomStart, setCustomEnd, filterByPeriod } = usePeriodFilter('all');
   const pt = getComponentTranslation(psychologyTranslations, language as Language);
   const dt = getComponentTranslation(daysTranslations, language as Language);
+  
+  // Filter trades by period
+  const trades = useMemo(() => filterByPeriod(allTrades), [allTrades, filterByPeriod]);
   
   // Get days array for current language
   const daysArray = [dt.sun, dt.mon, dt.tue, dt.wed, dt.thu, dt.fri, dt.sat];
@@ -305,6 +311,18 @@ const PsychologicalAnalysis: React.FC = () => {
         <div className="w-12 h-12 rounded-lg bg-gradient-primary flex items-center justify-center shadow-neon">
           <Brain className="w-6 h-6 text-primary-foreground" />
         </div>
+      </div>
+
+      {/* Period Filter */}
+      <div className="glass-card p-4 animate-fade-in">
+        <PeriodFilter
+          period={period}
+          setPeriod={setPeriod}
+          customStart={customStart}
+          customEnd={customEnd}
+          setCustomStart={setCustomStart}
+          setCustomEnd={setCustomEnd}
+        />
       </div>
 
       {hasNoData ? (
