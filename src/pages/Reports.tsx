@@ -86,48 +86,17 @@ const SESSION_NAMES: Record<string, { fr: string; en: string; color: string }> =
 
 const Reports: React.FC = () => {
   const { language, t } = useLanguage();
-  const { trades, isLoading } = useTrades();
+  const { trades: allTrades, isLoading } = useTrades();
   const { formatAmount } = useCurrency();
   const locale = language === 'fr' ? fr : enUS;
   
-  const [viewMode, setViewMode] = useState<ViewMode>('week');
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [calendarOpen, setCalendarOpen] = useState(false);
-
-  const periodStart = viewMode === 'week' 
-    ? startOfWeek(selectedDate, { weekStartsOn: 1 })
-    : startOfMonth(selectedDate);
-  const periodEnd = viewMode === 'week'
-    ? endOfWeek(selectedDate, { weekStartsOn: 1 })
-    : endOfMonth(selectedDate);
-
-  const navigatePeriod = (direction: 'prev' | 'next') => {
-    if (viewMode === 'week') {
-      setSelectedDate(prev => {
-        const newDate = new Date(prev);
-        newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
-        return newDate;
-      });
-    } else {
-      setSelectedDate(prev => direction === 'next' ? addMonths(prev, 1) : subMonths(prev, 1));
-    }
-  };
-
-  const formatPeriod = () => {
-    if (viewMode === 'week') {
-      return `${format(periodStart, 'd MMM', { locale })} - ${format(periodEnd, 'd MMM yyyy', { locale })}`;
-    }
-    return format(selectedDate, 'MMMM yyyy', { locale });
-  };
+  const { period, setPeriod, customStart, customEnd, setCustomStart, setCustomEnd, filterByPeriod } = usePeriodFilter('week');
 
   // Filter trades for selected period
   const periodTrades = useMemo(() => {
-    if (!trades) return [];
-    return trades.filter(trade => {
-      const tradeDate = parseISO(trade.trade_date);
-      return isWithinInterval(tradeDate, { start: periodStart, end: periodEnd });
-    });
-  }, [trades, periodStart, periodEnd]);
+    if (!allTrades) return [];
+    return filterByPeriod(allTrades);
+  }, [allTrades, filterByPeriod]);
 
   // Use new analysis hooks
   const sessionAnalysis = useSessionAnalysis(periodTrades, language);
