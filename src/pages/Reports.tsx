@@ -893,7 +893,7 @@ const Reports: React.FC = () => {
           </div>
 
           {/* AI Summary */}
-          <AIDailySummaryCard trades={trades} />
+          <AIDailySummaryCard trades={periodTrades} />
 
           {/* Daily PnL */}
           <div className="glass-card p-6 animate-fade-in">
