@@ -227,7 +227,7 @@ const Reports: React.FC = () => {
     );
   }
 
-  const hasNoData = !trades || trades.length === 0;
+  const hasNoData = !allTrades || allTrades.length === 0;
 
   return (
     <div className="py-4 space-y-6">
