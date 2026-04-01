@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTrades } from '@/hooks/useTrades';
+import { usePeriodFilter } from '@/hooks/usePeriodFilter';
+import PeriodFilter from '@/components/PeriodFilter';
 import { useExecutionQuality } from '@/hooks/useExecutionQuality';
 import { useTraderProfile } from '@/hooks/useTraderProfile';
 import { useMentalFatigue } from '@/hooks/useMentalFatigue';

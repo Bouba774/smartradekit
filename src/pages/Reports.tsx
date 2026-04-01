@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTrades } from '@/hooks/useTrades';
 import { useCurrency } from '@/hooks/useCurrency';
+import { usePeriodFilter } from '@/hooks/usePeriodFilter';
+import PeriodFilter from '@/components/PeriodFilter';
 import { ConfidentialValue } from '@/components/ConfidentialValue';
 import { useSessionAnalysis } from '@/hooks/useSessionAnalysis';
 import { useStrategyAnalysis } from '@/hooks/useStrategyAnalysis';
