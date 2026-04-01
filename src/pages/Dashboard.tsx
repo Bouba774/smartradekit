@@ -75,11 +75,15 @@ const Dashboard: React.FC = () => {
   const { t, language } = useLanguage();
   const { profile } = useAuth();
   const { currentLevel } = useChallenges();
-  const { trades, isLoading } = useTrades();
+  const { trades: allTrades, isLoading } = useTrades();
   const { formatAmount, currency } = useCurrency();
   const { isEnabled: focusEnabled, toggle: toggleFocus } = useTradeFocus();
   const { capitalInfo, showPrompt, dismissPrompt, isLoading: capitalIsLoading } = useInitialCapital();
   const { settings } = useSettings();
+  const { period, setPeriod, customStart, customEnd, setCustomStart, setCustomEnd, filterByPeriod } = usePeriodFilter('all');
+  
+  // Filter trades by selected period
+  const trades = useMemo(() => filterByPeriod(allTrades), [allTrades, filterByPeriod]);
   
   // Get initial capital for equity curve and stats
   const initialCapital = capitalInfo.capitalDefined && capitalInfo.capital ? capitalInfo.capital : 10000;
