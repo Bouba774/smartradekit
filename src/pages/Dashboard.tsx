@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChallenges } from '@/hooks/useChallenges';
@@ -8,6 +8,8 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { useTradeFocus } from '@/hooks/useTradeFocus';
 import { useInitialCapital } from '@/hooks/useInitialCapital';
 import { useSettings } from '@/hooks/useSettings';
+import { usePeriodFilter } from '@/hooks/usePeriodFilter';
+import PeriodFilter from '@/components/PeriodFilter';
 import { APP_VERSION } from '@/lib/version';
 import { getAssetCategory, getMarketGroup } from '@/data/assets';
 import { mainStatsTooltips, timeTooltips, streaksTooltips } from '@/data/helpTooltips';
