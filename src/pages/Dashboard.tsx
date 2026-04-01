@@ -310,7 +310,17 @@ const Dashboard: React.FC = () => {
         </h1>
       </div>
 
-      {/* Capital not defined notice */}
+      {/* Period Filter */}
+      <div className="glass-card p-3 animate-fade-in">
+        <PeriodFilter
+          period={period}
+          setPeriod={setPeriod}
+          customStart={customStart}
+          customEnd={customEnd}
+          setCustomStart={setCustomStart}
+          setCustomEnd={setCustomEnd}
+        />
+      </div>
       {!isLoading && !capitalIsLoading && !capitalInfo.capitalDefined && trades.length > 0 && (
         <div 
           className="glass-card p-4 flex items-center gap-3 border-yellow-500/30 bg-yellow-500/5 cursor-pointer hover:border-yellow-500/50 transition-colors"
