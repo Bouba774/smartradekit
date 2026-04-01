@@ -313,6 +313,18 @@ const PsychologicalAnalysis: React.FC = () => {
         </div>
       </div>
 
+      {/* Period Filter */}
+      <div className="glass-card p-4 animate-fade-in">
+        <PeriodFilter
+          period={period}
+          setPeriod={setPeriod}
+          customStart={customStart}
+          customEnd={customEnd}
+          setCustomStart={setCustomStart}
+          setCustomEnd={setCustomEnd}
+        />
+      </div>
+
       {hasNoData ? (
         <div className="glass-card p-12 text-center animate-fade-in">
           <Brain className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
