@@ -52,6 +52,7 @@ interface MTTradeImporterProps {
 const MTTradeImporter: React.FC<MTTradeImporterProps> = ({ onImportComplete }) => {
   const { language } = useLanguage();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const locale = language === 'fr' ? fr : enUS;
   
