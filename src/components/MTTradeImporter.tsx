@@ -3,6 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -51,6 +52,7 @@ interface MTTradeImporterProps {
 const MTTradeImporter: React.FC<MTTradeImporterProps> = ({ onImportComplete }) => {
   const { language } = useLanguage();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const locale = language === 'fr' ? fr : enUS;
   
@@ -502,6 +504,10 @@ const MTTradeImporter: React.FC<MTTradeImporterProps> = ({ onImportComplete }) =
       toast.success(`${texts.success} (${imported} ${texts.tradesImported})`);
       setParseResult(null);
       setColumnMapping(null);
+      
+      // Invalidate all trade-related queries so data shows everywhere
+      await queryClient.invalidateQueries({ queryKey: ['trades'] });
+      await queryClient.invalidateQueries({ queryKey: ['advancedStats'] });
       
       if (onImportComplete) {
         onImportComplete();

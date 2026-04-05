@@ -721,9 +721,34 @@ export function convertToAppTrades(mtTrades: ParsedMTTrade[], userId: string): a
       
       const totalPL = mt.profit + mt.swap + mt.commission;
       
+      // Calculate duration in seconds
+      let durationSeconds: number | null = null;
+      if (mt.closeTime && mt.openTime) {
+        durationSeconds = Math.round((mt.closeTime.getTime() - mt.openTime.getTime()) / 1000);
+        if (durationSeconds < 0) durationSeconds = null;
+      }
+      
+      // Determine exit method from SL/TP proximity
+      let exitMethod: 'sl' | 'tp' | 'manual' | null = null;
+      if (mt.closeTime && mt.closePrice) {
+        if (mt.stopLoss && Math.abs(mt.closePrice - mt.stopLoss) / mt.stopLoss < 0.001) {
+          exitMethod = 'sl';
+        } else if (mt.takeProfit && Math.abs(mt.closePrice - mt.takeProfit) / mt.takeProfit < 0.001) {
+          exitMethod = 'tp';
+        } else {
+          exitMethod = 'manual';
+        }
+      }
+
+      // Normalize asset name - add slash for forex pairs
+      let asset = mt.symbol.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (asset.length === 6 && /^[A-Z]+$/.test(asset)) {
+        asset = `${asset.slice(0, 3)}/${asset.slice(3)}`;
+      }
+      
       return {
         user_id: userId,
-        asset: mt.symbol,
+        asset,
         direction: mt.type === 'buy' ? 'long' : 'short',
         entry_price: mt.openPrice,
         exit_price: mt.closePrice || (mt.closeTime ? mt.openPrice : null),
@@ -734,7 +759,11 @@ export function convertToAppTrades(mtTrades: ParsedMTTrade[], userId: string): a
         result,
         trade_date: mt.openTime.toISOString(),
         exit_timestamp: mt.closeTime?.toISOString() || null,
-        notes: `Imported from MetaTrader - Ticket #${mt.ticket}${mt.comment ? ` - ${mt.comment}` : ''}`
+        exit_method: exitMethod,
+        duration_seconds: durationSeconds,
+        notes: mt.comment 
+          ? `Ticket #${mt.ticket} - ${mt.comment}` 
+          : `Ticket #${mt.ticket}`
       };
     });
 }
