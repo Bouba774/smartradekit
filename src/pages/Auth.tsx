@@ -406,10 +406,10 @@ const Auth: React.FC = () => {
         {/* Auth Card */}
         <div className="relative glass-card p-8 overflow-hidden">
           {/* Animated border gradient */}
-          <div className="absolute inset-0 rounded-xl p-[1px] bg-gradient-to-br from-primary/50 via-transparent to-profit/50 opacity-50" />
+           <div className="absolute inset-0 rounded-xl p-[1px] bg-gradient-to-br from-primary/50 via-transparent to-profit/50 opacity-50 pointer-events-none" />
           
           {/* Glow effect on top */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent pointer-events-none" />
           {/* Email Sent Confirmation Screen */}
           {authStep === 'email_sent' && (
             <>
