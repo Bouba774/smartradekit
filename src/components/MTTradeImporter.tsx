@@ -505,6 +505,10 @@ const MTTradeImporter: React.FC<MTTradeImporterProps> = ({ onImportComplete }) =
       setParseResult(null);
       setColumnMapping(null);
       
+      // Invalidate all trade-related queries so data shows everywhere
+      await queryClient.invalidateQueries({ queryKey: ['trades'] });
+      await queryClient.invalidateQueries({ queryKey: ['advancedStats'] });
+      
       if (onImportComplete) {
         onImportComplete();
       }
