@@ -122,12 +122,35 @@ export const CONTRACT_SIZES: { [key: string]: { size: number; unit: string } } =
   'USOIL': { size: 1000, unit: 'barrels' },
 };
 
+// Normalize asset name: "EURUSD" -> "EUR/USD", "GBPUSD" -> "GBP/USD", etc.
+export const normalizeAssetName = (asset: string): string => {
+  // Already contains a slash — return as-is
+  if (asset.includes('/')) return asset;
+
+  // Check if the raw name exists in the known list
+  if (ALL_ASSETS.includes(asset)) return asset;
+
+  // Try inserting a slash for 6-char forex pairs (EURUSD -> EUR/USD)
+  if (asset.length === 6) {
+    const withSlash = `${asset.slice(0, 3)}/${asset.slice(3)}`;
+    if (ALL_ASSETS.includes(withSlash)) return withSlash;
+  }
+
+  // Try inserting slash for crypto/metal pairs like BTCUSD, XAUUSD (3+3 or longer)
+  for (let i = 2; i <= asset.length - 2; i++) {
+    const withSlash = `${asset.slice(0, i)}/${asset.slice(i)}`;
+    if (ALL_ASSETS.includes(withSlash)) return withSlash;
+  }
+
+  return asset;
+};
+
 // Get asset category (detailed, e.g. "Forex Majors", "Indices US")
 export const getAssetCategory = (asset: string): string => {
+  const normalized = normalizeAssetName(asset);
   for (const [category, assets] of Object.entries(ASSET_CATEGORIES)) {
-    if (assets.includes(asset)) return category;
+    if (assets.includes(normalized)) return category;
   }
-  // Return the asset name itself instead of generic "Other"
   return asset;
 };
 
