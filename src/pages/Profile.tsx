@@ -573,7 +573,13 @@ const Profile: React.FC = () => {
 
       {/* MetaTrader Import Card */}
       <div className="glass-card p-6">
-        <MTTradeImporter />
+        <MTTradeImporter onImportComplete={() => {
+          // Invalidate trades cache to refresh all views
+          import('@tanstack/react-query').then(({ QueryClient }) => {
+            // Use window event to trigger refetch across all components
+            window.dispatchEvent(new CustomEvent('trades-imported'));
+          });
+        }} />
       </div>
 
 
