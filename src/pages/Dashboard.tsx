@@ -11,7 +11,7 @@ import { useSettings } from '@/hooks/useSettings';
 import { usePeriodFilter } from '@/hooks/usePeriodFilter';
 import PeriodFilter from '@/components/PeriodFilter';
 import { APP_VERSION } from '@/lib/version';
-import { getAssetCategory, getMarketGroup } from '@/data/assets';
+import { getAssetCategory, getMarketGroup, normalizeAssetName } from '@/data/assets';
 import { mainStatsTooltips, timeTooltips, streaksTooltips } from '@/data/helpTooltips';
 import StatCard from '@/components/ui/StatCard';
 
@@ -235,7 +235,7 @@ const Dashboard: React.FC = () => {
     const pairCounts: { [key: string]: { count: number; pnl: number } } = {};
     
     trades.forEach(trade => {
-      const asset = trade.asset;
+      const asset = normalizeAssetName(trade.asset);
       if (!pairCounts[asset]) {
         pairCounts[asset] = { count: 0, pnl: 0 };
       }
