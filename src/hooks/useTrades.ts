@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAccount } from '@/contexts/AccountContext';
 import { offlineMutationQueue } from '@/lib/offlineStorage';
 
 export interface Trade {
@@ -34,30 +35,32 @@ export interface Trade {
 
 export const useTrades = () => {
   const { user } = useAuth();
+  const { currentAccountId } = useAccount();
   const queryClient = useQueryClient();
 
   const tradesQuery = useQuery({
-    queryKey: ['trades', user?.id],
+    queryKey: ['trades', user?.id, currentAccountId],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user || !currentAccountId) return [];
       
       const { data, error } = await supabase
         .from('trades')
         .select('*')
         .eq('user_id', user.id)
+        .eq('account_id', currentAccountId)
         .order('trade_date', { ascending: false });
 
       if (error) throw error;
       return data as Trade[];
     },
-    enabled: !!user
+    enabled: !!user && !!currentAccountId
   });
 
   const addTrade = useMutation({
     mutationFn: async (trade: Omit<Trade, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
       if (!user) throw new Error('Not authenticated');
 
-      const tradeWithUser = { ...trade, user_id: user.id };
+      const tradeWithUser = { ...trade, user_id: user.id, account_id: currentAccountId };
 
       if (!navigator.onLine) {
         // Queue for later sync
