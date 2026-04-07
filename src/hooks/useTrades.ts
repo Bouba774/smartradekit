@@ -83,7 +83,7 @@ export const useTrades = () => {
     },
     onMutate: async (newTrade) => {
       if (!user) return;
-      await queryClient.cancelQueries({ queryKey: ['trades', user.id] });
+      await queryClient.cancelQueries({ queryKey: ['trades', user.id, currentAccountId] });
       const previous = queryClient.getQueryData<Trade[]>(['trades', user.id]);
       
       const optimistic: Trade = {
@@ -104,7 +104,7 @@ export const useTrades = () => {
     },
     onSettled: () => {
       if (navigator.onLine) {
-        queryClient.invalidateQueries({ queryKey: ['trades', user?.id] });
+        queryClient.invalidateQueries({ queryKey: ['trades', user?.id, currentAccountId] });
       }
     }
   });
@@ -131,7 +131,7 @@ export const useTrades = () => {
     },
     onMutate: async (updatedTrade) => {
       if (!user) return;
-      await queryClient.cancelQueries({ queryKey: ['trades', user.id] });
+      await queryClient.cancelQueries({ queryKey: ['trades', user.id, currentAccountId] });
       const previous = queryClient.getQueryData<Trade[]>(['trades', user.id]);
       
       queryClient.setQueryData<Trade[]>(['trades', user.id], (old = []) =>
@@ -146,7 +146,7 @@ export const useTrades = () => {
     },
     onSettled: () => {
       if (navigator.onLine) {
-        queryClient.invalidateQueries({ queryKey: ['trades', user?.id] });
+        queryClient.invalidateQueries({ queryKey: ['trades', user?.id, currentAccountId] });
       }
     }
   });
@@ -170,7 +170,7 @@ export const useTrades = () => {
     },
     onMutate: async (id) => {
       if (!user) return;
-      await queryClient.cancelQueries({ queryKey: ['trades', user.id] });
+      await queryClient.cancelQueries({ queryKey: ['trades', user.id, currentAccountId] });
       const previous = queryClient.getQueryData<Trade[]>(['trades', user.id]);
       
       queryClient.setQueryData<Trade[]>(['trades', user.id], (old = []) =>
@@ -185,7 +185,7 @@ export const useTrades = () => {
     },
     onSettled: () => {
       if (navigator.onLine) {
-        queryClient.invalidateQueries({ queryKey: ['trades', user?.id] });
+        queryClient.invalidateQueries({ queryKey: ['trades', user?.id, currentAccountId] });
       }
     }
   });
