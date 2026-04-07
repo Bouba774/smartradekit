@@ -25,6 +25,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, nickname: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
+  signInWithApple: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: Error | null }>;
   refreshProfile: () => Promise<void>;
@@ -247,7 +248,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: null };
       }
 
-      // Session already set by lovable auth
+      return { error: null };
+    } catch (err) {
+      return { error: err instanceof Error ? err : new Error(String(err)) };
+    }
+  };
+
+  const signInWithApple = async () => {
+    try {
+      const { lovable } = await import('@/integrations/lovable/index');
+      const result = await lovable.auth.signInWithOAuth('apple', {
+        redirect_uri: window.location.origin,
+      });
+
+      if (result.error) {
+        return { error: result.error instanceof Error ? result.error : new Error(String(result.error)) };
+      }
+
+      if (result.redirected) {
+        return { error: null };
+      }
+
       return { error: null };
     } catch (err) {
       return { error: err instanceof Error ? err : new Error(String(err)) };
@@ -289,6 +310,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signUp,
       signIn,
       signInWithGoogle,
+      signInWithApple,
       signOut,
       updateProfile,
       refreshProfile
