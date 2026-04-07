@@ -237,7 +237,7 @@ export const useChallenges = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user_challenges', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['user_challenges', user?.id, currentAccountId] });
     }
   });
 
