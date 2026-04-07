@@ -201,9 +201,9 @@ export const AccountManager: React.FC = () => {
           >
             <div
               className="w-4 h-4 rounded-full flex-shrink-0 ring-2 ring-offset-2 ring-offset-background"
-              style={{
+            style={{
                 backgroundColor: account.color || '#3B82F6',
-                ringColor: account.id === currentAccountId ? (account.color || '#3B82F6') : 'transparent',
+                boxShadow: account.id === currentAccountId ? `0 0 0 2px var(--background), 0 0 0 4px ${account.color || '#3B82F6'}` : undefined,
               }}
             />
             <div className="flex-1 min-w-0">
