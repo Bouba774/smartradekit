@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounts: {
+        Row: {
+          account_type: string
+          color: string | null
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          order_index: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_type?: string
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          order_index?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_type?: string
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          order_index?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_audit_logs: {
         Row: {
           action: string
@@ -485,6 +521,7 @@ export type Database = {
       }
       journal_entries: {
         Row: {
+          account_id: string | null
           checklist: Json | null
           created_at: string
           daily_objective: string | null
@@ -497,6 +534,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_id?: string | null
           checklist?: Json | null
           created_at?: string
           daily_objective?: string | null
@@ -509,6 +547,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_id?: string | null
           checklist?: Json | null
           created_at?: string
           daily_objective?: string | null
@@ -520,7 +559,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "journal_entries_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       login_confirmation_tokens: {
         Row: {
@@ -802,6 +849,7 @@ export type Database = {
       }
       trades: {
         Row: {
+          account_id: string | null
           asset: string
           audios: string[] | null
           created_at: string
@@ -830,6 +878,7 @@ export type Database = {
           videos: string[] | null
         }
         Insert: {
+          account_id?: string | null
           asset: string
           audios?: string[] | null
           created_at?: string
@@ -858,6 +907,7 @@ export type Database = {
           videos?: string[] | null
         }
         Update: {
+          account_id?: string | null
           asset?: string
           audios?: string[] | null
           created_at?: string
@@ -885,7 +935,15 @@ export type Database = {
           user_id?: string
           videos?: string[] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "trades_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       trusted_devices: {
         Row: {
@@ -964,6 +1022,7 @@ export type Database = {
       }
       user_challenges: {
         Row: {
+          account_id: string | null
           challenge_id: string
           completed: boolean | null
           completed_at: string | null
@@ -977,6 +1036,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_id?: string | null
           challenge_id: string
           completed?: boolean | null
           completed_at?: string | null
@@ -990,6 +1050,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_id?: string | null
           challenge_id?: string
           completed?: boolean | null
           completed_at?: string | null
@@ -1002,7 +1063,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_challenges_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_consents: {
         Row: {
