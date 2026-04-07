@@ -6,6 +6,7 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { AccountSwitcherDropdown } from '@/components/AccountSwitcher';
 
 const Header: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -69,6 +70,7 @@ const Header: React.FC = () => {
           <h1 className="font-display text-sm sm:text-lg font-semibold text-foreground hidden sm:block truncate">
             Smart Trade Kit
           </h1>
+          <AccountSwitcherDropdown />
         </div>
         
         {/* Right side - Date & Time - Always visible on all screens */}
