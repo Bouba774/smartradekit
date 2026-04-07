@@ -212,6 +212,7 @@ export const useChallenges = () => {
           .from('user_challenges')
           .insert({
             user_id: user.id,
+            account_id: currentAccountId,
             challenge_id: challenge.id,
             progress: challenge.progress,
             target: challenge.target,
