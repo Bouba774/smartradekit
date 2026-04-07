@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useFeedback } from '@/hooks/useFeedback';
 import { ProfilePhotoUploader } from '@/components/ProfilePhotoUploader';
+import { AccountManager } from '@/components/AccountSwitcher';
 import MTTradeImporter from '@/components/MTTradeImporter';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
@@ -531,6 +532,11 @@ const Profile: React.FC = () => {
         >
           <LogOut className="w-5 h-5" />
         </button>
+      </div>
+
+      {/* Account Manager */}
+      <div className="glass-card p-6">
+        <AccountManager />
       </div>
 
       {/* Export Data Card */}

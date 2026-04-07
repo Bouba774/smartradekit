@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAccount } from '@/contexts/AccountContext';
 import { useTrades, Trade } from './useTrades';
 import { useSelfSabotage } from './useSelfSabotage';
 import { useDisciplineScore } from './useDisciplineScore';
@@ -85,6 +86,7 @@ export interface RewardChestWithStatus {
 
 export const useChallenges = () => {
   const { user, profile, updateProfile } = useAuth();
+  const { currentAccountId } = useAccount();
   const { trades, stats } = useTrades();
   const queryClient = useQueryClient();
   
@@ -93,19 +95,20 @@ export const useChallenges = () => {
   const disciplineScore = useDisciplineScore(trades);
 
   const challengesQuery = useQuery({
-    queryKey: ['user_challenges', user?.id],
+    queryKey: ['user_challenges', user?.id, currentAccountId],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user || !currentAccountId) return [];
       
       const { data, error } = await supabase
         .from('user_challenges')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('account_id', currentAccountId);
 
       if (error) throw error;
       return data as UserChallenge[];
     },
-    enabled: !!user
+    enabled: !!user && !!currentAccountId
   });
 
   // Detect if there's been self-sabotage that should reset streak challenges
@@ -209,6 +212,7 @@ export const useChallenges = () => {
           .from('user_challenges')
           .insert({
             user_id: user.id,
+            account_id: currentAccountId,
             challenge_id: challenge.id,
             progress: challenge.progress,
             target: challenge.target,
@@ -234,7 +238,7 @@ export const useChallenges = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user_challenges', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['user_challenges', user?.id, currentAccountId] });
     }
   });
 

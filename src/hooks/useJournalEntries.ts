@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAccount } from '@/contexts/AccountContext';
 import { format } from 'date-fns';
 import { offlineMutationQueue } from '@/lib/offlineStorage';
 
@@ -25,17 +26,19 @@ export interface JournalEntry {
 
 export const useJournalEntries = () => {
   const { user } = useAuth();
+  const { currentAccountId } = useAccount();
   const queryClient = useQueryClient();
 
   const { data: entries = [], isLoading } = useQuery({
-    queryKey: ['journal-entries', user?.id],
+    queryKey: ['journal-entries', user?.id, currentAccountId],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user || !currentAccountId) return [];
 
       const { data, error } = await supabase
         .from('journal_entries')
         .select('*')
         .eq('user_id', user.id)
+        .eq('account_id', currentAccountId)
         .order('entry_date', { ascending: false });
 
       if (error) throw error;
@@ -45,7 +48,7 @@ export const useJournalEntries = () => {
         checklist: Array.isArray(entry.checklist) ? entry.checklist : JSON.parse(entry.checklist as string || '[]'),
       })) as JournalEntry[];
     },
-    enabled: !!user,
+    enabled: !!user && !!currentAccountId,
   });
 
   const getEntryByDate = (date: Date): JournalEntry | undefined => {
@@ -66,6 +69,7 @@ export const useJournalEntries = () => {
 
       const entryData = {
         user_id: user.id,
+        account_id: currentAccountId,
         entry_date: entry.entry_date,
         checklist: JSON.stringify(entry.checklist || []),
         daily_objective: entry.daily_objective || null,
@@ -118,8 +122,8 @@ export const useJournalEntries = () => {
     },
     onMutate: async (newEntry) => {
       if (!user) return;
-      await queryClient.cancelQueries({ queryKey: ['journal-entries', user.id] });
-      const previous = queryClient.getQueryData<JournalEntry[]>(['journal-entries', user.id]);
+      await queryClient.cancelQueries({ queryKey: ['journal-entries', user.id, currentAccountId] });
+      const previous = queryClient.getQueryData<JournalEntry[]>(['journal-entries', user.id, currentAccountId]);
       
       const existingEntry = previous?.find(e => e.entry_date === newEntry.entry_date);
       const optimistic: JournalEntry = {
@@ -135,7 +139,7 @@ export const useJournalEntries = () => {
         updated_at: new Date().toISOString(),
       };
       
-      queryClient.setQueryData<JournalEntry[]>(['journal-entries', user.id], (old = []) => {
+      queryClient.setQueryData<JournalEntry[]>(['journal-entries', user.id, currentAccountId], (old = []) => {
         const filtered = old.filter(e => e.entry_date !== newEntry.entry_date);
         return [optimistic, ...filtered].sort((a, b) => b.entry_date.localeCompare(a.entry_date));
       });
@@ -144,12 +148,12 @@ export const useJournalEntries = () => {
     },
     onError: (_err, _entry, context) => {
       if (context?.previous && user) {
-        queryClient.setQueryData(['journal-entries', user.id], context.previous);
+        queryClient.setQueryData(['journal-entries', user.id, currentAccountId], context.previous);
       }
     },
     onSettled: () => {
       if (navigator.onLine) {
-        queryClient.invalidateQueries({ queryKey: ['journal-entries', user?.id] });
+        queryClient.invalidateQueries({ queryKey: ['journal-entries', user?.id, currentAccountId] });
       }
     },
   });
@@ -176,10 +180,10 @@ export const useJournalEntries = () => {
     },
     onMutate: async (entryId) => {
       if (!user) return;
-      await queryClient.cancelQueries({ queryKey: ['journal-entries', user.id] });
-      const previous = queryClient.getQueryData<JournalEntry[]>(['journal-entries', user.id]);
+      await queryClient.cancelQueries({ queryKey: ['journal-entries', user.id, currentAccountId] });
+      const previous = queryClient.getQueryData<JournalEntry[]>(['journal-entries', user.id, currentAccountId]);
       
-      queryClient.setQueryData<JournalEntry[]>(['journal-entries', user.id], (old = []) =>
+      queryClient.setQueryData<JournalEntry[]>(['journal-entries', user.id, currentAccountId], (old = []) =>
         old.filter(e => e.id !== entryId)
       );
       
@@ -187,12 +191,12 @@ export const useJournalEntries = () => {
     },
     onError: (_err, _id, context) => {
       if (context?.previous && user) {
-        queryClient.setQueryData(['journal-entries', user.id], context.previous);
+        queryClient.setQueryData(['journal-entries', user.id, currentAccountId], context.previous);
       }
     },
     onSettled: () => {
       if (navigator.onLine) {
-        queryClient.invalidateQueries({ queryKey: ['journal-entries', user?.id] });
+        queryClient.invalidateQueries({ queryKey: ['journal-entries', user?.id, currentAccountId] });
       }
     },
   });

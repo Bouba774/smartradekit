@@ -9,6 +9,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { SecurityProvider, useSecurity } from "@/contexts/SecurityContext";
+import { AccountProvider } from "@/contexts/AccountContext";
 import { AdminProvider } from "@/contexts/AdminContext";
 import Layout from "@/components/layout/Layout";
 import { CookieConsent } from "@/components/CookieConsent";
@@ -445,7 +446,8 @@ const App = () => {
           <AuthProvider>
             <LanguageProvider>
               <SecurityProvider>
-                <AdminProvider>
+                <AccountProvider>
+                  <AdminProvider>
                   <TooltipProvider>
                     <Toaster />
                     <Sonner />
@@ -453,7 +455,8 @@ const App = () => {
                       <AppWrapper />
                     </Router>
                   </TooltipProvider>
-                </AdminProvider>
+                  </AdminProvider>
+                </AccountProvider>
               </SecurityProvider>
             </LanguageProvider>
           </AuthProvider>
