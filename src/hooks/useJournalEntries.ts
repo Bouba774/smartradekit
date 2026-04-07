@@ -122,8 +122,8 @@ export const useJournalEntries = () => {
     },
     onMutate: async (newEntry) => {
       if (!user) return;
-      await queryClient.cancelQueries({ queryKey: ['journal-entries', user.id] });
-      const previous = queryClient.getQueryData<JournalEntry[]>(['journal-entries', user.id]);
+      await queryClient.cancelQueries({ queryKey: ['journal-entries', user.id, currentAccountId] });
+      const previous = queryClient.getQueryData<JournalEntry[]>(['journal-entries', user.id, currentAccountId]);
       
       const existingEntry = previous?.find(e => e.entry_date === newEntry.entry_date);
       const optimistic: JournalEntry = {
@@ -139,7 +139,7 @@ export const useJournalEntries = () => {
         updated_at: new Date().toISOString(),
       };
       
-      queryClient.setQueryData<JournalEntry[]>(['journal-entries', user.id], (old = []) => {
+      queryClient.setQueryData<JournalEntry[]>(['journal-entries', user.id, currentAccountId], (old = []) => {
         const filtered = old.filter(e => e.entry_date !== newEntry.entry_date);
         return [optimistic, ...filtered].sort((a, b) => b.entry_date.localeCompare(a.entry_date));
       });
@@ -148,12 +148,12 @@ export const useJournalEntries = () => {
     },
     onError: (_err, _entry, context) => {
       if (context?.previous && user) {
-        queryClient.setQueryData(['journal-entries', user.id], context.previous);
+        queryClient.setQueryData(['journal-entries', user.id, currentAccountId], context.previous);
       }
     },
     onSettled: () => {
       if (navigator.onLine) {
-        queryClient.invalidateQueries({ queryKey: ['journal-entries', user?.id] });
+        queryClient.invalidateQueries({ queryKey: ['journal-entries', user?.id, currentAccountId] });
       }
     },
   });
@@ -180,10 +180,10 @@ export const useJournalEntries = () => {
     },
     onMutate: async (entryId) => {
       if (!user) return;
-      await queryClient.cancelQueries({ queryKey: ['journal-entries', user.id] });
-      const previous = queryClient.getQueryData<JournalEntry[]>(['journal-entries', user.id]);
+      await queryClient.cancelQueries({ queryKey: ['journal-entries', user.id, currentAccountId] });
+      const previous = queryClient.getQueryData<JournalEntry[]>(['journal-entries', user.id, currentAccountId]);
       
-      queryClient.setQueryData<JournalEntry[]>(['journal-entries', user.id], (old = []) =>
+      queryClient.setQueryData<JournalEntry[]>(['journal-entries', user.id, currentAccountId], (old = []) =>
         old.filter(e => e.id !== entryId)
       );
       
@@ -191,12 +191,12 @@ export const useJournalEntries = () => {
     },
     onError: (_err, _id, context) => {
       if (context?.previous && user) {
-        queryClient.setQueryData(['journal-entries', user.id], context.previous);
+        queryClient.setQueryData(['journal-entries', user.id, currentAccountId], context.previous);
       }
     },
     onSettled: () => {
       if (navigator.onLine) {
-        queryClient.invalidateQueries({ queryKey: ['journal-entries', user?.id] });
+        queryClient.invalidateQueries({ queryKey: ['journal-entries', user?.id, currentAccountId] });
       }
     },
   });
