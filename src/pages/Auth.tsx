@@ -22,7 +22,7 @@ const TURNSTILE_SITE_KEY = '0x4AAAAAACG-_s2EZYR5V8_J';
 type AuthStep = 'credentials' | 'email_sent' | 'confirm_email';
 
 const Auth: React.FC = () => {
-  const { signIn, signUp, signInWithGoogle, user, loading } = useAuth();
+  const { signIn, signUp, signInWithGoogle, signInWithApple, user, loading } = useAuth();
   const { language, t } = useLanguage();
   const { theme } = useTheme();
   const navigate = useNavigate();
@@ -42,6 +42,7 @@ const Auth: React.FC = () => {
   const [isBlocked, setIsBlocked] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isAppleLoading, setIsAppleLoading] = useState(false);
 
   // Enable Turnstile only if not on localhost
   const isLocalhost = (): boolean => {
@@ -331,6 +332,20 @@ const Auth: React.FC = () => {
       toast.error(t('googleAuthError'));
     } finally {
       setIsGoogleLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setIsAppleLoading(true);
+    try {
+      const { error } = await signInWithApple();
+      if (error) {
+        toast.error(language === 'fr' ? 'Erreur de connexion Apple' : 'Apple sign-in error');
+      }
+    } catch (err) {
+      toast.error(language === 'fr' ? 'Erreur de connexion Apple' : 'Apple sign-in error');
+    } finally {
+      setIsAppleLoading(false);
     }
   };
 
