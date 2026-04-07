@@ -69,6 +69,7 @@ export const useJournalEntries = () => {
 
       const entryData = {
         user_id: user.id,
+        account_id: currentAccountId,
         entry_date: entry.entry_date,
         checklist: JSON.stringify(entry.checklist || []),
         daily_objective: entry.daily_objective || null,
