@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAccount } from '@/contexts/AccountContext';
 import { format } from 'date-fns';
 import { offlineMutationQueue } from '@/lib/offlineStorage';
 
@@ -25,17 +26,19 @@ export interface JournalEntry {
 
 export const useJournalEntries = () => {
   const { user } = useAuth();
+  const { currentAccountId } = useAccount();
   const queryClient = useQueryClient();
 
   const { data: entries = [], isLoading } = useQuery({
-    queryKey: ['journal-entries', user?.id],
+    queryKey: ['journal-entries', user?.id, currentAccountId],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user || !currentAccountId) return [];
 
       const { data, error } = await supabase
         .from('journal_entries')
         .select('*')
         .eq('user_id', user.id)
+        .eq('account_id', currentAccountId)
         .order('entry_date', { ascending: false });
 
       if (error) throw error;
@@ -45,7 +48,7 @@ export const useJournalEntries = () => {
         checklist: Array.isArray(entry.checklist) ? entry.checklist : JSON.parse(entry.checklist as string || '[]'),
       })) as JournalEntry[];
     },
-    enabled: !!user,
+    enabled: !!user && !!currentAccountId,
   });
 
   const getEntryByDate = (date: Date): JournalEntry | undefined => {
