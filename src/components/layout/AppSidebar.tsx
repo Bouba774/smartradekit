@@ -101,26 +101,29 @@ const AppSidebar: React.FC = () => {
           isMobile && isOpen && "translate-x-0",
           isMobile && "w-[70vw] max-w-[360px]",
           "max-[420px]:w-[78vw]",
-          !isMobile && "w-[220px]"
+          !isMobile && !isCollapsed && "w-[220px]",
+          !isMobile && isCollapsed && "w-[60px]"
         )}
         collapsible="icon"
       >
         <SidebarHeader className="p-3 sm:p-4 border-b border-primary/20">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
+          <div className={cn("flex items-center", isCollapsed ? "justify-center" : "justify-between gap-3")}>
+            <div className={cn("flex items-center", isCollapsed ? "justify-center" : "gap-3")}>
               <img 
                 src="/assets/app-logo.png" 
                 alt="Smart Trade Kit" 
                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg shrink-0 object-cover animate-logo-glow"
               />
-              <div className="overflow-hidden">
-                <h1 className="font-display font-bold text-foreground text-sm leading-tight">
-                  Smart Trade
-                </h1>
-                <p className="text-[10px] text-primary neon-text">
-                  Tracker <span className="text-muted-foreground">V{APP_VERSION}</span>
-                </p>
-              </div>
+              {!isCollapsed && (
+                <div className="overflow-hidden">
+                  <h1 className="font-display font-bold text-foreground text-sm leading-tight">
+                    Smart Trade
+                  </h1>
+                  <p className="text-[10px] text-primary neon-text">
+                    Kit <span className="text-muted-foreground">V{APP_VERSION}</span>
+                  </p>
+                </div>
+              )}
             </div>
             
             {/* Close button on mobile */}
