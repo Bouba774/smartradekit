@@ -14,6 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
@@ -31,6 +32,8 @@ import {
   Settings,
   Info,
   X,
+  PanelLeftClose,
+  PanelLeft,
 } from 'lucide-react';
 
 const AppSidebar: React.FC = () => {
@@ -39,8 +42,9 @@ const AppSidebar: React.FC = () => {
   const navigate = useNavigate();
   const { isAdmin } = useAdminRole();
   const { isAdminVerified, isInAdminMode } = useAdmin();
-  const { state, openMobile, setOpenMobile, isMobile } = useSidebar();
+  const { state, openMobile, setOpenMobile, isMobile, toggleSidebar } = useSidebar();
   const isOpen = isMobile ? openMobile : state === 'expanded';
+  const isCollapsed = !isMobile && state === 'collapsed';
 
   const navItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: t('dashboard') },
@@ -97,26 +101,29 @@ const AppSidebar: React.FC = () => {
           isMobile && isOpen && "translate-x-0",
           isMobile && "w-[70vw] max-w-[360px]",
           "max-[420px]:w-[78vw]",
-          !isMobile && "w-[220px]"
+          !isMobile && !isCollapsed && "w-[220px]",
+          !isMobile && isCollapsed && "w-[60px]"
         )}
         collapsible="icon"
       >
         <SidebarHeader className="p-3 sm:p-4 border-b border-primary/20">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
+          <div className={cn("flex items-center", isCollapsed ? "justify-center" : "justify-between gap-3")}>
+            <div className={cn("flex items-center", isCollapsed ? "justify-center" : "gap-3")}>
               <img 
                 src="/assets/app-logo.png" 
                 alt="Smart Trade Kit" 
                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg shrink-0 object-cover animate-logo-glow"
               />
-              <div className="overflow-hidden">
-                <h1 className="font-display font-bold text-foreground text-sm leading-tight">
-                  Smart Trade
-                </h1>
-                <p className="text-[10px] text-primary neon-text">
-                  Tracker <span className="text-muted-foreground">V{APP_VERSION}</span>
-                </p>
-              </div>
+              {!isCollapsed && (
+                <div className="overflow-hidden">
+                  <h1 className="font-display font-bold text-foreground text-sm leading-tight">
+                    Smart Trade
+                  </h1>
+                  <p className="text-[10px] text-primary neon-text">
+                    Kit <span className="text-muted-foreground">V{APP_VERSION}</span>
+                  </p>
+                </div>
+              )}
             </div>
             
             {/* Close button on mobile */}
@@ -150,17 +157,21 @@ const AppSidebar: React.FC = () => {
                           to={item.path}
                           onClick={(e) => handleNavClick(e, item.path)}
                           className={cn(
-                            "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors duration-100 group relative touch-target",
+                            "flex items-center gap-3 rounded-lg transition-colors duration-100 group relative touch-target",
+                            isCollapsed ? "px-2 py-3 justify-center" : "px-3 py-3",
                             isActive
                               ? "bg-primary/20 text-primary border-l-2 border-primary"
                               : "text-muted-foreground hover:text-primary hover:bg-primary/10 active:bg-primary/20"
                           )}
+                          title={isCollapsed ? item.label : undefined}
                         >
                           <Icon className="w-5 h-5 shrink-0" />
-                          <span className="text-sm font-medium truncate">
-                            {item.label}
-                          </span>
-                          {isActive && (
+                          {!isCollapsed && (
+                            <span className="text-sm font-medium truncate">
+                              {item.label}
+                            </span>
+                          )}
+                          {isActive && !isCollapsed && (
                             <div className="absolute right-2 w-1.5 h-1.5 rounded-full bg-primary" />
                           )}
                         </Link>
@@ -172,6 +183,26 @@ const AppSidebar: React.FC = () => {
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
+
+        {/* Desktop toggle button */}
+        {!isMobile && (
+          <SidebarFooter className="p-2 border-t border-primary/20">
+            <button
+              onClick={toggleSidebar}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              title={isCollapsed ? 'Agrandir' : 'Réduire'}
+            >
+              {isCollapsed ? (
+                <PanelLeft className="w-5 h-5" />
+              ) : (
+                <>
+                  <PanelLeftClose className="w-5 h-5" />
+                  <span className="text-xs font-medium">Réduire</span>
+                </>
+              )}
+            </button>
+          </SidebarFooter>
+        )}
       </Sidebar>
     </>
   );
