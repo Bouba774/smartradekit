@@ -157,17 +157,21 @@ const AppSidebar: React.FC = () => {
                           to={item.path}
                           onClick={(e) => handleNavClick(e, item.path)}
                           className={cn(
-                            "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors duration-100 group relative touch-target",
+                            "flex items-center gap-3 rounded-lg transition-colors duration-100 group relative touch-target",
+                            isCollapsed ? "px-2 py-3 justify-center" : "px-3 py-3",
                             isActive
                               ? "bg-primary/20 text-primary border-l-2 border-primary"
                               : "text-muted-foreground hover:text-primary hover:bg-primary/10 active:bg-primary/20"
                           )}
+                          title={isCollapsed ? item.label : undefined}
                         >
                           <Icon className="w-5 h-5 shrink-0" />
-                          <span className="text-sm font-medium truncate">
-                            {item.label}
-                          </span>
-                          {isActive && (
+                          {!isCollapsed && (
+                            <span className="text-sm font-medium truncate">
+                              {item.label}
+                            </span>
+                          )}
+                          {isActive && !isCollapsed && (
                             <div className="absolute right-2 w-1.5 h-1.5 rounded-full bg-primary" />
                           )}
                         </Link>
