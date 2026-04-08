@@ -14,6 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
@@ -31,6 +32,8 @@ import {
   Settings,
   Info,
   X,
+  PanelLeftClose,
+  PanelLeft,
 } from 'lucide-react';
 
 const AppSidebar: React.FC = () => {
@@ -39,8 +42,9 @@ const AppSidebar: React.FC = () => {
   const navigate = useNavigate();
   const { isAdmin } = useAdminRole();
   const { isAdminVerified, isInAdminMode } = useAdmin();
-  const { state, openMobile, setOpenMobile, isMobile } = useSidebar();
+  const { state, openMobile, setOpenMobile, isMobile, toggleSidebar } = useSidebar();
   const isOpen = isMobile ? openMobile : state === 'expanded';
+  const isCollapsed = !isMobile && state === 'collapsed';
 
   const navItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: t('dashboard') },
