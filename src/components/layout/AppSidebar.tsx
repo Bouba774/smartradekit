@@ -135,46 +135,32 @@ const AppSidebar: React.FC = () => {
         <SidebarContent className="py-2 sm:py-4 overflow-y-auto">
           <SidebarGroup>
             <SidebarGroupContent>
-              <SidebarMenu className={cn(!isMobile && !isOpen && "flex flex-col items-center gap-2")}>
+              <SidebarMenu>
                 {navItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = location.pathname === item.path;
 
                   return (
-                    <SidebarMenuItem 
-                      key={item.path}
-                      className={cn(
-                        !isMobile && !isOpen && "w-auto"
-                      )}
-                    >
+                    <SidebarMenuItem key={item.path}>
                       <SidebarMenuButton
                         asChild
                         isActive={isActive}
-                        tooltip={!isMobile && !isOpen ? item.label : undefined}
                       >
                         <Link
                           to={item.path}
                           onClick={(e) => handleNavClick(e, item.path)}
                           className={cn(
                             "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors duration-100 group relative touch-target",
-                            !isMobile && !isOpen && "w-10 h-10 p-0 justify-center rounded-full border border-primary/30 hover:border-primary",
                             isActive
-                              ? !isMobile && !isOpen 
-                                ? "bg-primary/20 text-primary border-primary"
-                                : "bg-primary/20 text-primary border-l-2 border-primary"
+                              ? "bg-primary/20 text-primary border-l-2 border-primary"
                               : "text-muted-foreground hover:text-primary hover:bg-primary/10 active:bg-primary/20"
                           )}
                         >
-                          <Icon className={cn(
-                            "w-5 h-5 shrink-0",
-                            !isMobile && !isOpen && "w-4 h-4"
-                          )} />
-                          {(isMobile || isOpen) && (
-                            <span className="text-sm font-medium truncate">
-                              {item.label}
-                            </span>
-                          )}
-                          {isActive && (isMobile || isOpen) && (
+                          <Icon className="w-5 h-5 shrink-0" />
+                          <span className="text-sm font-medium truncate">
+                            {item.label}
+                          </span>
+                          {isActive && (
                             <div className="absolute right-2 w-1.5 h-1.5 rounded-full bg-primary" />
                           )}
                         </Link>
