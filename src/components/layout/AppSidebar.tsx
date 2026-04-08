@@ -183,6 +183,26 @@ const AppSidebar: React.FC = () => {
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
+
+        {/* Desktop toggle button */}
+        {!isMobile && (
+          <SidebarFooter className="p-2 border-t border-primary/20">
+            <button
+              onClick={toggleSidebar}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              title={isCollapsed ? 'Agrandir' : 'Réduire'}
+            >
+              {isCollapsed ? (
+                <PanelLeft className="w-5 h-5" />
+              ) : (
+                <>
+                  <PanelLeftClose className="w-5 h-5" />
+                  <span className="text-xs font-medium">Réduire</span>
+                </>
+              )}
+            </button>
+          </SidebarFooter>
+        )}
       </Sidebar>
     </>
   );
