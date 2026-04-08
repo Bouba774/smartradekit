@@ -96,7 +96,7 @@ const AdminSidebar: React.FC = () => {
           isMobile && isOpen && "translate-x-0",
           isMobile && "w-[70vw] max-w-[360px]",
           "max-[420px]:w-[78vw]",
-          !isMobile && (isOpen ? "w-64" : "w-16")
+          !isMobile && "w-[220px]"
         )}
         collapsible="icon"
       >
