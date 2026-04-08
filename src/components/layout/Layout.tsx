@@ -22,7 +22,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   useAutoPrefetch();
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen={!isMobile}>
       <NavigationProgress />
       <div className="min-h-screen flex w-full bg-background relative overflow-x-hidden">
         {/* Ambient glow effects - reduced on mobile for performance */}
@@ -38,9 +38,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {/* Header removed - no longer showing time/date/logo bar */}
           
           {/* Main content with bottom padding on mobile for bottom nav */}
-          <main className={`flex-1 pt-2 sm:pt-4 px-3 sm:px-4 md:px-6 relative z-10 overflow-x-hidden overflow-y-auto ${isMobile ? 'pb-24' : 'pb-4 sm:pb-6'}`}>
+          <main className={`flex-1 pt-2 sm:pt-4 px-3 sm:px-4 md:px-6 lg:px-8 relative z-10 overflow-x-hidden overflow-y-auto ${isMobile ? 'pb-24' : 'pb-4 sm:pb-6'}`}>
             <PageTransition>
-              <div className="w-full max-w-7xl mx-auto">
+              <div className="w-full mx-auto">
                 {children}
               </div>
               {isDashboard && <Footer />}
