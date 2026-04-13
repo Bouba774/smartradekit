@@ -14,6 +14,7 @@ import {
   searchAssets,
   AssetConfig 
 } from '@/lib/calculator';
+import useFavoriteAssets from '@/hooks/useFavoriteAssets';
 
 export type CalculatorMode = 'price' | 'pips';
 
@@ -27,24 +28,20 @@ interface CalculatorFormProps {
   onRiskPercentChange: (value: string) => void;
   riskAmount: string;
   onRiskAmountChange: (value: string) => void;
-  // Price mode
   entryPrice: string;
   onEntryPriceChange: (value: string) => void;
   stopLoss: string;
   onStopLossChange: (value: string) => void;
   takeProfit: string;
   onTakeProfitChange: (value: string) => void;
-  // Pips mode
   slPips: string;
   onSlPipsChange: (value: string) => void;
   tpPips: string;
   onTpPipsChange: (value: string) => void;
   pipsDirection: 'BUY' | 'SELL';
   onPipsDirectionChange: (dir: 'BUY' | 'SELL') => void;
-  // Mode
   mode: CalculatorMode;
   onModeChange: (mode: CalculatorMode) => void;
-  // UI
   language: string;
   currency: string;
   onCalculate: () => void;
@@ -79,6 +76,7 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
   onCalculate,
 }) => {
   const isFr = language === 'fr';
+  const { favorites, toggleFavorite, isFavorite } = useFavoriteAssets();
   
   const [isAssetOpen, setIsAssetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -96,6 +94,14 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
     if (selectedCategory) return getAssetsByCategory(selectedCategory);
     return [];
   }, [searchQuery, selectedCategory]);
+
+  // Get favorite asset configs (max 2 displayed)
+  const favoriteAssets = useMemo(() => {
+    return favorites
+      .slice(0, 2)
+      .map(sym => ALL_ASSETS.find(a => a.symbol === sym))
+      .filter(Boolean) as AssetConfig[];
+  }, [favorites]);
   
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -134,8 +140,9 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* Mode Toggle */}
-      <div className="flex items-center justify-center">
+      {/* Mode Toggle with label */}
+      <div className="flex flex-col items-center gap-1.5">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Mode</span>
         <div className="inline-flex rounded-xl bg-secondary/50 p-1 gap-1">
           <button
             type="button"
@@ -187,7 +194,18 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
                 {selectedAssetDetails?.symbol || (isFr ? 'Sélectionner...' : 'Select...')}
               </span>
             </span>
-            <ChevronDown className={cn('w-5 h-5 text-muted-foreground transition-transform', isAssetOpen && 'rotate-180')} />
+            <div className="flex items-center gap-2">
+              {selectedAssetDetails && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); toggleFavorite(selectedAssetDetails.symbol); }}
+                  className="p-1"
+                >
+                  <Star className={cn('w-4 h-4', isFavorite(selectedAssetDetails.symbol) ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground')} />
+                </button>
+              )}
+              <ChevronDown className={cn('w-5 h-5 text-muted-foreground transition-transform', isAssetOpen && 'rotate-180')} />
+            </div>
           </button>
           
           {isAssetOpen && (
@@ -237,7 +255,13 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
                         )}
                         onClick={() => handleAssetSelect(asset)}
                       >
-                        <Star className="w-4 h-4 text-muted-foreground" />
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); toggleFavorite(asset.symbol); }}
+                          className="p-0.5"
+                        >
+                          <Star className={cn('w-4 h-4', isFavorite(asset.symbol) ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground')} />
+                        </button>
                         <span className="font-medium">{asset.symbol}</span>
                         <span className="text-muted-foreground text-sm truncate">{asset.name}</span>
                       </button>
@@ -254,6 +278,29 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
             </div>
           )}
         </div>
+
+        {/* Favorite Assets Quick Access */}
+        {favoriteAssets.length > 0 && !isAssetOpen && (
+          <div className="flex items-center gap-2 pt-1">
+            <span className="text-xs text-muted-foreground">{isFr ? 'Favoris' : 'Favorites'}:</span>
+            {favoriteAssets.map(asset => (
+              <button
+                key={asset.symbol}
+                type="button"
+                onClick={() => handleAssetSelect(asset)}
+                className={cn(
+                  'px-3 py-1 rounded-lg text-xs font-semibold transition-colors border',
+                  asset.symbol === selectedAsset
+                    ? 'bg-primary/15 border-primary/40 text-primary'
+                    : 'bg-secondary/50 border-border/50 text-foreground hover:bg-secondary'
+                )}
+              >
+                {asset.symbol}
+              </button>
+            ))}
+          </div>
+        )}
+
         {selectedAssetDetails && (
           <p className="text-sm text-cyan-400">
             {isFr ? 'Catégorie' : 'Category'}: {getCategoryLabel(selectedAssetDetails.type)}
@@ -367,17 +414,15 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
       {/* === PIPS MODE FIELDS === */}
       {mode === 'pips' && (
         <>
-          {/* Direction selector */}
+          {/* Direction selector - smaller */}
           <div className="space-y-2">
-            <Label className="text-base font-semibold text-foreground">
-              {isFr ? 'Direction' : 'Direction'}
-            </Label>
+            <Label className="text-base font-semibold text-foreground">Direction</Label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => onPipsDirectionChange('BUY')}
                 className={cn(
-                  'h-14 rounded-xl font-semibold text-lg transition-all',
+                  'h-11 rounded-xl font-semibold text-base transition-all',
                   pipsDirection === 'BUY'
                     ? 'bg-emerald-500/20 border-2 border-emerald-500 text-emerald-500'
                     : 'bg-secondary/50 border-2 border-transparent text-muted-foreground hover:text-foreground'
@@ -389,7 +434,7 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
                 type="button"
                 onClick={() => onPipsDirectionChange('SELL')}
                 className={cn(
-                  'h-14 rounded-xl font-semibold text-lg transition-all',
+                  'h-11 rounded-xl font-semibold text-base transition-all',
                   pipsDirection === 'SELL'
                     ? 'bg-red-500/20 border-2 border-red-500 text-red-500'
                     : 'bg-secondary/50 border-2 border-transparent text-muted-foreground hover:text-foreground'
@@ -400,7 +445,6 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
             </div>
           </div>
 
-          {/* SL & TP in pips */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
