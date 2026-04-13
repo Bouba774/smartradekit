@@ -11,15 +11,16 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 import CalculatorForm from '@/components/calculator/CalculatorForm';
+import type { CalculatorMode } from '@/components/calculator/CalculatorForm';
 import CalculationResults from '@/components/calculator/CalculationResults';
 import {
   AssetConfig,
   calculatePosition,
+  calculatePositionFromPips,
   isCalculationError,
   CalculationResult,
 } from '@/lib/calculator';
 
-// Import the PENDING_TRADE_KEY from AddTrade to ensure consistency
 import { PENDING_TRADE_KEY } from '@/pages/AddTrade';
 
 const Calculator: React.FC = () => {
@@ -30,31 +31,44 @@ const Calculator: React.FC = () => {
   
   const isFr = language === 'fr';
   
-  // Form state
+  // Mode
+  const [mode, setMode] = useState<CalculatorMode>('price');
+  
+  // Form state (shared)
   const [selectedAsset, setSelectedAsset] = useState<string>('');
   const [assetConfig, setAssetConfig] = useState<AssetConfig | null>(null);
   const [capitalInput, setCapitalInput] = useState<string>('');
-  const [entryPrice, setEntryPrice] = useState<string>('');
-  const [stopLoss, setStopLoss] = useState<string>('');
-  const [takeProfit, setTakeProfit] = useState<string>('');
   const [riskPercentInput, setRiskPercentInput] = useState<string>('');
   const [riskAmountInput, setRiskAmountInput] = useState<string>('');
   
-  // Calculation result
+  // Price mode
+  const [entryPrice, setEntryPrice] = useState<string>('');
+  const [stopLoss, setStopLoss] = useState<string>('');
+  const [takeProfit, setTakeProfit] = useState<string>('');
+  
+  // Pips mode
+  const [slPips, setSlPips] = useState<string>('');
+  const [tpPips, setTpPips] = useState<string>('');
+  const [pipsDirection, setPipsDirection] = useState<'BUY' | 'SELL'>('BUY');
+  
+  // Result
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  // Get currency from settings
   const accountCurrency = settings.capitalCurrency || settings.currency || 'USD';
   
-  // Clear error when inputs change
+  // Clear error on input change
   useEffect(() => {
-    if (error) {
-      setError(null);
-    }
-  }, [selectedAsset, capitalInput, riskPercentInput, entryPrice, stopLoss, takeProfit]);
+    if (error) setError(null);
+  }, [selectedAsset, capitalInput, riskPercentInput, entryPrice, stopLoss, takeProfit, slPips, tpPips, pipsDirection, mode]);
   
-  // Initialize from settings (optional defaults)
+  // Clear result on mode change
+  useEffect(() => {
+    setResult(null);
+    setError(null);
+  }, [mode]);
+  
+  // Init from settings
   useEffect(() => {
     if (settingsLoaded) {
       if (settings.defaultRiskPercent && !riskPercentInput) {
@@ -62,7 +76,6 @@ const Calculator: React.FC = () => {
       }
       if (settings.defaultCapital && !capitalInput) {
         setCapitalInput(settings.defaultCapital.toString());
-        // Sync risk amount if percent is set
         if (settings.defaultRiskPercent) {
           const amount = settings.defaultCapital * (settings.defaultRiskPercent / 100);
           setRiskAmountInput(amount.toFixed(2));
@@ -71,33 +84,25 @@ const Calculator: React.FC = () => {
     }
   }, [settingsLoaded, settings.defaultRiskPercent, settings.defaultCapital]);
   
-  // Parse capital from input
   const capital = parseFloat(capitalInput) || 0;
   const riskPercent = parseFloat(riskPercentInput) || 0;
   
-  // Sync risk % → amount
   const handleRiskPercentChange = useCallback((value: string) => {
     setRiskPercentInput(value);
     const percent = parseFloat(value);
     if (!isNaN(percent) && capital > 0) {
       setRiskAmountInput((capital * (percent / 100)).toFixed(2));
-    } else if (value === '') {
-      setRiskAmountInput('');
-    }
+    } else if (value === '') setRiskAmountInput('');
   }, [capital]);
   
-  // Sync amount → risk %
   const handleRiskAmountChange = useCallback((value: string) => {
     setRiskAmountInput(value);
     const amount = parseFloat(value);
     if (!isNaN(amount) && capital > 0) {
       setRiskPercentInput(((amount / capital) * 100).toFixed(2));
-    } else if (value === '') {
-      setRiskPercentInput('');
-    }
+    } else if (value === '') setRiskPercentInput('');
   }, [capital]);
   
-  // Sync capital changes with risk amount
   const handleCapitalChange = useCallback((value: string) => {
     setCapitalInput(value);
     const cap = parseFloat(value);
@@ -107,7 +112,6 @@ const Calculator: React.FC = () => {
     }
   }, [riskPercentInput]);
   
-  // Handle asset selection
   const handleAssetChange = useCallback((symbol: string, config: AssetConfig | null) => {
     setSelectedAsset(symbol);
     setAssetConfig(config);
@@ -115,119 +119,89 @@ const Calculator: React.FC = () => {
     setError(null);
   }, []);
   
-  // Perform calculation
+  // === CALCULATION ===
   const performCalculation = useCallback(() => {
     setError(null);
     setResult(null);
     
-    // Pre-validation with priority order (single error at a time)
-    
-    // 1. Capital
+    // Common validation
     if (capital <= 0 || !isFinite(capital)) {
       setError(isFr ? 'Capital invalide' : 'Invalid capital');
       return;
     }
-    
-    // 2. Risk
     if (riskPercent <= 0 || riskPercent > 10 || !isFinite(riskPercent)) {
       setError(isFr ? 'Risque incorrect' : 'Invalid risk');
       return;
     }
-    
-    // 3. Asset
     if (!selectedAsset || !assetConfig) {
       setError(isFr ? 'Actif non pris en charge' : 'Unsupported asset');
       return;
     }
     
-    // 4. Entry price
-    const entry = parseFloat(entryPrice);
-    if (isNaN(entry) || entry <= 0 || !isFinite(entry)) {
-      setError(isFr ? 'Prix d\'entrée invalide' : 'Invalid entry price');
-      return;
-    }
-    
-    // 5. Stop loss
-    const sl = parseFloat(stopLoss);
-    if (isNaN(sl) || sl <= 0 || !isFinite(sl)) {
-      setError(isFr ? 'Stop loss requis' : 'Stop loss required');
-      return;
-    }
-    
-    // 6. Stop loss cannot equal entry
-    if (entry === sl) {
-      setError(isFr ? 'Stop loss incorrect' : 'Invalid stop loss');
-      return;
-    }
-    
-    // 7. Take profit validation (if defined)
-    const tp = takeProfit ? parseFloat(takeProfit) : undefined;
-    if (tp !== undefined && tp > 0) {
-      const isBuy = entry > sl;
-      if (isBuy && tp <= entry) {
-        setError(isFr ? 'Take profit incorrect' : 'Invalid take profit');
-        return;
+    if (mode === 'price') {
+      // Price mode (existing)
+      const entry = parseFloat(entryPrice);
+      if (isNaN(entry) || entry <= 0) { setError(isFr ? "Prix d'entrée invalide" : 'Invalid entry price'); return; }
+      const sl = parseFloat(stopLoss);
+      if (isNaN(sl) || sl <= 0) { setError(isFr ? 'Stop loss requis' : 'Stop loss required'); return; }
+      if (entry === sl) { setError(isFr ? 'Stop loss incorrect' : 'Invalid stop loss'); return; }
+      
+      const tp = takeProfit ? parseFloat(takeProfit) : undefined;
+      if (tp !== undefined && tp > 0) {
+        const isBuy = entry > sl;
+        if (isBuy && tp <= entry) { setError(isFr ? 'Take profit incorrect' : 'Invalid take profit'); return; }
+        if (!isBuy && tp >= entry) { setError(isFr ? 'Take profit incorrect' : 'Invalid take profit'); return; }
       }
-      if (!isBuy && tp >= entry) {
-        setError(isFr ? 'Take profit incorrect' : 'Invalid take profit');
-        return;
-      }
+      
+      const calcResult = calculatePosition({
+        capital, riskPercent, accountCurrency, asset: assetConfig,
+        entryPrice: entry, stopLoss: sl, takeProfit: tp, exchangeRates: rates,
+      }, isFr);
+      
+      if (isCalculationError(calcResult)) { setError(calcResult.error); return; }
+      if (!calcResult.lotSize || calcResult.lotSize <= 0) { setError(isFr ? 'Calcul impossible' : 'Calculation error'); return; }
+      setResult(calcResult);
+      
+    } else {
+      // Pips mode
+      const sl = parseFloat(slPips);
+      if (isNaN(sl) || sl <= 0) { setError(isFr ? 'SL invalide' : 'Invalid SL'); return; }
+      const tp = tpPips ? parseFloat(tpPips) : undefined;
+      if (tp !== undefined && tp < 0) { setError(isFr ? 'TP invalide' : 'Invalid TP'); return; }
+      
+      const calcResult = calculatePositionFromPips({
+        capital, riskPercent, accountCurrency, asset: assetConfig,
+        slPips: sl, tpPips: tp, direction: pipsDirection, exchangeRates: rates,
+      }, isFr);
+      
+      if (isCalculationError(calcResult)) { setError(calcResult.error); return; }
+      if (!calcResult.lotSize || calcResult.lotSize <= 0) { setError(isFr ? 'Calcul impossible' : 'Calculation error'); return; }
+      setResult(calcResult);
     }
-    
-    // Calculate
-    const calcResult = calculatePosition({
-      capital,
-      riskPercent,
-      accountCurrency,
-      asset: assetConfig,
-      entryPrice: entry,
-      stopLoss: sl,
-      takeProfit: tp,
-      exchangeRates: rates,
-    }, isFr);
-    
-    if (isCalculationError(calcResult)) {
-      setError(calcResult.error || (isFr ? 'Calcul impossible' : 'Calculation error'));
-      return;
-    }
-    
-    // Final validation of result
-    if (!calcResult.lotSize || calcResult.lotSize <= 0 || !isFinite(calcResult.lotSize)) {
-      setError(isFr ? 'Calcul impossible' : 'Calculation error');
-      return;
-    }
-    
-    setResult(calcResult);
-  }, [selectedAsset, assetConfig, capital, riskPercent, accountCurrency, entryPrice, stopLoss, takeProfit, rates, isFr]);
+  }, [selectedAsset, assetConfig, capital, riskPercent, accountCurrency, entryPrice, stopLoss, takeProfit, slPips, tpPips, pipsDirection, rates, isFr, mode]);
   
-  // Send to trade form
+  // Send to trade (price mode only has full data)
   const sendToTrade = useCallback(() => {
     if (!result || !selectedAsset) return;
     
     const riskAmount = capital * (riskPercent / 100);
-    
-    // Build trade data with field names matching AddTrade.tsx expectations
-    // Keep full precision for prices - use raw string values
     const pendingTrade = {
       asset: selectedAsset,
       direction: result.direction.toLowerCase() as 'buy' | 'sell',
-      entryPrice: entryPrice, // Keep original input with full precision
-      stopLoss: stopLoss, // Keep original input with full precision
-      takeProfit: takeProfit || '', // Keep original input with full precision
+      entryPrice: mode === 'price' ? entryPrice : '',
+      stopLoss: mode === 'price' ? stopLoss : '',
+      takeProfit: mode === 'price' ? (takeProfit || '') : '',
       lotSize: result.lotSize.toString(),
       riskCash: riskAmount.toFixed(2),
       risk: riskPercent.toString(),
       capital: capital.toString(),
     };
     
-    // Store in localStorage (matching AddTrade.tsx expectations)
     localStorage.setItem(PENDING_TRADE_KEY, JSON.stringify(pendingTrade));
-    
     toast.success(isFr ? 'Données envoyées au formulaire' : 'Data sent to form');
     navigate('/add-trade');
-  }, [result, selectedAsset, entryPrice, stopLoss, takeProfit, riskPercent, capital, navigate, isFr]);
+  }, [result, selectedAsset, entryPrice, stopLoss, takeProfit, riskPercent, capital, navigate, isFr, mode]);
 
-  // Loading state
   if (!settingsLoaded) {
     return (
       <div className="py-4 max-w-2xl mx-auto space-y-6 px-5 sm:px-8">
@@ -270,6 +244,14 @@ const Calculator: React.FC = () => {
             onStopLossChange={setStopLoss}
             takeProfit={takeProfit}
             onTakeProfitChange={setTakeProfit}
+            slPips={slPips}
+            onSlPipsChange={setSlPips}
+            tpPips={tpPips}
+            onTpPipsChange={setTpPips}
+            pipsDirection={pipsDirection}
+            onPipsDirectionChange={setPipsDirection}
+            mode={mode}
+            onModeChange={setMode}
             language={language}
             currency={accountCurrency}
             onCalculate={performCalculation}
@@ -277,15 +259,13 @@ const Calculator: React.FC = () => {
         </CardContent>
       </Card>
       
-      {/* Error display */}
+      {/* Error */}
       {error && (
-        <div 
-          className={cn(
-            "mb-6 p-4 rounded-xl",
-            "bg-destructive/15 border border-destructive/30",
-            "animate-in fade-in-0 slide-in-from-top-2 duration-200"
-          )}
-        >
+        <div className={cn(
+          "mb-6 p-4 rounded-xl",
+          "bg-destructive/15 border border-destructive/30",
+          "animate-in fade-in-0 slide-in-from-top-2 duration-200"
+        )}>
           <div className="flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 flex-shrink-0 text-destructive" />
             <span className="font-medium text-destructive-foreground">⚠️ {error}</span>
@@ -293,21 +273,13 @@ const Calculator: React.FC = () => {
         </div>
       )}
       
-      {/* Results Section - UNIQUEMENT lot size et RR */}
+      {/* Results */}
       {result && (
         <Card className="glass-card mb-6">
           <CardContent className="pt-6">
-            <CalculationResults
-              result={result}
-              language={language}
-            />
+            <CalculationResults result={result} language={language} />
             
-            {/* Send to trade button */}
-            <Button
-              onClick={sendToTrade}
-              className="w-full mt-6"
-              size="lg"
-            >
+            <Button onClick={sendToTrade} className="w-full mt-6" size="lg">
               <Send className="w-4 h-4 mr-2" />
               {isFr ? 'Envoyer vers un nouveau trade' : 'Send to new trade'}
             </Button>
