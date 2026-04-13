@@ -349,3 +349,86 @@ export function isCalculationError(
 ): result is CalculationError {
   return 'error' in result;
 }
+
+// ============================================
+// PIPS MODE CALCULATION
+// ============================================
+
+export interface PipsCalculationInput {
+  capital: number;
+  riskPercent: number;
+  accountCurrency: string;
+  asset: AssetConfig;
+  slPips: number;
+  tpPips?: number;
+  direction: 'BUY' | 'SELL';
+  exchangeRates: Record<string, number>;
+}
+
+/**
+ * Calculate position size from pips directly.
+ * Formula: LotSize = RiskAmount / (SL_Pips × PipValue × ConversionRate)
+ * Where PipValue = pipSize × contractSize (value of 1 pip per 1 lot in quote currency)
+ */
+export function calculatePositionFromPips(
+  input: PipsCalculationInput,
+  isFr: boolean = false
+): CalculationResult | CalculationError {
+  const { capital, riskPercent, accountCurrency, asset, slPips, tpPips, direction, exchangeRates } = input;
+  const warnings: string[] = [];
+
+  // Validate
+  if (!capital || capital <= 0) return { error: isFr ? 'Capital invalide' : 'Invalid capital', code: 'INVALID_INPUT' };
+  if (!riskPercent || riskPercent <= 0 || riskPercent > 10) return { error: isFr ? 'Risque incorrect' : 'Invalid risk', code: 'INVALID_INPUT' };
+  if (!asset) return { error: isFr ? 'Actif non pris en charge' : 'Unsupported asset', code: 'INVALID_INPUT' };
+  if (!slPips || slPips <= 0) return { error: isFr ? 'SL invalide' : 'Invalid SL', code: 'INVALID_INPUT' };
+  if (tpPips !== undefined && tpPips < 0) return { error: isFr ? 'TP invalide' : 'Invalid TP', code: 'INVALID_INPUT' };
+
+  const riskAmount = capital * (riskPercent / 100);
+
+  // pipValue from config = value of 1 pip for 1 lot in quote currency
+  const pipValuePerLot = asset.pipValue;
+
+  // Convert pip value to account currency
+  let conversionRate = 1;
+  if (asset.quoteCurrency !== accountCurrency) {
+    const rate = getExchangeRate(asset.quoteCurrency, accountCurrency, exchangeRates);
+    if (rate === null) {
+      return { error: `Cannot convert ${asset.quoteCurrency} to ${accountCurrency}`, code: 'MISSING_RATE' };
+    }
+    conversionRate = rate;
+  }
+
+  // LotSize = RiskAmount / (SL_Pips × PipValuePerLot × ConversionRate)
+  const rawLotSize = riskAmount / (slPips * pipValuePerLot * conversionRate);
+
+  if (!isFinite(rawLotSize) || isNaN(rawLotSize) || rawLotSize <= 0) {
+    return { error: isFr ? 'Calcul impossible' : 'Calculation error', code: 'CALCULATION_ERROR' };
+  }
+
+  const lotSteps = Math.floor(rawLotSize / asset.lotStep);
+  let lotSize = lotSteps * asset.lotStep;
+
+  if (lotSize < asset.minLot) {
+    lotSize = asset.minLot;
+    warnings.push(`Lot size adjusted to minimum: ${asset.minLot}`);
+  }
+  if (lotSize > asset.maxLot) {
+    lotSize = asset.maxLot;
+    warnings.push(`Lot size limited to maximum: ${asset.maxLot}`);
+  }
+
+  let riskReward: number | undefined;
+  if (tpPips !== undefined && tpPips > 0) {
+    riskReward = Number((tpPips / slPips).toFixed(2));
+  }
+
+  if (riskPercent > 5) warnings.push(isFr ? 'Risque élevé' : 'High risk');
+
+  return {
+    direction,
+    lotSize: Number(lotSize.toFixed(2)),
+    riskReward,
+    warnings,
+  };
+}

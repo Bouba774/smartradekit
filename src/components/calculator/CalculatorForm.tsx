@@ -15,26 +15,35 @@ import {
   AssetConfig 
 } from '@/lib/calculator';
 
+export type CalculatorMode = 'price' | 'pips';
+
 interface CalculatorFormProps {
-  // Asset
   selectedAsset: string;
   assetConfig: AssetConfig | null;
   onAssetChange: (symbol: string, config: AssetConfig | null) => void;
-  // Capital
   capital: string;
   onCapitalChange: (value: string) => void;
-  // Risk
   riskPercent: string;
   onRiskPercentChange: (value: string) => void;
   riskAmount: string;
   onRiskAmountChange: (value: string) => void;
-  // Prices
+  // Price mode
   entryPrice: string;
   onEntryPriceChange: (value: string) => void;
   stopLoss: string;
   onStopLossChange: (value: string) => void;
   takeProfit: string;
   onTakeProfitChange: (value: string) => void;
+  // Pips mode
+  slPips: string;
+  onSlPipsChange: (value: string) => void;
+  tpPips: string;
+  onTpPipsChange: (value: string) => void;
+  pipsDirection: 'BUY' | 'SELL';
+  onPipsDirectionChange: (dir: 'BUY' | 'SELL') => void;
+  // Mode
+  mode: CalculatorMode;
+  onModeChange: (mode: CalculatorMode) => void;
   // UI
   language: string;
   currency: string;
@@ -57,48 +66,44 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
   onStopLossChange,
   takeProfit,
   onTakeProfitChange,
+  slPips,
+  onSlPipsChange,
+  tpPips,
+  onTpPipsChange,
+  pipsDirection,
+  onPipsDirectionChange,
+  mode,
+  onModeChange,
   language,
   currency,
   onCalculate,
 }) => {
   const isFr = language === 'fr';
   
-  // Asset selector state
   const [isAssetOpen, setIsAssetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const assetRef = useRef<HTMLDivElement>(null);
   
-  // Get selected asset details
   const selectedAssetDetails = useMemo(() => {
     return ALL_ASSETS.find(a => a.symbol === selectedAsset);
   }, [selectedAsset]);
   
-  // Get categories
   const categories = useMemo(() => getAssetCategories(), []);
   
-  // Get filtered assets
   const filteredAssets = useMemo(() => {
-    if (searchQuery.trim()) {
-      return searchAssets(searchQuery, 50);
-    }
-    if (selectedCategory) {
-      return getAssetsByCategory(selectedCategory);
-    }
+    if (searchQuery.trim()) return searchAssets(searchQuery, 50);
+    if (selectedCategory) return getAssetsByCategory(selectedCategory);
     return [];
   }, [searchQuery, selectedCategory]);
   
-  // Close on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (assetRef.current && !assetRef.current.contains(e.target as Node)) {
         setIsAssetOpen(false);
       }
     };
-    
-    if (isAssetOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
+    if (isAssetOpen) document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isAssetOpen]);
   
@@ -109,10 +114,7 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
     setSelectedCategory(null);
   };
 
-  const handleNumericInput = (
-    value: string,
-    onChange: (value: string) => void
-  ) => {
+  const handleNumericInput = (value: string, onChange: (value: string) => void) => {
     if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
       onChange(value);
     }
@@ -132,15 +134,43 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* Actif */}
+      {/* Mode Toggle */}
+      <div className="flex items-center justify-center">
+        <div className="inline-flex rounded-xl bg-secondary/50 p-1 gap-1">
+          <button
+            type="button"
+            onClick={() => onModeChange('price')}
+            className={cn(
+              'px-5 py-2.5 rounded-lg text-sm font-semibold transition-all',
+              mode === 'price'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            {isFr ? 'Prix' : 'Price'}
+          </button>
+          <button
+            type="button"
+            onClick={() => onModeChange('pips')}
+            className={cn(
+              'px-5 py-2.5 rounded-lg text-sm font-semibold transition-all',
+              mode === 'pips'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Pips
+          </button>
+        </div>
+      </div>
+
+      {/* Asset Selector */}
       <div className="space-y-2" ref={assetRef}>
         <div className="flex items-center gap-2">
           <Label className="text-base font-semibold text-foreground">
             {isFr ? 'Actif' : 'Asset'}
           </Label>
         </div>
-        
-        {/* Asset Selector Button */}
         <div className="relative">
           <button
             type="button"
@@ -160,25 +190,18 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
             <ChevronDown className={cn('w-5 h-5 text-muted-foreground transition-transform', isAssetOpen && 'rotate-180')} />
           </button>
           
-          {/* Dropdown */}
           {isAssetOpen && (
             <div className="absolute z-50 w-full mt-2 rounded-xl border bg-popover shadow-xl overflow-hidden">
-              {/* Search */}
               <div className="p-3 border-b">
                 <Input
                   type="text"
                   placeholder={isFr ? 'Rechercher un actif...' : 'Search asset...'}
                   value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setSelectedCategory(null);
-                  }}
+                  onChange={(e) => { setSearchQuery(e.target.value); setSelectedCategory(null); }}
                   className="h-10"
                   autoFocus
                 />
               </div>
-              
-              {/* Categories */}
               {!searchQuery && (
                 <div className="p-3 border-b">
                   <div className="flex flex-wrap gap-2">
@@ -200,8 +223,6 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
                   </div>
                 </div>
               )}
-              
-              {/* Results */}
               <ScrollArea className="max-h-[250px]">
                 {filteredAssets.length > 0 ? (
                   <div className="p-2">
@@ -218,9 +239,7 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
                       >
                         <Star className="w-4 h-4 text-muted-foreground" />
                         <span className="font-medium">{asset.symbol}</span>
-                        <span className="text-muted-foreground text-sm truncate">
-                          {asset.name}
-                        </span>
+                        <span className="text-muted-foreground text-sm truncate">{asset.name}</span>
                       </button>
                     ))}
                   </div>
@@ -228,16 +247,13 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
                   <div className="p-6 text-center text-muted-foreground text-sm">
                     {searchQuery || selectedCategory
                       ? (isFr ? 'Aucun résultat' : 'No results')
-                      : (isFr ? 'Sélectionnez une catégorie ou recherchez' : 'Select a category or search')
-                    }
+                      : (isFr ? 'Sélectionnez une catégorie ou recherchez' : 'Select a category or search')}
                   </div>
                 )}
               </ScrollArea>
             </div>
           )}
         </div>
-        
-        {/* Category label */}
         {selectedAssetDetails && (
           <p className="text-sm text-cyan-400">
             {isFr ? 'Catégorie' : 'Category'}: {getCategoryLabel(selectedAssetDetails.type)}
@@ -248,20 +264,12 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
       {/* Capital */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <Label className="text-base font-semibold text-foreground">
-            Capital ({currency})
-          </Label>
+          <Label className="text-base font-semibold text-foreground">Capital ({currency})</Label>
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger>
-                <Info className="w-4 h-4 text-muted-foreground" />
-              </TooltipTrigger>
+              <TooltipTrigger><Info className="w-4 h-4 text-muted-foreground" /></TooltipTrigger>
               <TooltipContent>
-                <p className="max-w-xs">
-                  {isFr 
-                    ? 'Le capital total de votre compte de trading'
-                    : 'The total capital of your trading account'}
-                </p>
+                <p className="max-w-xs">{isFr ? 'Le capital total de votre compte de trading' : 'The total capital of your trading account'}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -276,117 +284,151 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
         />
       </div>
 
-      {/* Risque % et Montant */}
+      {/* Risk */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <Label className="text-base font-semibold text-foreground">
-            {isFr ? 'Risque' : 'Risk'}
-          </Label>
+          <Label className="text-base font-semibold text-foreground">{isFr ? 'Risque' : 'Risk'}</Label>
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger>
-                <Info className="w-4 h-4 text-muted-foreground" />
-              </TooltipTrigger>
+              <TooltipTrigger><Info className="w-4 h-4 text-muted-foreground" /></TooltipTrigger>
               <TooltipContent>
-                <p className="max-w-xs">
-                  {isFr 
-                    ? 'Le pourcentage de votre capital que vous risquez sur ce trade'
-                    : 'The percentage of your capital you risk on this trade'}
-                </p>
+                <p className="max-w-xs">{isFr ? 'Le pourcentage de votre capital que vous risquez sur ce trade' : 'The percentage of your capital you risk on this trade'}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          {/* Risk % */}
           <div className="relative">
             <Input
-              type="text"
-              inputMode="decimal"
-              value={riskPercent}
+              type="text" inputMode="decimal" value={riskPercent}
               onChange={(e) => handleNumericInput(e.target.value, onRiskPercentChange)}
               placeholder="2"
               className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl pr-12"
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-lg font-medium">
-              %
-            </span>
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-lg font-medium">%</span>
           </div>
-          {/* Risk Amount */}
           <div className="relative">
             <Input
-              type="text"
-              inputMode="decimal"
-              value={riskAmount}
+              type="text" inputMode="decimal" value={riskAmount}
               onChange={(e) => handleNumericInput(e.target.value, onRiskAmountChange)}
               placeholder="200.00"
               className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl pr-12"
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-lg font-medium">
-              {currency}
-            </span>
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-lg font-medium">{currency}</span>
           </div>
         </div>
       </div>
       
       <Separator className="my-4" />
 
-      {/* Prix d'Entrée */}
-      <div className="space-y-2">
-        <Label className="text-base font-semibold text-foreground">
-          {isFr ? "Prix d'Entrée" : "Entry Price"}
-        </Label>
-        <Input
-          type="text"
-          inputMode="decimal"
-          value={entryPrice}
-          onChange={(e) => handleNumericInput(e.target.value, onEntryPriceChange)}
-          placeholder="1.08500"
-          className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl"
-        />
-      </div>
+      {/* === PRICE MODE FIELDS === */}
+      {mode === 'price' && (
+        <>
+          <div className="space-y-2">
+            <Label className="text-base font-semibold text-foreground">
+              {isFr ? "Prix d'Entrée" : "Entry Price"}
+            </Label>
+            <Input
+              type="text" inputMode="decimal" value={entryPrice}
+              onChange={(e) => handleNumericInput(e.target.value, onEntryPriceChange)}
+              placeholder="1.08500"
+              className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Label className="text-base font-semibold text-foreground">Stop Loss</Label>
+                <span className="text-xs text-destructive font-medium">({isFr ? 'obligatoire' : 'required'})</span>
+              </div>
+              <Input
+                type="text" inputMode="decimal" value={stopLoss}
+                onChange={(e) => handleNumericInput(e.target.value, onStopLossChange)}
+                placeholder="1.08200"
+                className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl"
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Label className="text-base font-semibold text-foreground">Take Profit</Label>
+                <span className="text-xs text-muted-foreground">({isFr ? 'optionnel' : 'optional'})</span>
+              </div>
+              <Input
+                type="text" inputMode="decimal" value={takeProfit}
+                onChange={(e) => handleNumericInput(e.target.value, onTakeProfitChange)}
+                placeholder="1.09000"
+                className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl"
+              />
+            </div>
+          </div>
+        </>
+      )}
 
-      {/* Stop Loss & Take Profit */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Stop Loss */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
+      {/* === PIPS MODE FIELDS === */}
+      {mode === 'pips' && (
+        <>
+          {/* Direction selector */}
+          <div className="space-y-2">
             <Label className="text-base font-semibold text-foreground">
-              Stop Loss
+              {isFr ? 'Direction' : 'Direction'}
             </Label>
-            <span className="text-xs text-destructive font-medium">
-              ({isFr ? 'obligatoire' : 'required'})
-            </span>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => onPipsDirectionChange('BUY')}
+                className={cn(
+                  'h-14 rounded-xl font-semibold text-lg transition-all',
+                  pipsDirection === 'BUY'
+                    ? 'bg-emerald-500/20 border-2 border-emerald-500 text-emerald-500'
+                    : 'bg-secondary/50 border-2 border-transparent text-muted-foreground hover:text-foreground'
+                )}
+              >
+                BUY
+              </button>
+              <button
+                type="button"
+                onClick={() => onPipsDirectionChange('SELL')}
+                className={cn(
+                  'h-14 rounded-xl font-semibold text-lg transition-all',
+                  pipsDirection === 'SELL'
+                    ? 'bg-red-500/20 border-2 border-red-500 text-red-500'
+                    : 'bg-secondary/50 border-2 border-transparent text-muted-foreground hover:text-foreground'
+                )}
+              >
+                SELL
+              </button>
+            </div>
           </div>
-          <Input
-            type="text"
-            inputMode="decimal"
-            value={stopLoss}
-            onChange={(e) => handleNumericInput(e.target.value, onStopLossChange)}
-            placeholder="1.08200"
-            className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl"
-          />
-        </div>
-        {/* Take Profit */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Label className="text-base font-semibold text-foreground">
-              Take Profit
-            </Label>
-            <span className="text-xs text-muted-foreground">
-              ({isFr ? 'optionnel' : 'optional'})
-            </span>
+
+          {/* SL & TP in pips */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Label className="text-base font-semibold text-foreground">SL (pips)</Label>
+                <span className="text-xs text-destructive font-medium">({isFr ? 'obligatoire' : 'required'})</span>
+              </div>
+              <Input
+                type="text" inputMode="decimal" value={slPips}
+                onChange={(e) => handleNumericInput(e.target.value, onSlPipsChange)}
+                placeholder="30"
+                className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl"
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Label className="text-base font-semibold text-foreground">TP (pips)</Label>
+                <span className="text-xs text-muted-foreground">({isFr ? 'optionnel' : 'optional'})</span>
+              </div>
+              <Input
+                type="text" inputMode="decimal" value={tpPips}
+                onChange={(e) => handleNumericInput(e.target.value, onTpPipsChange)}
+                placeholder="60"
+                className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl"
+              />
+            </div>
           </div>
-          <Input
-            type="text"
-            inputMode="decimal"
-            value={takeProfit}
-            onChange={(e) => handleNumericInput(e.target.value, onTakeProfitChange)}
-            placeholder="1.09000"
-            className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl"
-          />
-        </div>
-      </div>
+        </>
+      )}
       
       {/* Calculate Button */}
       <Button
