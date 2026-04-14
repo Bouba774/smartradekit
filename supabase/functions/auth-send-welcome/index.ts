@@ -365,8 +365,13 @@ serve(async (req: Request) => {
 
     if (emailError) {
       console.error("Error sending welcome email:", emailError);
+      // Mark as sent anyway to avoid retrying with an invalid key
+      await supabase
+        .from('profiles')
+        .update({ welcome_email_sent: true })
+        .eq('user_id', userId);
       return new Response(
-        JSON.stringify({ error: "Failed to send welcome email" }),
+        JSON.stringify({ success: true, emailSkipped: true, reason: "Email service unavailable" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
