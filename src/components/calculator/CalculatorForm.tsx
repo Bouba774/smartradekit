@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Info, ChevronDown, Star, Calculator } from 'lucide-react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { Info, ChevronDown, Star, Calculator, Pin } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -76,11 +76,14 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
   onCalculate,
 }) => {
   const isFr = language === 'fr';
-  const { favorites, toggleFavorite, isFavorite } = useFavoriteAssets();
+  const { favorites, pinned, toggleFavorite, togglePinned, isFavorite, isPinned } = useFavoriteAssets();
   
   const [isAssetOpen, setIsAssetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [longPressAsset, setLongPressAsset] = useState<string | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
   const assetRef = useRef<HTMLDivElement>(null);
   
   const selectedAssetDetails = useMemo(() => {
@@ -91,27 +94,34 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
   
   const filteredAssets = useMemo(() => {
     if (searchQuery.trim()) return searchAssets(searchQuery, 50);
+    if (selectedCategory === '⭐ Favorites' || selectedCategory === '⭐ Favoris') {
+      return favorites
+        .map(sym => ALL_ASSETS.find(a => a.symbol === sym))
+        .filter(Boolean) as AssetConfig[];
+    }
     if (selectedCategory) return getAssetsByCategory(selectedCategory);
     return [];
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, favorites]);
 
-  // Get favorite asset configs (max 2 displayed)
-  const favoriteAssets = useMemo(() => {
-    return favorites
-      .slice(0, 2)
+  // Pinned assets for quick access
+  const pinnedAssets = useMemo(() => {
+    return pinned
       .map(sym => ALL_ASSETS.find(a => a.symbol === sym))
       .filter(Boolean) as AssetConfig[];
-  }, [favorites]);
+  }, [pinned]);
   
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (assetRef.current && !assetRef.current.contains(e.target as Node)) {
         setIsAssetOpen(false);
       }
+      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
+        setLongPressAsset(null);
+      }
     };
-    if (isAssetOpen) document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isAssetOpen]);
+  }, []);
   
   const handleAssetSelect = (asset: AssetConfig) => {
     onAssetChange(asset.symbol, asset);
@@ -126,6 +136,20 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
     }
   };
 
+  // Long press handlers
+  const handleTouchStart = useCallback((symbol: string) => {
+    longPressTimer.current = setTimeout(() => {
+      setLongPressAsset(symbol);
+    }, 500);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
   const getCategoryLabel = (type: string) => {
     const labels: Record<string, { fr: string; en: string }> = {
       forex: { fr: 'Forex', en: 'Forex' },
@@ -137,6 +161,8 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
     };
     return labels[type]?.[isFr ? 'fr' : 'en'] || type;
   };
+
+  const favCategoryLabel = isFr ? '⭐ Favoris' : '⭐ Favorites';
 
   return (
     <div className="space-y-5">
@@ -189,7 +215,6 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
             onClick={() => setIsAssetOpen(!isAssetOpen)}
           >
             <span className="flex items-center gap-3">
-              <Star className="w-5 h-5 text-muted-foreground" />
               <span className="text-lg font-medium">
                 {selectedAssetDetails?.symbol || (isFr ? 'Sélectionner...' : 'Select...')}
               </span>
@@ -223,6 +248,21 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
               {!searchQuery && (
                 <div className="p-3 border-b">
                   <div className="flex flex-wrap gap-2">
+                    {/* Favorites category first */}
+                    {favorites.length > 0 && (
+                      <button
+                        type="button"
+                        className={cn(
+                          'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                          selectedCategory === favCategoryLabel
+                            ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40' 
+                            : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'
+                        )}
+                        onClick={() => setSelectedCategory(selectedCategory === favCategoryLabel ? null : favCategoryLabel)}
+                      >
+                        {favCategoryLabel}
+                      </button>
+                    )}
                     {categories.map(cat => (
                       <button
                         key={cat}
@@ -245,26 +285,72 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
                 {filteredAssets.length > 0 ? (
                   <div className="p-2">
                     {filteredAssets.map(asset => (
-                      <button
-                        key={asset.symbol}
-                        type="button"
-                        className={cn(
-                          'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left',
-                          'hover:bg-accent transition-colors',
-                          asset.symbol === selectedAsset && 'bg-accent'
-                        )}
-                        onClick={() => handleAssetSelect(asset)}
-                      >
+                      <div key={asset.symbol} className="relative">
                         <button
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); toggleFavorite(asset.symbol); }}
-                          className="p-0.5"
+                          className={cn(
+                            'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left',
+                            'hover:bg-accent transition-colors',
+                            asset.symbol === selectedAsset && 'bg-accent'
+                          )}
+                          onClick={() => handleAssetSelect(asset)}
+                          onTouchStart={() => handleTouchStart(asset.symbol)}
+                          onTouchEnd={handleTouchEnd}
+                          onTouchCancel={handleTouchEnd}
+                          onContextMenu={(e) => { e.preventDefault(); setLongPressAsset(asset.symbol); }}
                         >
-                          <Star className={cn('w-4 h-4', isFavorite(asset.symbol) ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground')} />
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); toggleFavorite(asset.symbol); }}
+                            className="p-0.5"
+                          >
+                            <Star className={cn('w-4 h-4', isFavorite(asset.symbol) ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground')} />
+                          </button>
+                          <span className="font-medium">{asset.symbol}</span>
+                          <span className="text-muted-foreground text-sm truncate">{asset.name}</span>
                         </button>
-                        <span className="font-medium">{asset.symbol}</span>
-                        <span className="text-muted-foreground text-sm truncate">{asset.name}</span>
-                      </button>
+                        
+                        {/* Long press context menu */}
+                        {longPressAsset === asset.symbol && (
+                          <div
+                            ref={contextMenuRef}
+                            className="absolute right-2 top-0 z-50 bg-popover border rounded-lg shadow-xl p-1 min-w-[180px]"
+                          >
+                            <button
+                              type="button"
+                              className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-accent transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavorite(asset.symbol);
+                                setLongPressAsset(null);
+                              }}
+                            >
+                              <Star className={cn('w-4 h-4', isFavorite(asset.symbol) ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground')} />
+                              {isFavorite(asset.symbol)
+                                ? (isFr ? 'Retirer des favoris' : 'Remove from favorites')
+                                : (isFr ? 'Ajouter aux favoris' : 'Add to favorites')
+                              }
+                            </button>
+                            {isFavorite(asset.symbol) && (
+                              <button
+                                type="button"
+                                className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-accent transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  togglePinned(asset.symbol);
+                                  setLongPressAsset(null);
+                                }}
+                              >
+                                <Pin className={cn('w-4 h-4', isPinned(asset.symbol) ? 'fill-cyan-400 text-cyan-400' : 'text-muted-foreground')} />
+                                {isPinned(asset.symbol)
+                                  ? (isFr ? "Retirer de l'écran" : 'Remove from screen')
+                                  : (isFr ? "Ajouter à l'écran" : 'Add to screen')
+                                }
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 ) : (
@@ -279,11 +365,11 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
           )}
         </div>
 
-        {/* Favorite Assets Quick Access */}
-        {favoriteAssets.length > 0 && !isAssetOpen && (
+        {/* Pinned Assets Quick Access (only those explicitly added to screen) */}
+        {pinnedAssets.length > 0 && !isAssetOpen && (
           <div className="flex items-center gap-2 pt-1">
-            <span className="text-xs text-muted-foreground">{isFr ? 'Favoris' : 'Favorites'}:</span>
-            {favoriteAssets.map(asset => (
+            <span className="text-xs text-muted-foreground">{isFr ? 'Accès rapide' : 'Quick access'}:</span>
+            {pinnedAssets.map(asset => (
               <button
                 key={asset.symbol}
                 type="button"
@@ -414,7 +500,7 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
       {/* === PIPS MODE FIELDS === */}
       {mode === 'pips' && (
         <>
-          {/* Direction selector - smaller */}
+          {/* Direction selector */}
           <div className="space-y-2">
             <Label className="text-base font-semibold text-foreground">Direction</Label>
             <div className="grid grid-cols-2 gap-3">
