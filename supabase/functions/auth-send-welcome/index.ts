@@ -372,7 +372,7 @@ serve(async (req: Request) => {
         .eq('user_id', userId);
       return new Response(
         JSON.stringify({ success: true, emailSkipped: true, reason: "Email service unavailable" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
