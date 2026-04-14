@@ -3,29 +3,34 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const FAVORITES_STORAGE_KEY = 'smart-trade-tracker-favorite-assets';
+const PINNED_STORAGE_KEY = 'smart-trade-tracker-pinned-assets';
 
 export const useFavoriteAssets = () => {
   const { user } = useAuth();
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [pinned, setPinned] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load favorites on mount
+  // Load favorites & pinned on mount
   useEffect(() => {
-    const loadFavorites = async () => {
-      // First try localStorage
-      const saved = localStorage.getItem(FAVORITES_STORAGE_KEY);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
-            setFavorites(parsed);
-          }
-        } catch (e) {
-          console.error('Error loading favorites from localStorage:', e);
+    const loadData = async () => {
+      // Load from localStorage
+      try {
+        const savedFavs = localStorage.getItem(FAVORITES_STORAGE_KEY);
+        if (savedFavs) {
+          const parsed = JSON.parse(savedFavs);
+          if (Array.isArray(parsed)) setFavorites(parsed);
         }
+        const savedPinned = localStorage.getItem(PINNED_STORAGE_KEY);
+        if (savedPinned) {
+          const parsed = JSON.parse(savedPinned);
+          if (Array.isArray(parsed)) setPinned(parsed);
+        }
+      } catch (e) {
+        console.error('Error loading from localStorage:', e);
       }
 
-      // If user is logged in, sync with database
+      // Sync with database if logged in
       if (user) {
         try {
           const { data, error } = await supabase
@@ -35,53 +40,50 @@ export const useFavoriteAssets = () => {
             .single();
 
           if (!error && data) {
-            // We're using known_devices JSON field to store favorites temporarily
-            // In a real app, you'd have a dedicated column
-            const stored = data.known_devices as { favorite_assets?: string[] } | null;
+            const stored = data.known_devices as { favorite_assets?: string[]; pinned_assets?: string[] } | null;
             if (stored?.favorite_assets && Array.isArray(stored.favorite_assets)) {
               setFavorites(stored.favorite_assets);
               localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(stored.favorite_assets));
             }
+            if (stored?.pinned_assets && Array.isArray(stored.pinned_assets)) {
+              setPinned(stored.pinned_assets);
+              localStorage.setItem(PINNED_STORAGE_KEY, JSON.stringify(stored.pinned_assets));
+            }
           }
         } catch (e) {
-          console.error('Error loading favorites from database:', e);
+          console.error('Error loading from database:', e);
         }
       }
 
       setIsLoaded(true);
     };
 
-    loadFavorites();
+    loadData();
   }, [user]);
 
-  // Save favorites
-  const saveFavorites = useCallback(async (newFavorites: string[]) => {
-    setFavorites(newFavorites);
-    localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(newFavorites));
+  const saveToDb = useCallback(async (newFavorites: string[], newPinned: string[]) => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('user_settings')
+        .select('known_devices')
+        .eq('user_id', user.id)
+        .single();
 
-    if (user) {
-      try {
-        // Get current known_devices to preserve other data
-        const { data } = await supabase
-          .from('user_settings')
-          .select('known_devices')
-          .eq('user_id', user.id)
-          .single();
-
-        const currentData = (data?.known_devices as Record<string, unknown>) || {};
-        
-        await supabase
-          .from('user_settings')
-          .upsert({
-            user_id: user.id,
-            known_devices: {
-              ...currentData,
-              favorite_assets: newFavorites,
-            },
-          }, { onConflict: 'user_id' });
-      } catch (e) {
-        console.error('Error saving favorites:', e);
-      }
+      const currentData = (data?.known_devices as Record<string, unknown>) || {};
+      
+      await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: user.id,
+          known_devices: {
+            ...currentData,
+            favorite_assets: newFavorites,
+            pinned_assets: newPinned,
+          },
+        }, { onConflict: 'user_id' });
+    } catch (e) {
+      console.error('Error saving to database:', e);
     }
   }, [user]);
 
@@ -89,18 +91,48 @@ export const useFavoriteAssets = () => {
     const newFavorites = favorites.includes(asset)
       ? favorites.filter(a => a !== asset)
       : [...favorites, asset];
-    saveFavorites(newFavorites);
-  }, [favorites, saveFavorites]);
+    setFavorites(newFavorites);
+    localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(newFavorites));
+    
+    // If unfavoriting, also unpin
+    let newPinned = pinned;
+    if (favorites.includes(asset) && pinned.includes(asset)) {
+      newPinned = pinned.filter(a => a !== asset);
+      setPinned(newPinned);
+      localStorage.setItem(PINNED_STORAGE_KEY, JSON.stringify(newPinned));
+    }
+    
+    saveToDb(newFavorites, newPinned);
+  }, [favorites, pinned, saveToDb]);
+
+  const togglePinned = useCallback((asset: string) => {
+    // Can only pin favorites
+    if (!favorites.includes(asset)) return;
+    
+    const newPinned = pinned.includes(asset)
+      ? pinned.filter(a => a !== asset)
+      : [...pinned, asset];
+    setPinned(newPinned);
+    localStorage.setItem(PINNED_STORAGE_KEY, JSON.stringify(newPinned));
+    saveToDb(favorites, newPinned);
+  }, [favorites, pinned, saveToDb]);
 
   const isFavorite = useCallback((asset: string) => {
     return favorites.includes(asset);
   }, [favorites]);
 
+  const isPinned = useCallback((asset: string) => {
+    return pinned.includes(asset);
+  }, [pinned]);
+
   return {
     favorites,
+    pinned,
     isLoaded,
     toggleFavorite,
+    togglePinned,
     isFavorite,
+    isPinned,
   };
 };
 
