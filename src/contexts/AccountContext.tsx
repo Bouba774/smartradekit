@@ -198,6 +198,27 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
     queryClient.invalidateQueries({ queryKey: ['accounts', user?.id] });
   }, [user, queryClient]);
 
+  const updateAccountType = useCallback(async (accountId: string, account_type: string) => {
+    const { error } = await supabase
+      .from('accounts')
+      .update({ account_type })
+      .eq('id', accountId);
+    if (error) throw error;
+    queryClient.invalidateQueries({ queryKey: ['accounts', user?.id] });
+  }, [user, queryClient]);
+
+  const updateAccount = useCallback(async (
+    accountId: string,
+    patch: { name?: string; color?: string; account_type?: string }
+  ) => {
+    const { error } = await supabase
+      .from('accounts')
+      .update(patch)
+      .eq('id', accountId);
+    if (error) throw error;
+    queryClient.invalidateQueries({ queryKey: ['accounts', user?.id] });
+  }, [user, queryClient]);
+
   // Clear stored account on sign out
   useEffect(() => {
     if (!user) {
@@ -218,6 +239,8 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
       deleteAccount,
       updateAccountOrder,
       updateAccountColor,
+      updateAccountType,
+      updateAccount,
     }}>
       {children}
     </AccountContext.Provider>
