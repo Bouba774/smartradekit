@@ -98,37 +98,14 @@ const Settings: React.FC = () => {
     toast.success(t('settingUpdated'));
   };
 
-  const handleColorChange = (color: string) => {
-    setPrimaryColor(color);
-    localStorage.setItem('smart-trade-tracker-primary-color', color);
-    triggerFeedback('click');
-    
-    const root = document.documentElement;
-    const colorMap: Record<string, string> = {
-      blue: '217 91% 60%',
-      green: '142 71% 45%',
-      red: '0 84% 60%',
-      purple: '263 70% 50%',
-      orange: '25 95% 53%',
-      cyan: '189 94% 43%',
-    };
-    
-    if (colorMap[color]) {
-      root.style.setProperty('--primary', colorMap[color]);
-    }
-    
-    toast.success(t('colorUpdated'));
-  };
-
   const handleReset = async () => {
     await resetSettings();
-    setPrimaryColor('blue');
     localStorage.removeItem('smart-trade-tracker-primary-color');
     document.documentElement.style.fontSize = '16px';
     document.documentElement.style.removeProperty('--primary');
     setTheme('dark');
     triggerFeedback('success');
-    
+
     toast.success(t('interfaceReset'));
   };
 
