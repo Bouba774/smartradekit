@@ -33,7 +33,7 @@ const Calculator: React.FC = () => {
   
   const isFr = language === 'fr';
   
-  const [mode, setMode] = useState<CalculatorMode>('price');
+  const [mode, setMode] = useState<CalculatorMode>('pips');
   const [selectedAsset, setSelectedAsset] = useState<string>('');
   const [assetConfig, setAssetConfig] = useState<AssetConfig | null>(null);
   const [capitalInput, setCapitalInput] = useState<string>('');
