@@ -99,10 +99,10 @@ export const AccountSwitcherDropdown: React.FC = () => {
 };
 
 export const AccountManager: React.FC = () => {
-  const { accounts, currentAccount, currentAccountId, switchAccount, createAccount, renameAccount, deleteAccount, updateAccountColor } = useAccount();
+  const { accounts, currentAccount, currentAccountId, switchAccount, createAccount, deleteAccount, updateAccount } = useAccount();
   const { language } = useLanguage();
   const [showCreate, setShowCreate] = useState(false);
-  const [showRename, setShowRename] = useState<Account | null>(null);
+  const [showEdit, setShowEdit] = useState<Account | null>(null);
   const [showDelete, setShowDelete] = useState<Account | null>(null);
   const [newName, setNewName] = useState('');
   const [newType, setNewType] = useState('personal');
@@ -110,10 +110,17 @@ export const AccountManager: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCreate = async () => {
-    if (!newName.trim()) return;
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+    // Prevent duplicate names (case-insensitive) for same user
+    const exists = accounts.some(a => a.name.toLowerCase() === trimmed.toLowerCase());
+    if (exists) {
+      toast.error(language === 'fr' ? 'Un compte avec ce nom existe déjà' : 'An account with this name already exists');
+      return;
+    }
     setIsSubmitting(true);
     try {
-      await createAccount(newName.trim(), newType, newColor);
+      await createAccount(trimmed, newType, newColor);
       toast.success(language === 'fr' ? 'Compte créé !' : 'Account created!');
       setShowCreate(false);
       setNewName('');
@@ -126,14 +133,17 @@ export const AccountManager: React.FC = () => {
     }
   };
 
-  const handleRename = async () => {
-    if (!showRename || !newName.trim()) return;
+  const handleEdit = async () => {
+    if (!showEdit || !newName.trim()) return;
     setIsSubmitting(true);
     try {
-      await renameAccount(showRename.id, newName.trim());
-      toast.success(language === 'fr' ? 'Compte renommé !' : 'Account renamed!');
-      setShowRename(null);
-      setNewName('');
+      await updateAccount(showEdit.id, {
+        name: newName.trim(),
+        account_type: newType,
+        color: newColor,
+      });
+      toast.success(language === 'fr' ? 'Compte mis à jour !' : 'Account updated!');
+      setShowEdit(null);
     } catch {
       toast.error(language === 'fr' ? 'Erreur' : 'Error');
     } finally {
