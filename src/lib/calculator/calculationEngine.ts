@@ -92,6 +92,19 @@ function validateInput(input: CalculationInput, isFr: boolean = false): Validati
 // ============================================
 
 /**
+ * Internal fallback rates (units per 1 USD). Used ONLY when live rates are
+ * missing for a currency, so a calculation never blocks the user.
+ * Values are approximations, refreshed periodically.
+ */
+const FALLBACK_RATES_PER_USD: Record<string, number> = {
+  USD: 1, EUR: 0.92, GBP: 0.79, JPY: 154.25, CHF: 0.88,
+  CAD: 1.36, AUD: 1.54, NZD: 1.68, CNY: 7.24, HKD: 7.82,
+  SGD: 1.34, ZAR: 18.5, MXN: 17.2, SEK: 10.5, NOK: 10.8,
+  DKK: 6.9, PLN: 4.0, CZK: 23.5, HUF: 365, TRY: 32,
+  RUB: 92, INR: 83.5, KRW: 1340, THB: 35.5, BRL: 5.0,
+};
+
+/**
  * Get exchange rate FROM -> TO.
  * Supports two rate formats:
  *  1) USD-based single-currency rates: rates[CCY] = units of CCY per 1 USD
