@@ -144,6 +144,8 @@ export const useFavoriteAssets = () => {
     togglePinned,
     isFavorite,
     isPinned,
+    canPinMore,
+    maxPinned: MAX_PINNED,
   };
 };
 
