@@ -1218,7 +1218,15 @@ const AddTrade: React.FC = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 border border-primary/30">
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">{t('score')}: {calculateQualityScore()}/100</span>
+            {(() => {
+              const s = calculateQualityScore();
+              const meta = getScoreLabel(s);
+              return (
+                <span className="text-sm font-medium text-primary">
+                  {t('score')}: {s}/100 <span className={`ml-1 ${meta.color}`}>· {meta.label}</span>
+                </span>
+              );
+            })()}
           </div>
           <div className="flex gap-4">
             <Button type="button" variant="outline" disabled={isSubmitting}>
