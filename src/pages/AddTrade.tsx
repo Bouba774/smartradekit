@@ -366,15 +366,42 @@ const AddTrade: React.FC = () => {
     toast.error(error);
   };
 
+  // Quality of execution score (0-100). Independent of P&L.
+  // Criteria: setup, plan respected, no FOMO/revenge (discipline),
+  // SL defined, TP defined, valid RR (>=1), risk management (<=2%).
   const calculateQualityScore = () => {
     let score = 0;
-    if (formData.setup) score += 20;
-    if (!selectedTags.includes('fomo')) score += 20;
-    if (formData.stopLoss) score += 20;
-    if (parseFloat(formData.risk) <= 2) score += 10;
+    // Setup / tag coherent (15)
+    if (formData.setup || customSetup) score += 15;
+    // Plan respected (20)
     if (selectedTags.includes('plan_followed')) score += 20;
+    // Discipline: no FOMO (10) + no revenge (10)
+    if (!selectedTags.includes('fomo')) score += 10;
     if (!selectedTags.includes('revenge_trading')) score += 10;
-    return score;
+    // Stop loss defined (15)
+    if (formData.stopLoss && parseFloat(formData.stopLoss) > 0) score += 15;
+    // Take profit defined (10) — optional but valued
+    if (formData.takeProfit && parseFloat(formData.takeProfit) > 0) score += 10;
+    // Risk management: <=2% of capital (10)
+    const riskVal = parseFloat(formData.risk);
+    if (!isNaN(riskVal) && riskVal > 0 && riskVal <= 2) score += 10;
+    // Valid RR >= 1 (10)
+    const entry = parseFloat(formData.entryPrice);
+    const sl = parseFloat(formData.stopLoss);
+    const tp = parseFloat(formData.takeProfit);
+    if (!isNaN(entry) && !isNaN(sl) && !isNaN(tp) && entry > 0 && sl > 0 && tp > 0) {
+      const risk = Math.abs(entry - sl);
+      const reward = Math.abs(tp - entry);
+      if (risk > 0 && reward / risk >= 1) score += 10;
+    }
+    return Math.max(0, Math.min(100, score));
+  };
+
+  const getScoreLabel = (score: number) => {
+    if (score >= 90) return { label: language === 'fr' ? 'Excellent' : 'Excellent', color: 'text-emerald-500' };
+    if (score >= 70) return { label: language === 'fr' ? 'Bon' : 'Good', color: 'text-green-500' };
+    if (score >= 40) return { label: language === 'fr' ? 'Moyen' : 'Average', color: 'text-yellow-500' };
+    return { label: language === 'fr' ? 'À améliorer' : 'Needs work', color: 'text-red-500' };
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1191,7 +1218,15 @@ const AddTrade: React.FC = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 border border-primary/30">
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">{t('score')}: {calculateQualityScore()}/100</span>
+            {(() => {
+              const s = calculateQualityScore();
+              const meta = getScoreLabel(s);
+              return (
+                <span className="text-sm font-medium text-primary">
+                  {t('score')}: {s}/100 <span className={`ml-1 ${meta.color}`}>· {meta.label}</span>
+                </span>
+              );
+            })()}
           </div>
           <div className="flex gap-4">
             <Button type="button" variant="outline" disabled={isSubmitting}>

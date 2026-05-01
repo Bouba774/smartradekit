@@ -72,9 +72,7 @@ const Settings: React.FC = () => {
   const { user } = useAuth();
   const tradeFocus = useTradeFocus();
   const { settings, updateSetting: updateSettingHook, resetSettings } = useSettings();
-  const [primaryColor, setPrimaryColor] = useState(() => {
-    return localStorage.getItem('smart-trade-tracker-primary-color') || 'blue';
-  });
+  // Primary color customization removed — locked to design system tokens
   const [languageOpen, setLanguageOpen] = useState(false);
   const [languageSearch, setLanguageSearch] = useState('');
 
@@ -100,37 +98,14 @@ const Settings: React.FC = () => {
     toast.success(t('settingUpdated'));
   };
 
-  const handleColorChange = (color: string) => {
-    setPrimaryColor(color);
-    localStorage.setItem('smart-trade-tracker-primary-color', color);
-    triggerFeedback('click');
-    
-    const root = document.documentElement;
-    const colorMap: Record<string, string> = {
-      blue: '217 91% 60%',
-      green: '142 71% 45%',
-      red: '0 84% 60%',
-      purple: '263 70% 50%',
-      orange: '25 95% 53%',
-      cyan: '189 94% 43%',
-    };
-    
-    if (colorMap[color]) {
-      root.style.setProperty('--primary', colorMap[color]);
-    }
-    
-    toast.success(t('colorUpdated'));
-  };
-
   const handleReset = async () => {
     await resetSettings();
-    setPrimaryColor('blue');
     localStorage.removeItem('smart-trade-tracker-primary-color');
     document.documentElement.style.fontSize = '16px';
     document.documentElement.style.removeProperty('--primary');
     setTheme('dark');
     triggerFeedback('success');
-    
+
     toast.success(t('interfaceReset'));
   };
 
@@ -159,14 +134,7 @@ const Settings: React.FC = () => {
     toast.success(t('settingUpdated'));
   };
 
-  const colors = [
-    { id: 'blue', label: language === 'fr' ? 'Bleu' : 'Blue', class: 'bg-blue-500' },
-    { id: 'green', label: language === 'fr' ? 'Vert' : 'Green', class: 'bg-green-500' },
-    { id: 'red', label: language === 'fr' ? 'Rouge' : 'Red', class: 'bg-red-500' },
-    { id: 'purple', label: language === 'fr' ? 'Violet' : 'Purple', class: 'bg-purple-500' },
-    { id: 'orange', label: language === 'fr' ? 'Orange' : 'Orange', class: 'bg-orange-500' },
-    { id: 'cyan', label: language === 'fr' ? 'Cyan' : 'Cyan', class: 'bg-cyan-500' },
-  ];
+
 
   const themes = [
     { id: 'light' as const, label: t('light'), icon: Sun },
@@ -251,31 +219,7 @@ const Settings: React.FC = () => {
               </div>
             </div>
 
-            {/* Primary Color */}
-            <div className="space-y-3">
-              <Label className="flex items-center gap-2 text-muted-foreground">
-                <Palette className="w-4 h-4" />
-                {t('primaryColor')}
-                <HelpTooltip tooltip={settingsTooltips.primaryColor} size="sm" />
-              </Label>
-              <div className="flex flex-wrap gap-2">
-                {colors.map((color) => (
-                  <button
-                    key={color.id}
-                    onClick={() => handleColorChange(color.id)}
-                    className={cn(
-                      "w-10 h-10 rounded-lg transition-all",
-                      color.class,
-                      primaryColor === color.id
-                        ? "ring-2 ring-offset-2 ring-offset-background ring-primary scale-110"
-                        : "opacity-70 hover:opacity-100"
-                    )}
-                    title={color.label}
-                  />
-                ))}
-              </div>
-            </div>
-
+            {/* Primary color customization removed (locked to design system) */}
             {/* Font Size */}
             <div className="space-y-3">
               <Label className="flex items-center gap-2 text-muted-foreground">
@@ -479,21 +423,7 @@ const Settings: React.FC = () => {
               />
             </div>
 
-            {/* Animations */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <Label htmlFor="animations" className="text-foreground text-sm">
-                  {t('animations')}
-                </Label>
-                <HelpTooltip tooltip={settingsTooltips.animations} size="sm" />
-              </div>
-              <Switch
-                id="animations"
-                checked={settings.animations}
-                onCheckedChange={(checked) => handleUpdateSetting('animations', checked)}
-              />
-            </div>
+            {/* Animations toggle removed (always enabled) */}
           </AccordionContent>
         </AccordionItem>
 

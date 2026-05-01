@@ -105,17 +105,28 @@ export const useFavoriteAssets = () => {
     saveToDb(newFavorites, newPinned);
   }, [favorites, pinned, saveToDb]);
 
+  const MAX_PINNED = 3;
+
   const togglePinned = useCallback((asset: string) => {
     // Can only pin favorites
     if (!favorites.includes(asset)) return;
-    
-    const newPinned = pinned.includes(asset)
-      ? pinned.filter(a => a !== asset)
-      : [...pinned, asset];
+
+    let newPinned: string[];
+    if (pinned.includes(asset)) {
+      newPinned = pinned.filter(a => a !== asset);
+    } else {
+      if (pinned.length >= MAX_PINNED) {
+        // Silently cap at 3 — caller (UI) should warn
+        return;
+      }
+      newPinned = [...pinned, asset];
+    }
     setPinned(newPinned);
     localStorage.setItem(PINNED_STORAGE_KEY, JSON.stringify(newPinned));
     saveToDb(favorites, newPinned);
   }, [favorites, pinned, saveToDb]);
+
+  const canPinMore = pinned.length < MAX_PINNED;
 
   const isFavorite = useCallback((asset: string) => {
     return favorites.includes(asset);
@@ -133,6 +144,8 @@ export const useFavoriteAssets = () => {
     togglePinned,
     isFavorite,
     isPinned,
+    canPinMore,
+    maxPinned: MAX_PINNED,
   };
 };
 

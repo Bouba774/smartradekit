@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import { 
   ALL_ASSETS, 
   getAssetCategories, 
@@ -76,7 +77,7 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
   onCalculate,
 }) => {
   const isFr = language === 'fr';
-  const { favorites, pinned, toggleFavorite, togglePinned, isFavorite, isPinned } = useFavoriteAssets();
+  const { favorites, pinned, toggleFavorite, togglePinned, isFavorite, isPinned, canPinMore, maxPinned } = useFavoriteAssets();
   
   const [isAssetOpen, setIsAssetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -334,9 +335,16 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
                             {isFavorite(asset.symbol) && (
                               <button
                                 type="button"
-                                className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-accent transition-colors"
+                                className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-accent transition-colors disabled:opacity-50"
+                                disabled={!isPinned(asset.symbol) && !canPinMore}
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  if (!isPinned(asset.symbol) && !canPinMore) {
+                                    toast.error(isFr
+                                      ? `Maximum ${maxPinned} actifs à l'écran`
+                                      : `Maximum ${maxPinned} pinned assets`);
+                                    return;
+                                  }
                                   togglePinned(asset.symbol);
                                   setLongPressAsset(null);
                                 }}
@@ -344,7 +352,7 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
                                 <Pin className={cn('w-4 h-4', isPinned(asset.symbol) ? 'fill-cyan-400 text-cyan-400' : 'text-muted-foreground')} />
                                 {isPinned(asset.symbol)
                                   ? (isFr ? "Retirer de l'écran" : 'Remove from screen')
-                                  : (isFr ? "Ajouter à l'écran" : 'Add to screen')
+                                  : (isFr ? `Ajouter à l'écran (${pinned.length}/${maxPinned})` : `Add to screen (${pinned.length}/${maxPinned})`)
                                 }
                               </button>
                             )}
