@@ -455,21 +455,7 @@ const Settings: React.FC = () => {
               />
             </div>
 
-            {/* Animations */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <Label htmlFor="animations" className="text-foreground text-sm">
-                  {t('animations')}
-                </Label>
-                <HelpTooltip tooltip={settingsTooltips.animations} size="sm" />
-              </div>
-              <Switch
-                id="animations"
-                checked={settings.animations}
-                onCheckedChange={(checked) => handleUpdateSetting('animations', checked)}
-              />
-            </div>
+            {/* Animations toggle removed (always enabled) */}
           </AccordionContent>
         </AccordionItem>
 
