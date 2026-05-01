@@ -72,9 +72,7 @@ const Settings: React.FC = () => {
   const { user } = useAuth();
   const tradeFocus = useTradeFocus();
   const { settings, updateSetting: updateSettingHook, resetSettings } = useSettings();
-  const [primaryColor, setPrimaryColor] = useState(() => {
-    return localStorage.getItem('smart-trade-tracker-primary-color') || 'blue';
-  });
+  // Primary color customization removed — locked to design system tokens
   const [languageOpen, setLanguageOpen] = useState(false);
   const [languageSearch, setLanguageSearch] = useState('');
 
