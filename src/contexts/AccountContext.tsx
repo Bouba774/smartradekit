@@ -26,6 +26,8 @@ interface AccountContextType {
   deleteAccount: (accountId: string) => Promise<boolean>;
   updateAccountOrder: (accounts: { id: string; order_index: number }[]) => Promise<void>;
   updateAccountColor: (accountId: string, color: string) => Promise<void>;
+  updateAccountType: (accountId: string, type: string) => Promise<void>;
+  updateAccount: (accountId: string, patch: { name?: string; color?: string; account_type?: string }) => Promise<void>;
 }
 
 const AccountContext = createContext<AccountContextType | undefined>(undefined);
