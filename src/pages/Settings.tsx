@@ -251,31 +251,7 @@ const Settings: React.FC = () => {
               </div>
             </div>
 
-            {/* Primary Color */}
-            <div className="space-y-3">
-              <Label className="flex items-center gap-2 text-muted-foreground">
-                <Palette className="w-4 h-4" />
-                {t('primaryColor')}
-                <HelpTooltip tooltip={settingsTooltips.primaryColor} size="sm" />
-              </Label>
-              <div className="flex flex-wrap gap-2">
-                {colors.map((color) => (
-                  <button
-                    key={color.id}
-                    onClick={() => handleColorChange(color.id)}
-                    className={cn(
-                      "w-10 h-10 rounded-lg transition-all",
-                      color.class,
-                      primaryColor === color.id
-                        ? "ring-2 ring-offset-2 ring-offset-background ring-primary scale-110"
-                        : "opacity-70 hover:opacity-100"
-                    )}
-                    title={color.label}
-                  />
-                ))}
-              </div>
-            </div>
-
+            {/* Primary color customization removed (locked to design system) */}
             {/* Font Size */}
             <div className="space-y-3">
               <Label className="flex items-center gap-2 text-muted-foreground">
