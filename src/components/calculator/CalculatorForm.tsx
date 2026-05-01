@@ -76,7 +76,7 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
   onCalculate,
 }) => {
   const isFr = language === 'fr';
-  const { favorites, pinned, toggleFavorite, togglePinned, isFavorite, isPinned } = useFavoriteAssets();
+  const { favorites, pinned, toggleFavorite, togglePinned, isFavorite, isPinned, canPinMore, maxPinned } = useFavoriteAssets();
   
   const [isAssetOpen, setIsAssetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
