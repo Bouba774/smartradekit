@@ -325,25 +325,61 @@ export const AccountManager: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Rename Dialog */}
-      <Dialog open={!!showRename} onOpenChange={(open) => !open && setShowRename(null)}>
+      {/* Edit Dialog (name + type + color) */}
+      <Dialog open={!!showEdit} onOpenChange={(open) => !open && setShowEdit(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {language === 'fr' ? 'Renommer le compte' : 'Rename Account'}
+              {language === 'fr' ? 'Modifier le compte' : 'Edit Account'}
             </DialogTitle>
           </DialogHeader>
-          <Input
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            autoFocus
-          />
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">
+                {language === 'fr' ? 'Nom du compte' : 'Account name'}
+              </label>
+              <Input value={newName} onChange={(e) => setNewName(e.target.value)} autoFocus />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">
+                {language === 'fr' ? 'Type' : 'Type'}
+              </label>
+              <Select value={newType} onValueChange={setNewType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ACCOUNT_TYPES.map(t => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {language === 'fr' ? t.labelFr : t.labelEn}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">
+                <Palette className="w-4 h-4 inline mr-1" />
+                {language === 'fr' ? 'Couleur' : 'Color'}
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                {ACCOUNT_COLORS.map(color => (
+                  <button
+                    key={color}
+                    className={`w-8 h-8 rounded-full transition-transform ${
+                      newColor === color ? 'scale-125 ring-2 ring-offset-2 ring-offset-background ring-primary' : 'hover:scale-110'
+                    }`}
+                    style={{ backgroundColor: color }}
+                    onClick={() => setNewColor(color)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRename(null)}>
+            <Button variant="outline" onClick={() => setShowEdit(null)}>
               {language === 'fr' ? 'Annuler' : 'Cancel'}
             </Button>
-            <Button onClick={handleRename} disabled={!newName.trim() || isSubmitting}>
-              {language === 'fr' ? 'Renommer' : 'Rename'}
+            <Button onClick={handleEdit} disabled={!newName.trim() || isSubmitting}>
+              {language === 'fr' ? 'Enregistrer' : 'Save'}
             </Button>
           </DialogFooter>
         </DialogContent>
