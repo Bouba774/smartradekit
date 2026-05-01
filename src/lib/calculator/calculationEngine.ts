@@ -140,6 +140,13 @@ function getExchangeRate(
     return toPerUsd / fromPerUsd;
   }
 
+  // 3) Fallback hardcoded rates so a calculation NEVER blocks
+  const fbFrom = fromCurrency === 'USD' ? 1 : FALLBACK_RATES_PER_USD[fromCurrency];
+  const fbTo = toCurrency === 'USD' ? 1 : FALLBACK_RATES_PER_USD[toCurrency];
+  if (fbFrom && fbTo) {
+    return fbTo / fbFrom;
+  }
+
   return null;
 }
 
