@@ -91,25 +91,42 @@ function validateInput(input: CalculationInput, isFr: boolean = false): Validati
 // CONVERSION HELPERS
 // ============================================
 
+/**
+ * Get exchange rate FROM -> TO.
+ * Supports two rate formats:
+ *  1) USD-based single-currency rates: rates[CCY] = units of CCY per 1 USD
+ *     (e.g. rates.JPY = 154.25 means 1 USD = 154.25 JPY)
+ *  2) Pair-based rates: rates["EURUSD"] = price of EUR in USD
+ * Falls back through USD when needed. Returns null only if truly impossible.
+ */
 function getExchangeRate(
   fromCurrency: string,
   toCurrency: string,
   rates: Record<string, number>
 ): number | null {
+  if (!fromCurrency || !toCurrency) return null;
   if (fromCurrency === toCurrency) return 1;
-  
+
+  // 1) Direct pair (legacy)
   const directPair = `${fromCurrency}${toCurrency}`;
-  if (rates[directPair]) return rates[directPair];
-  
-  const inversePair = `${toCurrency}${fromCurrency}`;
-  if (rates[inversePair]) return 1 / rates[inversePair];
-  
-  if (fromCurrency !== 'USD' && toCurrency !== 'USD') {
-    const fromToUsd = getExchangeRate(fromCurrency, 'USD', rates);
-    const usdToTarget = getExchangeRate('USD', toCurrency, rates);
-    if (fromToUsd && usdToTarget) return fromToUsd * usdToTarget;
+  if (rates[directPair] && isFinite(rates[directPair]) && rates[directPair] > 0) {
+    return rates[directPair];
   }
-  
+  const inversePair = `${toCurrency}${fromCurrency}`;
+  if (rates[inversePair] && isFinite(rates[inversePair]) && rates[inversePair] > 0) {
+    return 1 / rates[inversePair];
+  }
+
+  // 2) USD-based single-currency rates
+  // rates[X] = X per 1 USD => 1 X = 1/rates[X] USD
+  const fromPerUsd = fromCurrency === 'USD' ? 1 : rates[fromCurrency];
+  const toPerUsd = toCurrency === 'USD' ? 1 : rates[toCurrency];
+
+  if (fromPerUsd && toPerUsd && isFinite(fromPerUsd) && isFinite(toPerUsd) && fromPerUsd > 0 && toPerUsd > 0) {
+    // 1 FROM = (1/fromPerUsd) USD = (toPerUsd/fromPerUsd) TO
+    return toPerUsd / fromPerUsd;
+  }
+
   return null;
 }
 
