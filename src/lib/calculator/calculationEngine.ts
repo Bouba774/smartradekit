@@ -91,25 +91,62 @@ function validateInput(input: CalculationInput, isFr: boolean = false): Validati
 // CONVERSION HELPERS
 // ============================================
 
+/**
+ * Internal fallback rates (units per 1 USD). Used ONLY when live rates are
+ * missing for a currency, so a calculation never blocks the user.
+ * Values are approximations, refreshed periodically.
+ */
+const FALLBACK_RATES_PER_USD: Record<string, number> = {
+  USD: 1, EUR: 0.92, GBP: 0.79, JPY: 154.25, CHF: 0.88,
+  CAD: 1.36, AUD: 1.54, NZD: 1.68, CNY: 7.24, HKD: 7.82,
+  SGD: 1.34, ZAR: 18.5, MXN: 17.2, SEK: 10.5, NOK: 10.8,
+  DKK: 6.9, PLN: 4.0, CZK: 23.5, HUF: 365, TRY: 32,
+  RUB: 92, INR: 83.5, KRW: 1340, THB: 35.5, BRL: 5.0,
+};
+
+/**
+ * Get exchange rate FROM -> TO.
+ * Supports two rate formats:
+ *  1) USD-based single-currency rates: rates[CCY] = units of CCY per 1 USD
+ *     (e.g. rates.JPY = 154.25 means 1 USD = 154.25 JPY)
+ *  2) Pair-based rates: rates["EURUSD"] = price of EUR in USD
+ * Falls back through USD when needed. Returns null only if truly impossible.
+ */
 function getExchangeRate(
   fromCurrency: string,
   toCurrency: string,
   rates: Record<string, number>
 ): number | null {
+  if (!fromCurrency || !toCurrency) return null;
   if (fromCurrency === toCurrency) return 1;
-  
+
+  // 1) Direct pair (legacy)
   const directPair = `${fromCurrency}${toCurrency}`;
-  if (rates[directPair]) return rates[directPair];
-  
-  const inversePair = `${toCurrency}${fromCurrency}`;
-  if (rates[inversePair]) return 1 / rates[inversePair];
-  
-  if (fromCurrency !== 'USD' && toCurrency !== 'USD') {
-    const fromToUsd = getExchangeRate(fromCurrency, 'USD', rates);
-    const usdToTarget = getExchangeRate('USD', toCurrency, rates);
-    if (fromToUsd && usdToTarget) return fromToUsd * usdToTarget;
+  if (rates[directPair] && isFinite(rates[directPair]) && rates[directPair] > 0) {
+    return rates[directPair];
   }
-  
+  const inversePair = `${toCurrency}${fromCurrency}`;
+  if (rates[inversePair] && isFinite(rates[inversePair]) && rates[inversePair] > 0) {
+    return 1 / rates[inversePair];
+  }
+
+  // 2) USD-based single-currency rates
+  // rates[X] = X per 1 USD => 1 X = 1/rates[X] USD
+  const fromPerUsd = fromCurrency === 'USD' ? 1 : rates[fromCurrency];
+  const toPerUsd = toCurrency === 'USD' ? 1 : rates[toCurrency];
+
+  if (fromPerUsd && toPerUsd && isFinite(fromPerUsd) && isFinite(toPerUsd) && fromPerUsd > 0 && toPerUsd > 0) {
+    // 1 FROM = (1/fromPerUsd) USD = (toPerUsd/fromPerUsd) TO
+    return toPerUsd / fromPerUsd;
+  }
+
+  // 3) Fallback hardcoded rates so a calculation NEVER blocks
+  const fbFrom = fromCurrency === 'USD' ? 1 : FALLBACK_RATES_PER_USD[fromCurrency];
+  const fbTo = toCurrency === 'USD' ? 1 : FALLBACK_RATES_PER_USD[toCurrency];
+  if (fbFrom && fbTo) {
+    return fbTo / fbFrom;
+  }
+
   return null;
 }
 
