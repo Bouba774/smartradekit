@@ -233,7 +233,9 @@ export const AccountManager: React.FC = () => {
                 onClick={(e) => {
                   e.stopPropagation();
                   setNewName(account.name);
-                  setShowRename(account);
+                  setNewType(account.account_type || 'personal');
+                  setNewColor(account.color || '#3B82F6');
+                  setShowEdit(account);
                 }}
               >
                 <Edit3 className="w-3 h-3" />
