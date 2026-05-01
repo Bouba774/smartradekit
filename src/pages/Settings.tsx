@@ -134,14 +134,7 @@ const Settings: React.FC = () => {
     toast.success(t('settingUpdated'));
   };
 
-  const colors = [
-    { id: 'blue', label: language === 'fr' ? 'Bleu' : 'Blue', class: 'bg-blue-500' },
-    { id: 'green', label: language === 'fr' ? 'Vert' : 'Green', class: 'bg-green-500' },
-    { id: 'red', label: language === 'fr' ? 'Rouge' : 'Red', class: 'bg-red-500' },
-    { id: 'purple', label: language === 'fr' ? 'Violet' : 'Purple', class: 'bg-purple-500' },
-    { id: 'orange', label: language === 'fr' ? 'Orange' : 'Orange', class: 'bg-orange-500' },
-    { id: 'cyan', label: language === 'fr' ? 'Cyan' : 'Cyan', class: 'bg-cyan-500' },
-  ];
+
 
   const themes = [
     { id: 'light' as const, label: t('light'), icon: Sun },
