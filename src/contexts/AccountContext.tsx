@@ -54,12 +54,27 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
     enabled: !!user,
   });
 
-  // Auto-create default account if none exist
+  // Auto-create default account ONLY if the DB trigger failed (rare).
+  // The DB trigger `on_auth_user_created_account` already creates one default account
+  // on signup, so we skip frontend creation to avoid duplicates.
+  // We only refetch after a small delay if no accounts appear, in case the trigger is async.
+  const [hasCheckedDefault, setHasCheckedDefault] = useState(false);
   useEffect(() => {
-    if (!user || isLoading || accounts.length > 0) return;
-    
-    const createDefault = async () => {
-      const { data, error } = await supabase
+    if (!user || isLoading || accounts.length > 0 || hasCheckedDefault) return;
+    setHasCheckedDefault(true);
+    const timer = setTimeout(async () => {
+      // Re-fetch first to confirm the trigger hasn't created one yet
+      const { data: existing } = await supabase
+        .from('accounts')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+      if (existing && existing.length > 0) {
+        queryClient.invalidateQueries({ queryKey: ['accounts', user.id] });
+        return;
+      }
+      // Fallback creation only if trigger truly failed
+      const { error } = await supabase
         .from('accounts')
         .insert({
           user_id: user.id,
@@ -68,16 +83,13 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
           is_default: true,
           order_index: 0,
           color: '#3B82F6',
-        })
-        .select()
-        .single();
-      
-      if (!error && data) {
+        });
+      if (!error) {
         queryClient.invalidateQueries({ queryKey: ['accounts', user.id] });
       }
-    };
-    createDefault();
-  }, [user, isLoading, accounts.length, queryClient]);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [user, isLoading, accounts.length, queryClient, hasCheckedDefault]);
 
   // Auto-select current account
   useEffect(() => {
