@@ -335,9 +335,16 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
                             {isFavorite(asset.symbol) && (
                               <button
                                 type="button"
-                                className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-accent transition-colors"
+                                className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-accent transition-colors disabled:opacity-50"
+                                disabled={!isPinned(asset.symbol) && !canPinMore}
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  if (!isPinned(asset.symbol) && !canPinMore) {
+                                    toast.error(isFr
+                                      ? `Maximum ${maxPinned} actifs à l'écran`
+                                      : `Maximum ${maxPinned} pinned assets`);
+                                    return;
+                                  }
                                   togglePinned(asset.symbol);
                                   setLongPressAsset(null);
                                 }}
@@ -345,7 +352,7 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
                                 <Pin className={cn('w-4 h-4', isPinned(asset.symbol) ? 'fill-cyan-400 text-cyan-400' : 'text-muted-foreground')} />
                                 {isPinned(asset.symbol)
                                   ? (isFr ? "Retirer de l'écran" : 'Remove from screen')
-                                  : (isFr ? "Ajouter à l'écran" : 'Add to screen')
+                                  : (isFr ? `Ajouter à l'écran (${pinned.length}/${maxPinned})` : `Add to screen (${pinned.length}/${maxPinned})`)
                                 }
                               </button>
                             )}
