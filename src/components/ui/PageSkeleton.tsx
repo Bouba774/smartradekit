@@ -594,9 +594,6 @@ const renderBody = (variant: PageSkeletonProps['type']) => {
     default: return <DefaultBody />;
   }
 };
-    default: return <DefaultBody />;
-  }
-};
 
 export const PageSkeleton: React.FC<PageSkeletonProps> = ({ type }) => {
   const location = useLocation();
