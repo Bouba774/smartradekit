@@ -4,7 +4,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface PageSkeletonProps {
-  type?: 'dashboard' | 'reports' | 'calculator' | 'menu' | 'history' | 'comparison' | 'psychology' | 'journal' | 'add-trade' | 'list' | 'form' | 'default';
+  type?:
+    | 'dashboard' | 'reports' | 'calculator' | 'menu' | 'history'
+    | 'comparison' | 'psychology' | 'journal' | 'add-trade'
+    | 'challenges' | 'ai-assistant' | 'currency' | 'settings'
+    | 'profile' | 'help' | 'sessions' | 'admin-roles'
+    | 'privacy' | 'about' | 'audit' | 'security'
+    | 'list' | 'form' | 'default';
 }
 
 /* ---------- Atoms ---------- */
