@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 // Chart skeleton placeholder
 export const ChartSkeleton: React.FC<{ height?: number }> = ({ height = 256 }) => (
-  <div className="w-full animate-pulse" style={{ height }}>
+  <div className="w-full" style={{ height }}>
     <Skeleton className="w-full h-full rounded-lg" />
   </div>
 );
