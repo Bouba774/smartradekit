@@ -498,6 +498,24 @@ body.landing-page * {
   animation: shake 0.5s ease-in-out;
 }
 
+/* Shimmer skeleton loader */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted) / 0.5) 0%,
+    hsl(var(--primary) / 0.18) 50%,
+    hsl(var(--muted) / 0.5) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+  border-radius: 0.5rem;
+}
+
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 8px;
