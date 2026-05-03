@@ -77,7 +77,7 @@ export const PINInput: React.FC<PINInputProps> = ({
     
     // Haptic feedback on digit press
     if ('vibrate' in navigator) {
-      navigator.vibrate(10);
+      navigator.vibrate(50);
     }
     
     setPin((prev) => prev + digit);
