@@ -11,7 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 class SplashActivity : AppCompatActivity() {
 
     companion object {
-        private const val SPLASH_DELAY = 1500L
+        private const val SPLASH_DELAY = 600L
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,7 +21,8 @@ class SplashActivity : AppCompatActivity() {
         Handler(Looper.getMainLooper()).postDelayed({
             startActivity(Intent(this, MainActivity::class.java))
             finish()
-            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+            // Faster, lighter transition than the default fade
+            overridePendingTransition(0, android.R.anim.fade_out)
         }, SPLASH_DELAY)
     }
 }
