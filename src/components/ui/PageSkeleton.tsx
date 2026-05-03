@@ -601,7 +601,11 @@ export const PageSkeleton: React.FC<PageSkeletonProps> = ({ type }) => {
   const variant = type && type !== 'default' ? type : detectVariant(location.pathname);
   const body = renderBody(variant);
 
-  return isMobile ? <MobileShell>{body}</MobileShell> : <DesktopShell>{body}</DesktopShell>;
+  return (
+    <div data-testid="page-skeleton" data-variant={variant}>
+      {isMobile ? <MobileShell>{body}</MobileShell> : <DesktopShell>{body}</DesktopShell>}
+    </div>
+  );
 };
 
 export default PageSkeleton;
