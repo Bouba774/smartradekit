@@ -23,6 +23,8 @@ export interface CalculationInput {
   stopLoss: number;
   takeProfit?: number;
   exchangeRates: Record<string, number>;
+  /** Optional broker commission per 1 lot (round-turn), in account currency */
+  commissionPerLot?: number;
 }
 
 export interface CalculationResult {
@@ -33,6 +35,10 @@ export interface CalculationResult {
   riskReward?: number;
   slPips: number;
   tpPips?: number;
+  /** Total commission cost for the calculated lot (account currency) */
+  commissionTotal?: number;
+  /** Real risk including commission (must be <= riskAmount) */
+  riskReal?: number;
   warnings: string[];
 }
 
