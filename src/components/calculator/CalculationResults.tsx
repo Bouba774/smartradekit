@@ -41,15 +41,22 @@ const CalculationResults: React.FC<CalculationResultsProps> = ({
       
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
-        {/* Risk $ */}
+        {/* Risk $ (real if commission applied) */}
         <div className="p-3.5 rounded-xl bg-red-500/8 border border-red-500/20">
           <div className="flex items-center gap-2 mb-1">
             <ShieldAlert className="w-4 h-4 text-red-500" />
-            <span className="text-xs text-muted-foreground">{isFr ? 'Risque' : 'Risk'}</span>
+            <span className="text-xs text-muted-foreground">
+              {result.riskReal !== undefined ? (isFr ? 'Risque réel' : 'Real risk') : (isFr ? 'Risque' : 'Risk')}
+            </span>
           </div>
           <p className="text-lg font-bold font-mono text-red-500">
-            {result.riskAmount.toFixed(2)} {currencySymbol}
+            {(result.riskReal ?? result.riskAmount).toFixed(2)} {currencySymbol}
           </p>
+          {result.riskReal !== undefined && (
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {isFr ? 'Max' : 'Max'}: {result.riskAmount.toFixed(2)} {currencySymbol}
+            </p>
+          )}
         </div>
 
         {/* Gain $ */}
@@ -91,6 +98,20 @@ const CalculationResults: React.FC<CalculationResultsProps> = ({
           </p>
         </div>
       </div>
+
+      {/* Commission total - shown only if commission applied */}
+      {result.commissionTotal !== undefined && result.commissionTotal > 0 && (
+        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">
+              {isFr ? 'Commission totale' : 'Total commission'}
+            </span>
+            <p className="text-lg font-bold font-mono text-amber-500">
+              {result.commissionTotal.toFixed(2)} {currencySymbol}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* TP Pips - full width if present */}
       {result.tpPips !== undefined && (

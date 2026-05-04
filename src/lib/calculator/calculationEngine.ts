@@ -23,6 +23,8 @@ export interface CalculationInput {
   stopLoss: number;
   takeProfit?: number;
   exchangeRates: Record<string, number>;
+  /** Optional broker commission per 1 lot (round-turn), in account currency */
+  commissionPerLot?: number;
 }
 
 export interface CalculationResult {
@@ -33,6 +35,10 @@ export interface CalculationResult {
   riskReward?: number;
   slPips: number;
   tpPips?: number;
+  /** Total commission cost for the calculated lot (account currency) */
+  commissionTotal?: number;
+  /** Real risk including commission (must be <= riskAmount) */
+  riskReal?: number;
   warnings: string[];
 }
 
@@ -163,24 +169,21 @@ export function calculatePosition(
     return { error: validationError.message, code: 'INVALID_INPUT' };
   }
   
-  const { capital, riskPercent, accountCurrency, asset, entryPrice, stopLoss, takeProfit, exchangeRates } = input;
+  const { capital, riskPercent, accountCurrency, asset, entryPrice, stopLoss, takeProfit, exchangeRates, commissionPerLot } = input;
   const warnings: string[] = [];
   
   const direction: 'BUY' | 'SELL' = entryPrice > stopLoss ? 'BUY' : 'SELL';
   const riskAmount = capital * (riskPercent / 100);
   const slDistancePrice = Math.abs(entryPrice - stopLoss);
   
-  // Convert SL distance to pips
   const slPips = Number((slDistancePrice / asset.pipSize).toFixed(1));
   
-  // Convert TP distance to pips
   let tpPips: number | undefined;
   if (takeProfit !== undefined && takeProfit > 0) {
     const tpDistancePrice = Math.abs(takeProfit - entryPrice);
     tpPips = Number((tpDistancePrice / asset.pipSize).toFixed(1));
   }
   
-  // Get conversion rate
   let conversionRate = 1;
   if (asset.quoteCurrency !== accountCurrency) {
     const rate = getExchangeRate(asset.quoteCurrency, accountCurrency, exchangeRates);
@@ -190,8 +193,19 @@ export function calculatePosition(
     conversionRate = rate;
   }
   
-  // LotSize = RiskAmount / (SL_Distance × ContractSize × ConversionRate)
-  const rawLotSize = riskAmount / (slDistancePrice * asset.contractSize * conversionRate);
+  // Per-lot loss at SL (in account currency)
+  const lossPerLot = slDistancePrice * asset.contractSize * conversionRate;
+  const commission = commissionPerLot && commissionPerLot > 0 ? commissionPerLot : 0;
+  const denom = lossPerLot + commission;
+
+  if (denom <= 0 || !isFinite(denom)) {
+    return { error: isFr ? 'Calcul impossible' : 'Calculation error', code: 'CALCULATION_ERROR' };
+  }
+  if (commission > 0 && commission >= riskAmount) {
+    return { error: isFr ? 'Commission trop élevée pour ce trade' : 'Commission too high for this trade', code: 'CALCULATION_ERROR' };
+  }
+
+  const rawLotSize = riskAmount / denom;
   
   if (!isFinite(rawLotSize) || isNaN(rawLotSize) || rawLotSize <= 0) {
     return { error: isFr ? 'Calcul impossible' : 'Calculation error', code: 'CALCULATION_ERROR' };
@@ -212,15 +226,17 @@ export function calculatePosition(
     lotSize = asset.maxLot;
     warnings.push(`Lot size limited to maximum: ${asset.maxLot}`);
   }
-  
-  // RR & Gain
+
+  const commissionTotal = commission > 0 ? Number((lotSize * commission).toFixed(2)) : 0;
+  const riskReal = Number((lotSize * lossPerLot + commissionTotal).toFixed(2));
+
   let riskReward: number | undefined;
   let gainAmount: number | undefined;
   
   if (tpPips !== undefined && tpPips > 0 && slPips > 0) {
     riskReward = Number((tpPips / slPips).toFixed(2));
-    // Gain = Lot × TP_pips × PipValue × ConversionRate
-    gainAmount = Number((lotSize * tpPips * asset.pipValue * conversionRate).toFixed(2));
+    const grossGain = lotSize * tpPips * asset.pipValue * conversionRate;
+    gainAmount = Number((grossGain - commissionTotal).toFixed(2));
   }
   
   if (riskPercent > 5) warnings.push(isFr ? 'Risque élevé' : 'High risk');
@@ -233,6 +249,8 @@ export function calculatePosition(
     riskReward,
     slPips,
     tpPips,
+    commissionTotal: commission > 0 ? commissionTotal : undefined,
+    riskReal: commission > 0 ? riskReal : undefined,
     warnings,
   };
 }
@@ -256,13 +274,14 @@ export interface PipsCalculationInput {
   tpPips?: number;
   direction: 'BUY' | 'SELL';
   exchangeRates: Record<string, number>;
+  commissionPerLot?: number;
 }
 
 export function calculatePositionFromPips(
   input: PipsCalculationInput,
   isFr: boolean = false
 ): CalculationResult | CalculationError {
-  const { capital, riskPercent, accountCurrency, asset, slPips, tpPips, direction, exchangeRates } = input;
+  const { capital, riskPercent, accountCurrency, asset, slPips, tpPips, direction, exchangeRates, commissionPerLot } = input;
   const warnings: string[] = [];
 
   if (!capital || capital <= 0) return { error: isFr ? 'Capital invalide' : 'Invalid capital', code: 'INVALID_INPUT' };
@@ -283,7 +302,18 @@ export function calculatePositionFromPips(
     conversionRate = rate;
   }
 
-  const rawLotSize = riskAmount / (slPips * pipValuePerLot * conversionRate);
+  const lossPerLot = slPips * pipValuePerLot * conversionRate;
+  const commission = commissionPerLot && commissionPerLot > 0 ? commissionPerLot : 0;
+  const denom = lossPerLot + commission;
+
+  if (denom <= 0 || !isFinite(denom)) {
+    return { error: isFr ? 'Calcul impossible' : 'Calculation error', code: 'CALCULATION_ERROR' };
+  }
+  if (commission > 0 && commission >= riskAmount) {
+    return { error: isFr ? 'Commission trop élevée pour ce trade' : 'Commission too high for this trade', code: 'CALCULATION_ERROR' };
+  }
+
+  const rawLotSize = riskAmount / denom;
 
   if (!isFinite(rawLotSize) || isNaN(rawLotSize) || rawLotSize <= 0) {
     return { error: isFr ? 'Calcul impossible' : 'Calculation error', code: 'CALCULATION_ERROR' };
@@ -301,12 +331,16 @@ export function calculatePositionFromPips(
     warnings.push(`Lot size limited to maximum: ${asset.maxLot}`);
   }
 
+  const commissionTotal = commission > 0 ? Number((lotSize * commission).toFixed(2)) : 0;
+  const riskReal = Number((lotSize * lossPerLot + commissionTotal).toFixed(2));
+
   let riskReward: number | undefined;
   let gainAmount: number | undefined;
-  
+
   if (tpPips !== undefined && tpPips > 0 && slPips > 0) {
     riskReward = Number((tpPips / slPips).toFixed(2));
-    gainAmount = Number((lotSize * tpPips * pipValuePerLot * conversionRate).toFixed(2));
+    const grossGain = lotSize * tpPips * pipValuePerLot * conversionRate;
+    gainAmount = Number((grossGain - commissionTotal).toFixed(2));
   }
 
   if (riskPercent > 5) warnings.push(isFr ? 'Risque élevé' : 'High risk');
@@ -319,6 +353,8 @@ export function calculatePositionFromPips(
     riskReward,
     slPips,
     tpPips,
+    commissionTotal: commission > 0 ? commissionTotal : undefined,
+    riskReal: commission > 0 ? riskReal : undefined,
     warnings,
   };
 }

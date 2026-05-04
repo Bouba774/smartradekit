@@ -868,6 +868,8 @@ export type Database = {
           profit_loss: number | null
           result: string | null
           risk_amount: number | null
+          session_label: string | null
+          session_type: string | null
           setup: string | null
           stop_loss: number | null
           take_profit: number | null
@@ -897,6 +899,8 @@ export type Database = {
           profit_loss?: number | null
           result?: string | null
           risk_amount?: number | null
+          session_label?: string | null
+          session_type?: string | null
           setup?: string | null
           stop_loss?: number | null
           take_profit?: number | null
@@ -926,6 +930,8 @@ export type Database = {
           profit_loss?: number | null
           result?: string | null
           risk_amount?: number | null
+          session_label?: string | null
+          session_type?: string | null
           setup?: string | null
           stop_loss?: number | null
           take_profit?: number | null

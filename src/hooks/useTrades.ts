@@ -31,6 +31,8 @@ export interface Trade {
   exit_method: 'sl' | 'tp' | 'manual' | null;
   duration_seconds: number | null;
   timeframe: string | null;
+  session_type?: 'ASIA' | 'LONDON' | 'NEW_YORK' | 'CUSTOM' | null;
+  session_label?: string | null;
 }
 
 export const useTrades = () => {

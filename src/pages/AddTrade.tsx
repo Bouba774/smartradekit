@@ -116,6 +116,23 @@ const AddTrade: React.FC = () => {
   
   const [hasPendingData, setHasPendingData] = useState(false);
 
+  // Session / Killzone (manual user choice ONLY — never derived from time)
+  const SESSION_PERSIST_KEY = 'smart-trade-kit-last-session';
+  const [sessionType, setSessionType] = useState<'ASIA' | 'LONDON' | 'NEW_YORK' | 'CUSTOM'>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SESSION_PERSIST_KEY) || 'null');
+      if (saved?.type) return saved.type;
+    } catch { /* noop */ }
+    return 'LONDON';
+  });
+  const [sessionCustomLabel, setSessionCustomLabel] = useState<string>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SESSION_PERSIST_KEY) || 'null');
+      if (saved?.type === 'CUSTOM' && saved?.label) return saved.label as string;
+    } catch { /* noop */ }
+    return '';
+  });
+
   const [formData, setFormData] = useState(() => {
     // Load pending trade data from localStorage on initial mount
     const savedData = localStorage.getItem(PENDING_TRADE_KEY);
@@ -444,7 +461,21 @@ const AddTrade: React.FC = () => {
       return;
     }
 
-    
+    // Validate session
+    const sessionLabelFinal = sessionType === 'CUSTOM'
+      ? sessionCustomLabel.trim()
+      : sessionType === 'ASIA' ? (language === 'fr' ? 'Asie' : 'Asia')
+      : sessionType === 'LONDON' ? (language === 'fr' ? 'Londres' : 'London')
+      : 'New York';
+    if (sessionType === 'CUSTOM' && !sessionLabelFinal) {
+      toast.error(language === 'fr' ? 'Veuillez nommer la session personnalisée' : 'Please name the custom session');
+      return;
+    }
+    // Persist last used session
+    try {
+      localStorage.setItem(SESSION_PERSIST_KEY, JSON.stringify({ type: sessionType, label: sessionLabelFinal }));
+    } catch { /* noop */ }
+
     setIsSubmitting(true);
     
     try {
@@ -531,7 +562,9 @@ const AddTrade: React.FC = () => {
         exit_method: exitTimestamp ? exitMethod : null,
         duration_seconds: durationSeconds,
         timeframe: formData.timeframe || customTimeframe || null,
-      });
+        session_type: sessionType,
+        session_label: sessionLabelFinal,
+      } as Parameters<typeof addTrade.mutateAsync>[0]);
       
       // Clear pending trade data from localStorage only after successful save
       localStorage.removeItem(PENDING_TRADE_KEY);
@@ -681,9 +714,45 @@ const AddTrade: React.FC = () => {
               />
             </div>
           </div>
+
+          {/* Session / Killzone (manual) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>{language === 'fr' ? 'Session / Killzone' : 'Session / Killzone'}</Label>
+              <Select
+                value={sessionType}
+                onValueChange={(v: 'ASIA' | 'LONDON' | 'NEW_YORK' | 'CUSTOM') => setSessionType(v)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  <SelectItem value="ASIA">{language === 'fr' ? 'Asie' : 'Asia'}</SelectItem>
+                  <SelectItem value="LONDON">{language === 'fr' ? 'Londres' : 'London'}</SelectItem>
+                  <SelectItem value="NEW_YORK">{language === 'fr' ? 'New York' : 'New York'}</SelectItem>
+                  <SelectItem value="CUSTOM">{language === 'fr' ? 'Autre' : 'Other'}</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {language === 'fr'
+                  ? "Session manuelle (jamais déduite de l'heure). Utilisée pour les statistiques par session."
+                  : "Manual session (never derived from time). Used for per-session statistics."}
+              </p>
+            </div>
+            {sessionType === 'CUSTOM' && (
+              <div className="space-y-2">
+                <Label>{language === 'fr' ? 'Nom de session' : 'Session name'}</Label>
+                <Input
+                  placeholder="Ex: London Open, NY AM, Scalping..."
+                  value={sessionCustomLabel}
+                  onChange={(e) => setSessionCustomLabel(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Asset Selection with Search */}
+
         <div className="glass-card p-6 space-y-4 animate-fade-in" style={{ animationDelay: '50ms' }}>
           <h3 className="font-display font-semibold text-foreground">{t('assetSelection')}</h3>
           

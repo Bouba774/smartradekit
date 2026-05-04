@@ -40,12 +40,17 @@ clickSound.volume = 0.3;
 successSound.volume = 0.4;
 errorSound.volume = 0.4;
 
+const HAPTIC_DURATION_MS = 70;
+let lastHapticAt = 0;
+
 export const useFeedback = () => {
-  const vibrate = useCallback((pattern: number | number[] = 50) => {
+  const vibrate = useCallback((pattern: number | number[] = HAPTIC_DURATION_MS) => {
     const settings = getSettings();
-    if (settings.vibration && navigator.vibrate) {
-      navigator.vibrate(pattern);
-    }
+    if (!settings.vibration || !navigator.vibrate) return;
+    const now = Date.now();
+    if (now - lastHapticAt < 40) return;
+    lastHapticAt = now;
+    try { navigator.vibrate(pattern); } catch { /* ignore */ }
   }, []);
 
   const playSound = useCallback((type: 'click' | 'success' | 'error' = 'click') => {
@@ -80,13 +85,17 @@ export const useFeedback = () => {
     
     // Vibration patterns
     const vibrationPatterns = {
-      click: 30,
-      success: [50, 50, 100],
+      click: HAPTIC_DURATION_MS,
+      success: [HAPTIC_DURATION_MS, 50, 100],
       error: [100, 50, 100],
     };
 
     if (settings.vibration && navigator.vibrate) {
-      navigator.vibrate(vibrationPatterns[type]);
+      const now = Date.now();
+      if (now - lastHapticAt >= 40) {
+        lastHapticAt = now;
+        try { navigator.vibrate(vibrationPatterns[type]); } catch { /* ignore */ }
+      }
     }
 
     if (settings.sounds) {
