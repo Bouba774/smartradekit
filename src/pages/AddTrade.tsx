@@ -562,7 +562,9 @@ const AddTrade: React.FC = () => {
         exit_method: exitTimestamp ? exitMethod : null,
         duration_seconds: durationSeconds,
         timeframe: formData.timeframe || customTimeframe || null,
-      });
+        session_type: sessionType,
+        session_label: sessionLabelFinal,
+      } as Parameters<typeof addTrade.mutateAsync>[0]);
       
       // Clear pending trade data from localStorage only after successful save
       localStorage.removeItem(PENDING_TRADE_KEY);
