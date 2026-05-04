@@ -85,13 +85,17 @@ export const useFeedback = () => {
     
     // Vibration patterns
     const vibrationPatterns = {
-      click: 30,
-      success: [50, 50, 100],
+      click: HAPTIC_DURATION_MS,
+      success: [HAPTIC_DURATION_MS, 50, 100],
       error: [100, 50, 100],
     };
 
     if (settings.vibration && navigator.vibrate) {
-      navigator.vibrate(vibrationPatterns[type]);
+      const now = Date.now();
+      if (now - lastHapticAt >= 40) {
+        lastHapticAt = now;
+        try { navigator.vibrate(vibrationPatterns[type]); } catch { /* ignore */ }
+      }
     }
 
     if (settings.sounds) {
