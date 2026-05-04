@@ -271,6 +271,8 @@ const Calculator: React.FC = () => {
             onModeChange={setMode}
             language={language}
             currency={accountCurrency}
+            commissionPerLot={commissionInput}
+            onCommissionChange={handleCommissionChange}
             onCalculate={performCalculation}
           />
         </CardContent>
