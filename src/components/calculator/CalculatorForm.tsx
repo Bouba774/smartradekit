@@ -45,6 +45,8 @@ interface CalculatorFormProps {
   onModeChange: (mode: CalculatorMode) => void;
   language: string;
   currency: string;
+  commissionPerLot?: string;
+  onCommissionChange?: (value: string) => void;
   onCalculate: () => void;
 }
 
@@ -74,6 +76,8 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
   onModeChange,
   language,
   currency,
+  commissionPerLot = '',
+  onCommissionChange,
   onCalculate,
 }) => {
   const isFr = language === 'fr';
