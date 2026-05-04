@@ -116,6 +116,23 @@ const AddTrade: React.FC = () => {
   
   const [hasPendingData, setHasPendingData] = useState(false);
 
+  // Session / Killzone (manual user choice ONLY — never derived from time)
+  const SESSION_PERSIST_KEY = 'smart-trade-kit-last-session';
+  const [sessionType, setSessionType] = useState<'ASIA' | 'LONDON' | 'NEW_YORK' | 'CUSTOM'>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SESSION_PERSIST_KEY) || 'null');
+      if (saved?.type) return saved.type;
+    } catch { /* noop */ }
+    return 'LONDON';
+  });
+  const [sessionCustomLabel, setSessionCustomLabel] = useState<string>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SESSION_PERSIST_KEY) || 'null');
+      if (saved?.type === 'CUSTOM' && saved?.label) return saved.label as string;
+    } catch { /* noop */ }
+    return '';
+  });
+
   const [formData, setFormData] = useState(() => {
     // Load pending trade data from localStorage on initial mount
     const savedData = localStorage.getItem(PENDING_TRADE_KEY);
