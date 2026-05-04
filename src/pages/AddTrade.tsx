@@ -698,9 +698,45 @@ const AddTrade: React.FC = () => {
               />
             </div>
           </div>
+
+          {/* Session / Killzone (manual) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>{language === 'fr' ? 'Session / Killzone' : 'Session / Killzone'}</Label>
+              <Select
+                value={sessionType}
+                onValueChange={(v: 'ASIA' | 'LONDON' | 'NEW_YORK' | 'CUSTOM') => setSessionType(v)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  <SelectItem value="ASIA">{language === 'fr' ? 'Asie' : 'Asia'}</SelectItem>
+                  <SelectItem value="LONDON">{language === 'fr' ? 'Londres' : 'London'}</SelectItem>
+                  <SelectItem value="NEW_YORK">{language === 'fr' ? 'New York' : 'New York'}</SelectItem>
+                  <SelectItem value="CUSTOM">{language === 'fr' ? 'Autre' : 'Other'}</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {language === 'fr'
+                  ? "Session manuelle (jamais déduite de l'heure). Utilisée pour les statistiques par session."
+                  : "Manual session (never derived from time). Used for per-session statistics."}
+              </p>
+            </div>
+            {sessionType === 'CUSTOM' && (
+              <div className="space-y-2">
+                <Label>{language === 'fr' ? 'Nom de session' : 'Session name'}</Label>
+                <Input
+                  placeholder="Ex: London Open, NY AM, Scalping..."
+                  value={sessionCustomLabel}
+                  onChange={(e) => setSessionCustomLabel(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Asset Selection with Search */}
+
         <div className="glass-card p-6 space-y-4 animate-fade-in" style={{ animationDelay: '50ms' }}>
           <h3 className="font-display font-semibold text-foreground">{t('assetSelection')}</h3>
           
