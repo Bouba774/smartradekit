@@ -461,7 +461,21 @@ const AddTrade: React.FC = () => {
       return;
     }
 
-    
+    // Validate session
+    const sessionLabelFinal = sessionType === 'CUSTOM'
+      ? sessionCustomLabel.trim()
+      : sessionType === 'ASIA' ? (language === 'fr' ? 'Asie' : 'Asia')
+      : sessionType === 'LONDON' ? (language === 'fr' ? 'Londres' : 'London')
+      : 'New York';
+    if (sessionType === 'CUSTOM' && !sessionLabelFinal) {
+      toast.error(language === 'fr' ? 'Veuillez nommer la session personnalisée' : 'Please name the custom session');
+      return;
+    }
+    // Persist last used session
+    try {
+      localStorage.setItem(SESSION_PERSIST_KEY, JSON.stringify({ type: sessionType, label: sessionLabelFinal }));
+    } catch { /* noop */ }
+
     setIsSubmitting(true);
     
     try {
