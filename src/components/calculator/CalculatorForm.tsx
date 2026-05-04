@@ -464,6 +464,39 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
         </div>
       </div>
       
+      {/* Commission per lot (optional) */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Label className="text-base font-semibold text-foreground">
+            {isFr ? 'Commission / lot' : 'Commission / lot'}
+          </Label>
+          <span className="text-xs text-muted-foreground">({isFr ? 'optionnel' : 'optional'})</span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger type="button" onClick={(e) => e.preventDefault()}>
+                <Info className="w-4 h-4 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">
+                  {isFr
+                    ? "Commission facturée par votre broker pour 1 lot (aller-retour). Optionnel : laissez vide si votre broker utilise uniquement le spread. Permet un calcul de risque plus précis."
+                    : "Commission charged by your broker per 1 lot (round-turn). Optional: leave empty if your broker uses spread only. Enables more accurate risk calculation."}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <div className="relative">
+          <Input
+            type="text" inputMode="decimal" value={commissionPerLot}
+            onChange={(e) => handleNumericInput(e.target.value, (v) => onCommissionChange?.(v))}
+            placeholder="7.00"
+            className="h-14 text-lg font-medium bg-secondary/50 border-0 rounded-xl pr-12"
+          />
+          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-lg font-medium">{currency}</span>
+        </div>
+      </div>
+
       <Separator className="my-4" />
 
       {/* === PRICE MODE FIELDS === */}
