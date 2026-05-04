@@ -24,6 +24,7 @@ import {
 import { PENDING_TRADE_KEY } from '@/pages/AddTrade';
 
 const RISK_PERSIST_KEY = 'smart-trade-kit-calc-risk-percent';
+const COMMISSION_PERSIST_KEY = 'smart-trade-kit-calc-commission-per-lot';
 
 const Calculator: React.FC = () => {
   const { language } = useLanguage();
@@ -47,6 +48,7 @@ const Calculator: React.FC = () => {
   const [slPips, setSlPips] = useState<string>('');
   const [tpPips, setTpPips] = useState<string>('');
   const [pipsDirection, setPipsDirection] = useState<'BUY' | 'SELL'>('BUY');
+  const [commissionInput, setCommissionInput] = useState<string>(() => localStorage.getItem(COMMISSION_PERSIST_KEY) || '');
   
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -128,6 +130,12 @@ const Calculator: React.FC = () => {
     setError(null);
   }, []);
   
+  const handleCommissionChange = useCallback((value: string) => {
+    setCommissionInput(value);
+    if (value) localStorage.setItem(COMMISSION_PERSIST_KEY, value);
+    else localStorage.removeItem(COMMISSION_PERSIST_KEY);
+  }, []);
+
   const performCalculation = useCallback(() => {
     setError(null);
     setResult(null);
@@ -136,7 +144,6 @@ const Calculator: React.FC = () => {
       setError(isFr ? 'Capital invalide' : 'Invalid capital');
       return;
     }
-    // No max risk cap - user is free
     if (riskPercent <= 0 || !isFinite(riskPercent)) {
       setError(isFr ? 'Risque incorrect' : 'Invalid risk');
       return;
@@ -145,6 +152,11 @@ const Calculator: React.FC = () => {
       setError(isFr ? 'Actif non pris en charge' : 'Unsupported asset');
       return;
     }
+
+    const commissionPerLot = (() => {
+      const v = parseFloat(commissionInput);
+      return !isNaN(v) && v > 0 ? v : undefined;
+    })();
     
     if (mode === 'price') {
       const entry = parseFloat(entryPrice);
@@ -162,7 +174,7 @@ const Calculator: React.FC = () => {
       
       const calcResult = calculatePosition({
         capital, riskPercent, accountCurrency, asset: assetConfig,
-        entryPrice: entry, stopLoss: sl, takeProfit: tp, exchangeRates: rates,
+        entryPrice: entry, stopLoss: sl, takeProfit: tp, exchangeRates: rates, commissionPerLot,
       }, isFr);
       
       if (isCalculationError(calcResult)) { setError(calcResult.error); return; }
@@ -177,14 +189,14 @@ const Calculator: React.FC = () => {
       
       const calcResult = calculatePositionFromPips({
         capital, riskPercent, accountCurrency, asset: assetConfig,
-        slPips: sl, tpPips: tp, direction: pipsDirection, exchangeRates: rates,
+        slPips: sl, tpPips: tp, direction: pipsDirection, exchangeRates: rates, commissionPerLot,
       }, isFr);
       
       if (isCalculationError(calcResult)) { setError(calcResult.error); return; }
       if (!calcResult.lotSize || calcResult.lotSize <= 0) { setError(isFr ? 'Calcul impossible' : 'Calculation error'); return; }
       setResult(calcResult);
     }
-  }, [selectedAsset, assetConfig, capital, riskPercent, accountCurrency, entryPrice, stopLoss, takeProfit, slPips, tpPips, pipsDirection, rates, isFr, mode]);
+  }, [selectedAsset, assetConfig, capital, riskPercent, accountCurrency, entryPrice, stopLoss, takeProfit, slPips, tpPips, pipsDirection, rates, isFr, mode, commissionInput]);
   
   const sendToTrade = useCallback(() => {
     if (!result || !selectedAsset) return;
