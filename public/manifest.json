@@ -16,7 +16,7 @@
      },
      {
        "src": "/assets/app-logo.png",
-       "sizes": "512x512",
+       "sizes": "410x410",
        "type": "image/png",
        "purpose": "any maskable"
      }
