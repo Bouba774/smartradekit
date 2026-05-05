@@ -30,11 +30,13 @@ import {
   TrendingDown,
   Save,
   Loader2,
+  Share2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { sanitizeText } from '@/lib/tradeValidation';
 import { TIMEFRAMES, EMOTIONS } from '@/data/tradeFormOptions';
 import { MediaSection } from '@/components/EditTradeDialog/MediaSection';
+import { useShareTrade } from '@/hooks/useTradeHub';
 
 interface ExistingMedia {
   url: string;
