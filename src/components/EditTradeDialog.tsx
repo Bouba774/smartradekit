@@ -30,11 +30,13 @@ import {
   TrendingDown,
   Save,
   Loader2,
+  Share2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { sanitizeText } from '@/lib/tradeValidation';
 import { TIMEFRAMES, EMOTIONS } from '@/data/tradeFormOptions';
 import { MediaSection } from '@/components/EditTradeDialog/MediaSection';
+import { useShareTrade } from '@/hooks/useTradeHub';
 
 interface ExistingMedia {
   url: string;
@@ -64,6 +66,26 @@ const EditTradeDialog: React.FC<EditTradeDialogProps> = ({
   const { uploadMedia, deleteMedia } = useTradeMedia();
   const locale = language === 'fr' ? fr : enUS;
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const shareTrade = useShareTrade();
+
+  const handleShareToHub = () => {
+    if (!trade) return;
+    let rr: number | null = null;
+    if (trade.stop_loss && trade.take_profit && trade.entry_price !== trade.stop_loss) {
+      const slDist = Math.abs(trade.entry_price - trade.stop_loss);
+      const tpDist = Math.abs(trade.take_profit - trade.entry_price);
+      if (slDist > 0) rr = +(tpDist / slDist).toFixed(2);
+    }
+    shareTrade.mutate({
+      trade_id: trade.id,
+      asset: trade.asset,
+      direction: trade.direction === 'long' ? 'buy' : 'sell',
+      session_label: trade.session_label || trade.session_type || null,
+      rr,
+      result: (trade.result as any) || null,
+      note: null,
+    });
+  };
 
   const [date, setDate] = useState<Date>(new Date());
   const [entryTime, setEntryTime] = useState('');
@@ -498,7 +520,17 @@ const EditTradeDialog: React.FC<EditTradeDialogProps> = ({
           />
 
           {/* Submit Button */}
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-wrap justify-end gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleShareToHub}
+              disabled={shareTrade.isPending}
+              className="gap-2"
+            >
+              <Share2 className="w-4 h-4" />
+              TradeHub
+            </Button>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t('cancel')}
             </Button>

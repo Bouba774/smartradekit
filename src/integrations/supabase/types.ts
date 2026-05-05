@@ -232,6 +232,188 @@ export type Database = {
         }
         Relationships: []
       }
+      community_challenge_progress: {
+        Row: {
+          challenge_id: string
+          completed: boolean
+          completed_at: string | null
+          id: string
+          progress: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          completed?: boolean
+          completed_at?: string | null
+          id?: string
+          progress?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          completed?: boolean
+          completed_at?: string | null
+          id?: string
+          progress?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_challenge_progress_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "community_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_challenges: {
+        Row: {
+          badge_emoji: string
+          bonus_points: number
+          created_at: string
+          description: string
+          id: string
+          is_active: boolean
+          metric: string
+          target: number
+          title: string
+        }
+        Insert: {
+          badge_emoji?: string
+          bonus_points?: number
+          created_at?: string
+          description: string
+          id: string
+          is_active?: boolean
+          metric: string
+          target: number
+          title: string
+        }
+        Update: {
+          badge_emoji?: string
+          bonus_points?: number
+          created_at?: string
+          description?: string
+          id?: string
+          is_active?: boolean
+          metric?: string
+          target?: number
+          title?: string
+        }
+        Relationships: []
+      }
+      community_follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      community_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          id: string
+          is_public: boolean
+          preferred_assets: string[] | null
+          preferred_sessions: string[] | null
+          pseudo: string
+          strategy: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          preferred_assets?: string[] | null
+          preferred_sessions?: string[] | null
+          pseudo: string
+          strategy?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          preferred_assets?: string[] | null
+          preferred_sessions?: string[] | null
+          pseudo?: string
+          strategy?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      community_stats: {
+        Row: {
+          avg_rr: number
+          badges: string[]
+          discipline_score: number
+          drawdown_score: number
+          global_score: number
+          last_computed_at: string
+          regularity_score: number
+          rr_score: number
+          total_trades: number
+          user_id: string
+          winrate_pct: number
+          winrate_score: number
+        }
+        Insert: {
+          avg_rr?: number
+          badges?: string[]
+          discipline_score?: number
+          drawdown_score?: number
+          global_score?: number
+          last_computed_at?: string
+          regularity_score?: number
+          rr_score?: number
+          total_trades?: number
+          user_id: string
+          winrate_pct?: number
+          winrate_score?: number
+        }
+        Update: {
+          avg_rr?: number
+          badges?: string[]
+          discipline_score?: number
+          drawdown_score?: number
+          global_score?: number
+          last_computed_at?: string
+          regularity_score?: number
+          rr_score?: number
+          total_trades?: number
+          user_id?: string
+          winrate_pct?: number
+          winrate_score?: number
+        }
+        Relationships: []
+      }
       connection_logs: {
         Row: {
           action_taken: string | null
@@ -847,6 +1029,77 @@ export type Database = {
           },
         ]
       }
+      shared_trades: {
+        Row: {
+          asset: string
+          created_at: string
+          direction: string
+          id: string
+          note: string | null
+          result: string | null
+          rr: number | null
+          session_label: string | null
+          trade_id: string | null
+          user_id: string
+        }
+        Insert: {
+          asset: string
+          created_at?: string
+          direction: string
+          id?: string
+          note?: string | null
+          result?: string | null
+          rr?: number | null
+          session_label?: string | null
+          trade_id?: string | null
+          user_id: string
+        }
+        Update: {
+          asset?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          note?: string | null
+          result?: string | null
+          rr?: number | null
+          session_label?: string | null
+          trade_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trade_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          reaction: string
+          shared_trade_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reaction: string
+          shared_trade_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reaction?: string
+          shared_trade_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_reactions_shared_trade_id_fkey"
+            columns: ["shared_trade_id"]
+            isOneToOne: false
+            referencedRelation: "shared_trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trades: {
         Row: {
           account_id: string | null
@@ -1390,6 +1643,7 @@ export type Database = {
         Returns: string
       }
       export_user_data: { Args: { p_user_id: string }; Returns: Json }
+      generate_unique_pseudo: { Args: never; Returns: string }
       get_own_pin_status: {
         Args: never
         Returns: {
@@ -1508,6 +1762,10 @@ export type Database = {
       }
       log_unauthorized_access: {
         Args: { p_details?: Json; p_operation: string; p_table_name: string }
+        Returns: undefined
+      }
+      recompute_community_stats: {
+        Args: { p_user_id: string }
         Returns: undefined
       }
       request_account_deletion: { Args: { p_reason?: string }; Returns: Json }

@@ -15,6 +15,7 @@ import {
   Settings,
   Info,
   MessageCircle,
+  Users,
 } from 'lucide-react';
 
 interface MenuSection {
@@ -53,6 +54,7 @@ const MenuPage: React.FC = () => {
         { path: '/currency-conversion', icon: ArrowRightLeft, label: t('currencyConversion') },
         { path: '/challenges', icon: Trophy, label: t('challenges') },
         { path: '/ai-assistant', icon: MessageCircle, label: t('aiAssistant') },
+        { path: '/tradehub', icon: Users, label: 'TradeHub' },
       ],
     },
     {
