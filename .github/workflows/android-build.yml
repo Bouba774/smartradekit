@@ -1,4 +1,4 @@
-name: Build Smart Trade Kit APK (Signed)
+name: Build Smart Trade Kit APK
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -24,27 +24,47 @@ jobs:
           java-version: 17
           distribution: temurin
 
-      - name: Install NPM Dependencies
+      - name: Install NPM dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Build Web
+      - name: Install Capacitor Assets generator
+        run: npm install --legacy-peer-deps --save-dev @capacitor/assets
+
+      - name: Build web app
         run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
-      - name: Add Android Platform
+      - name: Add Android platform
         run: npx cap add android || echo "Android platform already exists"
 
-      - name: Capacitor Sync
+      - name: Capacitor sync (initial)
         run: npx cap sync android
 
-      - name: Configure Gradle
+      - name: Clean default Android icons & splashes
+        run: |
+          rm -rf android/app/src/main/res/mipmap-mdpi
+          rm -rf android/app/src/main/res/mipmap-hdpi
+          rm -rf android/app/src/main/res/mipmap-xhdpi
+          rm -rf android/app/src/main/res/mipmap-xxhdpi
+          rm -rf android/app/src/main/res/mipmap-xxxhdpi
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+          rm -f android/app/src/main/res/drawable*/splash.png
+          rm -f android/app/src/main/res/drawable*/ic_launcher*.png
+
+      - name: Generate Android icons & splash from /resources
+        run: npx @capacitor/assets generate --android --iconBackgroundColor "#0a1929" --iconBackgroundColorDark "#0a1929" --splashBackgroundColor "#0a1929" --splashBackgroundColorDark "#0a1929"
+
+      - name: Capacitor sync (after assets)
+        run: npx cap sync android
+
+      - name: Force Java 17 in Gradle
         run: |
           echo "org.gradle.java.home=$JAVA_HOME" >> android/gradle.properties
           echo "android.useAndroidX=true" >> android/gradle.properties
 
-      - name: Generate Keystore
+      - name: Generate signing keystore
         run: |
           cd android
           keytool -genkey -v \
@@ -52,59 +72,22 @@ jobs:
             -storepass SmartTradeKit2026 \
             -alias smarttradekit \
             -keypass SmartTradeKit2026 \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
+            -keyalg RSA -keysize 2048 -validity 10000 \
             -dname "CN=Smart Trade Kit, OU=Mobile, O=SmartTradeKit, L=Paris, S=IDF, C=FR"
 
-      - name: Debug - Show build.gradle
-        run: cat android/app/build.gradle
-
-      - name: Configure Signing
+      - name: Configure release signing
         run: |
           python3 << 'PYEOF'
           import re
-
-          with open("android/app/build.gradle", "r") as f:
+          path = "android/app/build.gradle"
+          with open(path, "r") as f:
               content = f.read()
 
-          print("=== Original build.gradle (first 600 chars) ===")
-          print(content[:600])
-
-          # Check if signingConfigs already exists
-          if "signingConfigs" in content:
-              print("signingConfigs already present, skipping injection.")
-          else:
-              # Find the android { block and inject signingConfigs inside it
-              # Strategy: insert signingConfigs block right before buildTypes
-              bt_match = re.search(r'^(\s*)buildTypes\s*\{', content, re.MULTILINE)
-              if not bt_match:
-                  # Try alternative format (Capacitor 8 sometimes uses different indentation)
-                  bt_match = re.search(r'(\s+)buildTypes\s*\{', content)
-              
-              if not bt_match:
-                  print("WARNING: Could not find buildTypes block. Trying alternative approach...")
-                  # Fallback: find 'android {' and append signingConfigs at the end before closing
-                  android_match = re.search(r'android\s*\{', content)
-                  if android_match:
-                      # Insert right after android {
-                      insert_pos = android_match.end()
-                      signing_block = (
-                          "\n    signingConfigs {\n"
-                          "        release {\n"
-                          "            storeFile file(\"../release.keystore\")\n"
-                          "            storePassword \"SmartTradeKit2026\"\n"
-                          "            keyAlias \"smarttradekit\"\n"
-                          "            keyPassword \"SmartTradeKit2026\"\n"
-                          "        }\n"
-                          "    }\n"
-                      )
-                      content = content[:insert_pos] + signing_block + content[insert_pos:]
-                  else:
-                      raise Exception("Could not find android block in build.gradle")
-              else:
-                  indent = bt_match.group(1)
-                  signing_block = (
+          if "signingConfigs" not in content:
+              bt = re.search(r'(\s*)buildTypes\s*\{', content)
+              if bt:
+                  indent = bt.group(1)
+                  block = (
                       f"{indent}signingConfigs {{\n"
                       f"{indent}    release {{\n"
                       f"{indent}        storeFile file(\"../release.keystore\")\n"
@@ -114,39 +97,42 @@ jobs:
                       f"{indent}    }}\n"
                       f"{indent}}}\n\n"
                   )
-                  content = content[:bt_match.start()] + signing_block + content[bt_match.start():]
+                  content = content[:bt.start()] + block + content[bt.start():]
 
-          # Now add signingConfig to the release buildType if not already present
           if "signingConfig signingConfigs.release" not in content:
-              # Find release block inside buildTypes
-              bt_match2 = re.search(r'buildTypes\s*\{', content)
-              if bt_match2:
-                  bt_pos = bt_match2.end()
-                  release_match = re.search(r'(release\s*\{)', content[bt_pos:])
-                  if release_match:
-                      insert_pos = bt_pos + release_match.end()
-                      content = content[:insert_pos] + "\n            signingConfig signingConfigs.release" + content[insert_pos:]
-                      print("signingConfig added to release buildType.")
-                  else:
-                      print("WARNING: Could not find release block inside buildTypes")
-              else:
-                  print("WARNING: Could not find buildTypes block for signingConfig injection")
+              bt2 = re.search(r'buildTypes\s*\{', content)
+              if bt2:
+                  rel = re.search(r'release\s*\{', content[bt2.end():])
+                  if rel:
+                      pos = bt2.end() + rel.end()
+                      content = content[:pos] + "\n            signingConfig signingConfigs.release" + content[pos:]
 
-          with open("android/app/build.gradle", "w") as f:
+          # Force Java 17 compileOptions
+          if "JavaVersion.VERSION_17" not in content:
+              content = re.sub(
+                  r'compileOptions\s*\{[^}]*\}',
+                  'compileOptions {\n        sourceCompatibility JavaVersion.VERSION_17\n        targetCompatibility JavaVersion.VERSION_17\n    }',
+                  content,
+                  flags=re.DOTALL,
+              )
+
+          with open(path, "w") as f:
               f.write(content)
-
-          print("\n=== Patched build.gradle (first 1000 chars) ===")
-          print(content[:1000])
-          print("\nSigning config processing complete!")
+          print("build.gradle patched")
           PYEOF
+
+      - name: Gradle clean
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew clean --no-daemon
 
       - name: Build Release APK
         run: |
           cd android
-          chmod +x gradlew
           ./gradlew assembleRelease --no-daemon --stacktrace
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: SmartTradeKit-APK
