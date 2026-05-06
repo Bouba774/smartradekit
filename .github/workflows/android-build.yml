@@ -56,8 +56,10 @@ jobs:
       - name: Generate Android icons & splash from /resources
         run: npx @capacitor/assets generate --android --iconBackgroundColor "#0a1929" --iconBackgroundColorDark "#0a1929" --splashBackgroundColor "#0a1929" --splashBackgroundColorDark "#0a1929"
 
-      - name: Capacitor sync (after assets)
-        run: npx cap sync android
+      - name: Capacitor copy & sync (after assets)
+        run: |
+          npx cap copy android
+          npx cap sync android
 
       - name: Force Java 21 in Gradle
         run: |
