@@ -4,10 +4,15 @@ const config: CapacitorConfig = {
   appId: 'app.lovable.c083a032f07147138f072f3c0dc36e56',
   appName: 'Smart Trade Kit',
   webDir: 'dist',
+  server: {
+    androidScheme: 'https',
+    cleartext: true,
+  },
   android: {
-    allowMixedContent: false,
+    allowMixedContent: true,
     backgroundColor: '#0a1929',
     appendUserAgent: 'SmartTradeKit/Native',
+    webContentsDebuggingEnabled: true,
   },
   plugins: {
     SplashScreen: {
