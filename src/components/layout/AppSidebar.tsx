@@ -117,10 +117,10 @@ const AppSidebar: React.FC = () => {
               {!isCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-display font-bold text-foreground text-sm leading-tight">
-                    Smart Trade
+                    PipsKit
                   </h1>
                   <p className="text-[10px] text-primary neon-text">
-                    Kit <span className="text-muted-foreground">V{APP_VERSION}</span>
+                    <span className="text-muted-foreground">V{APP_VERSION}</span>
                   </p>
                 </div>
               )}
