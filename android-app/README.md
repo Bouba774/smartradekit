@@ -1,6 +1,6 @@
-# Smart Trade Tracker - Application Android
+# PipsKit - Application Android
 
-Application Android native WebView pour Smart Trade Tracker avec notifications push Firebase.
+Application Android native WebView pour PipsKit avec notifications push Firebase.
 
 ## Prérequis
 
@@ -31,7 +31,7 @@ gradle wrapper
 
 1. Allez sur [Firebase Console](https://console.firebase.google.com/)
 2. Créez un nouveau projet ou utilisez un existant
-3. Ajoutez une application Android avec le package: `com.smarttradetracker.app`
+3. Ajoutez une application Android avec le package: `com.smartradekit.lovable.app`
 4. Téléchargez le fichier `google-services.json`
 5. Remplacez le fichier `app/google-services.json.template` par votre `google-services.json`
 

@@ -103,7 +103,7 @@ serve(async (req) => {
     // Sanitize user data to prevent prompt injection
     const sanitizedUserData = sanitizeUserData(userData);
 
-const systemPrompt = `Tu es un assistant IA expert en trading, intégré dans l'application Smart Trade Kit. Tu es l'assistant le plus intelligent, complet et utile qu'un trader puisse avoir.
+const systemPrompt = `Tu es un assistant IA expert en trading, intégré dans l'application PipsKit. Tu es l'assistant le plus intelligent, complet et utile qu'un trader puisse avoir.
 
 === INSTRUCTION CRITIQUE DE LANGUE ===
 ${responseLanguage}

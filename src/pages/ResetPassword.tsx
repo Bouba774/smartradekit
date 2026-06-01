@@ -258,7 +258,7 @@ const ResetPassword: React.FC = () => {
             </div>
           </div>
           <h1 className="font-display text-2xl font-bold text-foreground">
-            Smart Trade Kit
+            PipsKit
           </h1>
           <p className="text-muted-foreground text-sm mt-1">ALPHA FX</p>
         </div>

@@ -40,9 +40,9 @@ const translations: Record<string, {
   footer: string;
 }> = {
   en: {
-    subject: '🔐 Confirm your login - Smart Trade Kit',
+    subject: '🔐 Confirm your login - PipsKit',
     title: 'Login Attempt',
-    intro: 'A login attempt was detected on your Smart Trade Kit account. To log in, click the button below.',
+    intro: 'A login attempt was detected on your PipsKit account. To log in, click the button below.',
     deviceDetected: 'Detected device:',
     ctaButton: '✓ Confirm Login',
     expiryNote: 'This link expires in 15 minutes and can only be used once.',
@@ -50,9 +50,9 @@ const translations: Record<string, {
     footer: 'Your intelligent trading journal'
   },
   fr: {
-    subject: '🔐 Confirmez votre connexion - Smart Trade Kit',
+    subject: '🔐 Confirmez votre connexion - PipsKit',
     title: 'Tentative de connexion',
-    intro: 'Une tentative de connexion a été détectée sur votre compte Smart Trade Kit. Pour vous connecter, cliquez sur le bouton ci-dessous.',
+    intro: 'Une tentative de connexion a été détectée sur votre compte PipsKit. Pour vous connecter, cliquez sur le bouton ci-dessous.',
     deviceDetected: 'Appareil détecté:',
     ctaButton: '✓ Confirmer la connexion',
     expiryNote: 'Ce lien expire dans 15 minutes et ne peut être utilisé qu\'une seule fois.',
@@ -60,9 +60,9 @@ const translations: Record<string, {
     footer: 'Votre journal de trading intelligent'
   },
   es: {
-    subject: '🔐 Confirma tu inicio de sesión - Smart Trade Kit',
+    subject: '🔐 Confirma tu inicio de sesión - PipsKit',
     title: 'Intento de inicio de sesión',
-    intro: 'Se detectó un intento de inicio de sesión en tu cuenta de Smart Trade Kit. Para iniciar sesión, haz clic en el botón de abajo.',
+    intro: 'Se detectó un intento de inicio de sesión en tu cuenta de PipsKit. Para iniciar sesión, haz clic en el botón de abajo.',
     deviceDetected: 'Dispositivo detectado:',
     ctaButton: '✓ Confirmar inicio de sesión',
     expiryNote: 'Este enlace caduca en 15 minutos y solo puede usarse una vez.',
@@ -70,9 +70,9 @@ const translations: Record<string, {
     footer: 'Tu diario de trading inteligente'
   },
   pt: {
-    subject: '🔐 Confirme seu login - Smart Trade Kit',
+    subject: '🔐 Confirme seu login - PipsKit',
     title: 'Tentativa de login',
-    intro: 'Uma tentativa de login foi detectada em sua conta Smart Trade Kit. Para fazer login, clique no botão abaixo.',
+    intro: 'Uma tentativa de login foi detectada em sua conta PipsKit. Para fazer login, clique no botão abaixo.',
     deviceDetected: 'Dispositivo detectado:',
     ctaButton: '✓ Confirmar login',
     expiryNote: 'Este link expira em 15 minutos e só pode ser usado uma vez.',
@@ -80,9 +80,9 @@ const translations: Record<string, {
     footer: 'Seu diário de trading inteligente'
   },
   de: {
-    subject: '🔐 Bestätigen Sie Ihre Anmeldung - Smart Trade Kit',
+    subject: '🔐 Bestätigen Sie Ihre Anmeldung - PipsKit',
     title: 'Anmeldeversuch',
-    intro: 'Ein Anmeldeversuch wurde auf Ihrem Smart Trade Kit-Konto erkannt. Um sich anzumelden, klicken Sie auf die Schaltfläche unten.',
+    intro: 'Ein Anmeldeversuch wurde auf Ihrem PipsKit-Konto erkannt. Um sich anzumelden, klicken Sie auf die Schaltfläche unten.',
     deviceDetected: 'Erkanntes Gerät:',
     ctaButton: '✓ Anmeldung bestätigen',
     expiryNote: 'Dieser Link läuft in 15 Minuten ab und kann nur einmal verwendet werden.',
@@ -90,9 +90,9 @@ const translations: Record<string, {
     footer: 'Ihr intelligentes Trading-Tagebuch'
   },
   it: {
-    subject: '🔐 Conferma il tuo accesso - Smart Trade Kit',
+    subject: '🔐 Conferma il tuo accesso - PipsKit',
     title: 'Tentativo di accesso',
-    intro: 'È stato rilevato un tentativo di accesso al tuo account Smart Trade Kit. Per accedere, clicca sul pulsante qui sotto.',
+    intro: 'È stato rilevato un tentativo di accesso al tuo account PipsKit. Per accedere, clicca sul pulsante qui sotto.',
     deviceDetected: 'Dispositivo rilevato:',
     ctaButton: '✓ Conferma accesso',
     expiryNote: 'Questo link scade tra 15 minuti e può essere utilizzato solo una volta.',
@@ -100,9 +100,9 @@ const translations: Record<string, {
     footer: 'Il tuo diario di trading intelligente'
   },
   tr: {
-    subject: '🔐 Girişinizi onaylayın - Smart Trade Kit',
+    subject: '🔐 Girişinizi onaylayın - PipsKit',
     title: 'Giriş Denemesi',
-    intro: 'Smart Trade Kit hesabınızda bir giriş denemesi tespit edildi. Giriş yapmak için aşağıdaki düğmeye tıklayın.',
+    intro: 'PipsKit hesabınızda bir giriş denemesi tespit edildi. Giriş yapmak için aşağıdaki düğmeye tıklayın.',
     deviceDetected: 'Tespit edilen cihaz:',
     ctaButton: '✓ Girişi Onayla',
     expiryNote: 'Bu bağlantı 15 dakika içinde sona erer ve yalnızca bir kez kullanılabilir.',
@@ -110,9 +110,9 @@ const translations: Record<string, {
     footer: 'Akıllı trading günlüğünüz'
   },
   ar: {
-    subject: '🔐 أكد تسجيل دخولك - Smart Trade Kit',
+    subject: '🔐 أكد تسجيل دخولك - PipsKit',
     title: 'محاولة تسجيل دخول',
-    intro: 'تم اكتشاف محاولة تسجيل دخول على حساب Smart Trade Kit الخاص بك. لتسجيل الدخول، انقر على الزر أدناه.',
+    intro: 'تم اكتشاف محاولة تسجيل دخول على حساب PipsKit الخاص بك. لتسجيل الدخول، انقر على الزر أدناه.',
     deviceDetected: 'الجهاز المكتشف:',
     ctaButton: '✓ تأكيد تسجيل الدخول',
     expiryNote: 'تنتهي صلاحية هذا الرابط خلال 15 دقيقة ويمكن استخدامه مرة واحدة فقط.',
@@ -150,7 +150,7 @@ const getEmailContent = (language: string, confirmUrl: string, userAgent?: strin
                 </tr>
               </table>
               <h2 style="color: #ffffff; font-size: 18px; margin: 16px 0 4px; font-weight: 700; letter-spacing: -0.5px;">
-                Smart Trade Kit
+                PipsKit
               </h2>
               <p style="color: #6366f1; font-size: 11px; margin: 0; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;">
                 ALPHA FX
@@ -223,11 +223,11 @@ const getEmailContent = (language: string, confirmUrl: string, userAgent?: strin
           <tr>
             <td style="padding: 24px 40px; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.05);">
               <p style="color: #475569; font-size: 11px; margin: 0; text-align: center; line-height: 1.6;">
-                <strong style="color: #64748b;">Smart Trade Kit</strong> - ALPHA FX<br>
+                <strong style="color: #64748b;">PipsKit</strong> - ALPHA FX<br>
                 ${t.footer}
               </p>
               <p style="color: #334155; font-size: 10px; margin: 12px 0 0; text-align: center;">
-                © ${new Date().getFullYear()} Smart Trade Kit. All rights reserved.
+                © ${new Date().getFullYear()} PipsKit. All rights reserved.
               </p>
             </td>
           </tr>
@@ -325,7 +325,7 @@ serve(async (req: Request) => {
     const { subject, html } = getEmailContent(language, confirmUrl, userAgent);
 
     const { error: emailError } = await resend.emails.send({
-      from: "Smart Trade Kit <noreply@resend.dev>",
+      from: "PipsKit <noreply@resend.dev>",
       to: [email],
       subject,
       html,

@@ -3,8 +3,8 @@
 
 const ALLOWED_ORIGINS = [
   // Production domains
-  'https://smarttradetracker.app',
-  'https://www.smarttradetracker.app',
+  'https://smartradekit.lovable.app',
+  'https://www.smartradekit.lovable.app',
   // Lovable preview domains
   'https://sfdudueswogeusuofbbi.lovableproject.com',
 ];
@@ -30,7 +30,7 @@ export function getAllowedOrigin(origin: string): string {
   }
   
   // Default to main production domain
-  return 'https://smarttradetracker.app';
+  return 'https://smartradekit.lovable.app';
 }
 
 export function getCorsHeaders(req: Request): Record<string, string> {

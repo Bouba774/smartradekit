@@ -372,7 +372,7 @@ export const usePinSecurity = () => {
         publicKey: {
           challenge,
           rp: {
-            name: 'Smart Trade Kit',
+            name: 'PipsKit',
             id: window.location.hostname,
           },
           user: {

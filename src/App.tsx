@@ -436,7 +436,7 @@ const App = () => {
   const isCapacitor = typeof window !== 'undefined' && (
     window.location.protocol === 'file:' ||
     window.location.protocol === 'capacitor:' ||
-    navigator.userAgent.includes('SmartTradeKit/Native')
+    navigator.userAgent.includes('PipsKit/Native')
   );
 
   const Router = isCapacitor ? HashRouter : BrowserRouter;
