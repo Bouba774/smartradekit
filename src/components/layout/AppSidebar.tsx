@@ -111,16 +111,16 @@ const AppSidebar: React.FC = () => {
             <div className={cn("flex items-center", isCollapsed ? "justify-center" : "gap-3")}>
               <img 
                 src="/assets/app-logo.png" 
-                alt="Smart Trade Kit" 
+                alt="PipsKit" 
                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg shrink-0 object-cover animate-logo-glow"
               />
               {!isCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-display font-bold text-foreground text-sm leading-tight">
-                    Smart Trade
+                    PipsKit
                   </h1>
                   <p className="text-[10px] text-primary neon-text">
-                    Kit <span className="text-muted-foreground">V{APP_VERSION}</span>
+                    <span className="text-muted-foreground">V{APP_VERSION}</span>
                   </p>
                 </div>
               )}

@@ -1,4 +1,4 @@
-name: Build Smart Trade Kit APK
+name: Build PipsKit APK
 
 on:
   push:
@@ -71,11 +71,11 @@ jobs:
           cd android
           keytool -genkey -v \
             -keystore release.keystore \
-            -storepass SmartTradeKit2026 \
+            -storepass PipsKit2026 \
             -alias smarttradekit \
-            -keypass SmartTradeKit2026 \
+            -keypass PipsKit2026 \
             -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "CN=Smart Trade Kit, OU=Mobile, O=SmartTradeKit, L=Paris, S=IDF, C=FR"
+            -dname "CN=PipsKit, OU=Mobile, O=PipsKit, L=Paris, S=IDF, C=FR"
 
       - name: Configure release signing
         run: |
@@ -93,9 +93,9 @@ jobs:
                       f"{indent}signingConfigs {{\n"
                       f"{indent}    release {{\n"
                       f"{indent}        storeFile file(\"../release.keystore\")\n"
-                      f"{indent}        storePassword \"SmartTradeKit2026\"\n"
+                      f"{indent}        storePassword \"PipsKit2026\"\n"
                       f"{indent}        keyAlias \"smarttradekit\"\n"
-                      f"{indent}        keyPassword \"SmartTradeKit2026\"\n"
+                      f"{indent}        keyPassword \"PipsKit2026\"\n"
                       f"{indent}    }}\n"
                       f"{indent}}}\n\n"
                   )
@@ -137,6 +137,6 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SmartTradeKit-APK
+          name: PipsKit-APK
           path: android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error

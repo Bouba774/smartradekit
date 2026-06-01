@@ -1,6 +1,6 @@
 # Capacitor Assets — Source
 
-Ce dossier contient **la source unique** des icônes et splash screens de Smart Trade Kit.
+Ce dossier contient **la source unique** des icônes et splash screens de PipsKit.
 
 ## Fichiers
 

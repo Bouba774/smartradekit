@@ -6,7 +6,7 @@
         </trust-anchors>
     </base-config>
     <domain-config cleartextTrafficPermitted="false">
-        <domain includeSubdomains="true">smarttradetracker.lovable.app</domain>
+        <domain includeSubdomains="true">smartradekit.lovable.app</domain>
         <domain includeSubdomains="true">lovable.app</domain>
     </domain-config>
 </network-security-config>
