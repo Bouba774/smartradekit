@@ -23,7 +23,7 @@ export const tr = {
 
   // Common
   welcome: 'Hoş geldiniz',
-  slogan: 'Bir trader tarafından traderlar için oluşturuldu. ALPHA FX.',
+  slogan: 'Nihai Trading Yoldaşınız',
   startTrading: 'Trading\'e Başla',
   viewDashboard: 'Paneli Görüntüle',
   save: 'Kaydet',

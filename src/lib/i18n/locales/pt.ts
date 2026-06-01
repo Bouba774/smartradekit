@@ -23,7 +23,7 @@ export const pt = {
 
   // Common
   welcome: 'Bem-vindo',
-  slogan: 'Criado por um trader para traders. ALPHA FX.',
+  slogan: 'Seu Companheiro de Trading Definitivo',
   startTrading: 'Começar a Operar',
   viewDashboard: 'Ver Painel',
   save: 'Salvar',
