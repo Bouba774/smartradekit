@@ -313,7 +313,7 @@ const AIAssistant: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background px-3 sm:px-6">
+    <div className="flex flex-col h-full bg-background">
       {/* Header */}
       <div className="bg-gradient-primary p-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
@@ -518,7 +518,7 @@ const AIAssistant: React.FC = () => {
                     )}
                     <div
                       className={cn(
-                        "max-w-[85%] rounded-2xl px-4 py-3",
+                        "max-w-[95%] rounded-2xl px-4 py-3",
                         msg.role === 'user'
                           ? 'bg-primary text-primary-foreground rounded-br-md'
                           : 'bg-secondary text-foreground rounded-bl-md'
