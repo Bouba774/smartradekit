@@ -1,7 +1,7 @@
 // App versioning system
 // Version follows semantic versioning: Major.Minor.Patch
 // UPDATE THIS VERSION when releasing new features!
- export const APP_VERSION = '13.8.0';
+ export const APP_VERSION = '14.0.0';
 export const APP_NAME = 'PipsKit';
 export const BUILD_DATE = new Date().toISOString().split('T')[0];
 
