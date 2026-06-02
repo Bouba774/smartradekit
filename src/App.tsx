@@ -85,6 +85,14 @@ const AdminAbout = lazy(() => import(/* webpackChunkName: "admin-pages" */ "./pa
 // Improved loading fallback with skeleton
 const PageLoader = () => <PageSkeleton type="default" />;
 
+const DashboardRoute = () => {
+  useEffect(() => {
+    logAndroidStep("Dashboard Loaded");
+  }, []);
+
+  return <Dashboard />;
+};
+
 const StartupFallback = () => (
   <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
     <div className="flex flex-col items-center gap-4 text-center">
@@ -364,7 +372,7 @@ const AppContent = () => {
             <Route path="/admin-verify" element={<ProtectedRoute><AdminSecretValidation /></ProtectedRoute>} />
             
             {/* ========== USER ROUTES ========== */}
-            <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><Layout><DashboardRoute /></Layout></ProtectedRoute>} />
             <Route path="/add-trade" element={<ProtectedRoute><Layout><AddTrade /></Layout></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><Layout><History /></Layout></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute><Layout><Reports /></Layout></ProtectedRoute>} />
@@ -404,7 +412,7 @@ const AppContent = () => {
               <Route path="about" element={<AdminAbout />} />
             </Route>
             
-            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </ChunkErrorBoundary>
