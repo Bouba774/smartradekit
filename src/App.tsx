@@ -465,11 +465,11 @@ class AppErrorBoundary extends React.Component<
 const App = () => {
   useEffect(() => {
     const handleRejection = (event: PromiseRejectionEvent) => {
-      console.error("Unhandled promise rejection:", event.reason);
+      logAndroidStep("Unhandled promise rejection", event.reason, "error");
       event.preventDefault();
     };
     window.addEventListener('unhandledrejection', handleRejection);
-    window.dispatchEvent(new Event('app-ready'));
+    markAppReady('react-root-mounted');
     return () => window.removeEventListener('unhandledrejection', handleRejection);
   }, []);
 
