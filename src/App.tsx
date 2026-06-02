@@ -23,10 +23,10 @@ import { usePrefetchOnAuth } from "@/hooks/useRoutePrefetch";
 import PageSkeleton from "@/components/ui/PageSkeleton";
 import { idbPersister } from "@/lib/offlineStorage";
 import { initOfflineSync, syncPendingMutations } from "@/lib/offlineSync";
+import { logAndroidStep, markAppReady } from "@/lib/androidDiagnostics";
 // Critical pages loaded immediately
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
 
 // Lazy load non-critical pages with webpackChunkName for better caching
 const Dashboard = lazy(() => import(/* webpackChunkName: "dashboard" */ "./pages/Dashboard"));
@@ -84,6 +84,43 @@ const AdminAbout = lazy(() => import(/* webpackChunkName: "admin-pages" */ "./pa
 // Improved loading fallback with skeleton
 const PageLoader = () => <PageSkeleton type="default" />;
 
+const DashboardRoute = () => {
+  useEffect(() => {
+    logAndroidStep("Dashboard Loaded");
+  }, []);
+
+  return <Dashboard />;
+};
+
+const StartupFallback = () => (
+  <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
+    <div className="flex flex-col items-center gap-4 text-center">
+      <img src="./assets/app-logo.png" alt="PipsKit" className="h-20 w-20 object-contain" />
+      <div className="h-9 w-9 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+      <div>
+        <p className="text-lg font-semibold">PipsKit</p>
+        <p className="text-sm text-muted-foreground">Chargement sécurisé...</p>
+      </div>
+    </div>
+  </div>
+);
+
+const CriticalFallback = ({ error }: { error?: Error }) => (
+  <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
+    <div className="w-full max-w-sm text-center space-y-5">
+      <img src="./assets/app-logo.png" alt="PipsKit" className="h-20 w-20 object-contain mx-auto" />
+      <div className="space-y-2">
+        <h1 className="text-2xl font-semibold">PipsKit</h1>
+        <p className="text-sm text-muted-foreground">Erreur de chargement - vérifiez votre connexion</p>
+        {error?.message && <p className="text-xs text-muted-foreground break-words">{error.message}</p>}
+      </div>
+      <button className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground" onClick={() => window.location.reload()}>
+        Recharger
+      </button>
+    </div>
+  </div>
+);
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -121,7 +158,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   const { isLocked, isPinConfigured, isLoading: securityLoading } = useSecurity();
 
   if (loading || securityLoading) {
-    return null; // Splash screen is still visible during loading
+    return <StartupFallback />;
   }
 
   if (!user) {
@@ -139,6 +176,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const AppContent = () => {
   const { user, loading: authLoading } = useAuth();
   const qc = useQueryClient();
+
+  useEffect(() => {
+    logAndroidStep("Router Loaded", { path: window.location.pathname, hash: window.location.hash });
+  }, []);
 
   // Sync offline mutations when coming back online
   useEffect(() => {
@@ -265,12 +306,22 @@ const AppContent = () => {
   // Hide splash screen once both auth and security state are resolved
   useEffect(() => {
     if (!securityLoading && !authLoading) {
-      window.dispatchEvent(new Event('app-ready'));
+      markAppReady('auth-and-security-loaded');
     }
   }, [securityLoading, authLoading]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (securityLoading || authLoading) {
+        logAndroidStep('Startup loading timeout reached', { authLoading, securityLoading }, 'warn');
+        markAppReady('startup-loading-timeout');
+      }
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, [securityLoading, authLoading]);
+
   if (securityLoading || authLoading) {
-    return null; // Keep splash screen visible until fully resolved
+    return <StartupFallback />;
   }
 
   // Show lock screen if locked and user is authenticated with PIN configured
@@ -320,7 +371,7 @@ const AppContent = () => {
             <Route path="/admin-verify" element={<ProtectedRoute><AdminSecretValidation /></ProtectedRoute>} />
             
             {/* ========== USER ROUTES ========== */}
-            <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><Layout><DashboardRoute /></Layout></ProtectedRoute>} />
             <Route path="/add-trade" element={<ProtectedRoute><Layout><AddTrade /></Layout></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><Layout><History /></Layout></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute><Layout><Reports /></Layout></ProtectedRoute>} />
@@ -360,7 +411,7 @@ const AppContent = () => {
               <Route path="about" element={<AdminAbout />} />
             </Route>
             
-            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </ChunkErrorBoundary>
@@ -397,25 +448,15 @@ class AppErrorBoundary extends React.Component<
     return { hasError: true, error };
   }
   componentDidMount() {
-    window.dispatchEvent(new Event('app-ready'));
+    markAppReady('error-boundary-mounted');
   }
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error("App crash:", error, info);
+    logAndroidStep("App crash", { error, info }, "error");
   }
   render() {
     if (this.state.hasError) {
-      return (
-        <div style={{ padding: 32, color: '#fff', background: '#0a1929', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-          <h2>Une erreur est survenue</h2>
-          <p style={{ color: '#aaa' }}>{this.state.error?.message}</p>
-          <button
-            onClick={() => window.location.reload()}
-            style={{ marginTop: 16, padding: '8px 24px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer' }}
-          >
-            Recharger
-          </button>
-        </div>
-      );
+      markAppReady('critical-error-fallback');
+      return <CriticalFallback error={this.state.error} />;
     }
     return this.props.children;
   }
@@ -424,11 +465,11 @@ class AppErrorBoundary extends React.Component<
 const App = () => {
   useEffect(() => {
     const handleRejection = (event: PromiseRejectionEvent) => {
-      console.error("Unhandled promise rejection:", event.reason);
+      logAndroidStep("Unhandled promise rejection", event.reason, "error");
       event.preventDefault();
     };
     window.addEventListener('unhandledrejection', handleRejection);
-    window.dispatchEvent(new Event('app-ready'));
+    markAppReady('react-root-mounted');
     return () => window.removeEventListener('unhandledrejection', handleRejection);
   }, []);
 
