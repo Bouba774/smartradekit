@@ -23,6 +23,7 @@ import { usePrefetchOnAuth } from "@/hooks/useRoutePrefetch";
 import PageSkeleton from "@/components/ui/PageSkeleton";
 import { idbPersister } from "@/lib/offlineStorage";
 import { initOfflineSync, syncPendingMutations } from "@/lib/offlineSync";
+import { logAndroidStep, markAppReady } from "@/lib/androidDiagnostics";
 // Critical pages loaded immediately
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
@@ -84,6 +85,35 @@ const AdminAbout = lazy(() => import(/* webpackChunkName: "admin-pages" */ "./pa
 // Improved loading fallback with skeleton
 const PageLoader = () => <PageSkeleton type="default" />;
 
+const StartupFallback = () => (
+  <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
+    <div className="flex flex-col items-center gap-4 text-center">
+      <img src="./assets/app-logo.png" alt="PipsKit" className="h-20 w-20 object-contain" />
+      <div className="h-9 w-9 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+      <div>
+        <p className="text-lg font-semibold">PipsKit</p>
+        <p className="text-sm text-muted-foreground">Chargement sécurisé...</p>
+      </div>
+    </div>
+  </div>
+);
+
+const CriticalFallback = ({ error }: { error?: Error }) => (
+  <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
+    <div className="w-full max-w-sm text-center space-y-5">
+      <img src="./assets/app-logo.png" alt="PipsKit" className="h-20 w-20 object-contain mx-auto" />
+      <div className="space-y-2">
+        <h1 className="text-2xl font-semibold">PipsKit</h1>
+        <p className="text-sm text-muted-foreground">Erreur de chargement - vérifiez votre connexion</p>
+        {error?.message && <p className="text-xs text-muted-foreground break-words">{error.message}</p>}
+      </div>
+      <button className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground" onClick={() => window.location.reload()}>
+        Recharger
+      </button>
+    </div>
+  </div>
+);
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -121,7 +151,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   const { isLocked, isPinConfigured, isLoading: securityLoading } = useSecurity();
 
   if (loading || securityLoading) {
-    return null; // Splash screen is still visible during loading
+    return <StartupFallback />;
   }
 
   if (!user) {
