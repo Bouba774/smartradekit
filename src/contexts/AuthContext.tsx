@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { logAndroidStep, withTimeout } from '@/lib/androidDiagnostics';
 
 interface Profile {
   id: string;
@@ -40,11 +41,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
+    let data: Profile | null = null;
+    let error: unknown = null;
+
+    try {
+      const result = await withTimeout(
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle(),
+        7000,
+        'profile-load'
+      );
+      data = result.data as Profile | null;
+      error = result.error;
+    } catch (err) {
+      error = err;
+      logAndroidStep('Profile load failed; continuing with defaults', err, 'warn');
+    }
     
     if (!error && data) {
       setProfile(data);
@@ -134,7 +149,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (event, currentSession) => {
         if (!isMounted) return;
         
-        console.log('Auth state changed:', event, currentSession?.user?.id);
+        logAndroidStep('Auth state changed', { event, userId: currentSession?.user?.id });
         
         // Handle sign out explicitly
         if (event === 'SIGNED_OUT') {
@@ -167,7 +182,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // THEN check for existing session - this is critical for page reloads/updates
     const initializeSession = async () => {
       try {
-        const { data: { session: existingSession }, error } = await supabase.auth.getSession();
+        logAndroidStep('Supabase Init', {
+          hasUrl: Boolean(import.meta.env.VITE_SUPABASE_URL),
+          hasKey: Boolean(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY),
+        });
+        const { data: { session: existingSession }, error } = await withTimeout(
+          supabase.auth.getSession(),
+          7000,
+          'auth-session-load'
+        );
         
         if (!isMounted) return;
         
@@ -190,10 +213,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           fetchProfile(existingSession.user.id);
         }
         
+        logAndroidStep('Auth Loaded', { authenticated: Boolean(existingSession?.user) });
         setLoading(false);
       } catch (error) {
         console.error('Failed to initialize session:', error);
+        logAndroidStep('Auth Loaded', { authenticated: false, fallback: true, error }, 'warn');
         if (isMounted) {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
           setLoading(false);
         }
       }
