@@ -27,7 +27,6 @@ import { logAndroidStep, markAppReady } from "@/lib/androidDiagnostics";
 // Critical pages loaded immediately
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
 
 // Lazy load non-critical pages with webpackChunkName for better caching
 const Dashboard = lazy(() => import(/* webpackChunkName: "dashboard" */ "./pages/Dashboard"));
@@ -449,25 +448,15 @@ class AppErrorBoundary extends React.Component<
     return { hasError: true, error };
   }
   componentDidMount() {
-    window.dispatchEvent(new Event('app-ready'));
+    markAppReady('error-boundary-mounted');
   }
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error("App crash:", error, info);
+    logAndroidStep("App crash", { error, info }, "error");
   }
   render() {
     if (this.state.hasError) {
-      return (
-        <div style={{ padding: 32, color: '#fff', background: '#0a1929', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-          <h2>Une erreur est survenue</h2>
-          <p style={{ color: '#aaa' }}>{this.state.error?.message}</p>
-          <button
-            onClick={() => window.location.reload()}
-            style={{ marginTop: 16, padding: '8px 24px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer' }}
-          >
-            Recharger
-          </button>
-        </div>
-      );
+      markAppReady('critical-error-fallback');
+      return <CriticalFallback error={this.state.error} />;
     }
     return this.props.children;
   }
