@@ -170,6 +170,10 @@ const AppContent = () => {
   const { user, loading: authLoading } = useAuth();
   const qc = useQueryClient();
 
+  useEffect(() => {
+    logAndroidStep("Router Loaded", { path: window.location.pathname, hash: window.location.hash });
+  }, []);
+
   // Sync offline mutations when coming back online
   useEffect(() => {
     const handleSyncComplete = () => {
@@ -295,12 +299,22 @@ const AppContent = () => {
   // Hide splash screen once both auth and security state are resolved
   useEffect(() => {
     if (!securityLoading && !authLoading) {
-      window.dispatchEvent(new Event('app-ready'));
+      markAppReady('auth-and-security-loaded');
     }
   }, [securityLoading, authLoading]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (securityLoading || authLoading) {
+        logAndroidStep('Startup loading timeout reached', { authLoading, securityLoading }, 'warn');
+        markAppReady('startup-loading-timeout');
+      }
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, [securityLoading, authLoading]);
+
   if (securityLoading || authLoading) {
-    return null; // Keep splash screen visible until fully resolved
+    return <StartupFallback />;
   }
 
   // Show lock screen if locked and user is authenticated with PIN configured
