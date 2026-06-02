@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
   const supabaseUrl = env.VITE_SUPABASE_URL || env.SUPABASE_URL || "https://trkhpxxylnjxasigcxqj.supabase.co";
   const supabaseKey = env.VITE_SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_PUBLISHABLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRya2hweHh5bG5qeGFzaWdjeHFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NTczODIsImV4cCI6MjA4NDEzMzM4Mn0.U_3wCHaVh0uVShpirk_FDlreDDmYJ-MCikG_qFT1ts4";
 
-  return ({
+  return {
   base: "./",
   server: {
     host: "::",
@@ -31,9 +31,9 @@ export default defineConfig(({ mode }) => {
        registerType: "autoUpdate",
        includeAssets: ["favicon.ico", "assets/app-logo.png"],
        manifest: {
-         name: "Smart Trade Kit",
-         short_name: "STT",
-         description: "Journal de trading professionnel avec analyses avancées",
+         name: "PipsKit",
+         short_name: "PipsKit",
+         description: "PipsKit - Your Ultimate Trading Companion",
          theme_color: "#0a1929",
          background_color: "#0a1929",
          display: "standalone",
@@ -107,4 +107,5 @@ export default defineConfig(({ mode }) => {
       "@": path.resolve(__dirname, "./src"),
     },
   },
-}));
+  };
+});
