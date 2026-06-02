@@ -14,6 +14,7 @@ interface Profile {
   total_points: number;
   weekly_objective_trades: number;
   monthly_objective_profit: number;
+  welcome_email_sent?: boolean | null;
   created_at: string;
   updated_at: string;
 }
