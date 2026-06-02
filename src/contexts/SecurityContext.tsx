@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { logAndroidStep, withTimeout } from '@/lib/androidDiagnostics';
 
 // Session storage key for unlock state - clears when tab closes
 const UNLOCK_SESSION_KEY = 'app_unlocked_session';
@@ -96,26 +97,41 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Check if app should be locked on mount
   useEffect(() => {
+    let cancelled = false;
+
     const checkLockState = async () => {
       if (!user) {
-        setIsLocked(false);
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLocked(false);
+          setIsLoading(false);
+        }
         return;
       }
 
       try {
         // Check if PIN is configured
-        const { data: credData } = await supabase
-          .from('secure_credentials')
-          .select('pin_hash')
-          .eq('user_id', user.id)
-          .maybeSingle();
+        const [{ data: credData }, { data: settingsData }] = await Promise.all([
+          withTimeout(
+            supabase
+              .from('secure_credentials')
+              .select('pin_hash')
+              .eq('user_id', user.id)
+              .maybeSingle(),
+            6000,
+            'secure-credentials-load'
+          ),
+          withTimeout(
+            supabase
+              .from('user_settings')
+              .select('pin_enabled, auto_lock_timeout, confidential_mode')
+              .eq('user_id', user.id)
+              .maybeSingle(),
+            6000,
+            'security-settings-load'
+          ),
+        ]);
 
-        const { data: settingsData } = await supabase
-          .from('user_settings')
-          .select('pin_enabled, auto_lock_timeout, confidential_mode')
-          .eq('user_id', user.id)
-          .maybeSingle();
+        if (cancelled) return;
 
         const pinConfigured = !!(credData?.pin_hash && settingsData?.pin_enabled);
         setIsPinConfigured(pinConfigured);
@@ -130,14 +146,26 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           setIsLocked(false);
         }
       } catch (error) {
-        console.error('Error checking lock state:', error);
+        logAndroidStep('Security load failed; continuing unlocked', error, 'warn');
         setIsLocked(false);
       }
 
-      setIsLoading(false);
+      if (!cancelled) setIsLoading(false);
     };
 
     checkLockState();
+    const safetyTimer = setTimeout(() => {
+      if (!cancelled) {
+        logAndroidStep('Security loading timeout; forcing safe UI', undefined, 'warn');
+        setIsLocked(false);
+        setIsLoading(false);
+      }
+    }, 8000);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(safetyTimer);
+    };
   }, [user]);
 
   // Handle visibility change (app goes to background/foreground)
