@@ -26,14 +26,14 @@ export const markAppReady = (reason: string) => {
   window.dispatchEvent(new Event("app-ready"));
 };
 
-export const withTimeout = async <T,>(promise: Promise<T>, ms: number, label: string): Promise<T> => {
+export const withTimeout = async <T,>(promise: PromiseLike<T>, ms: number, label: string): Promise<T> => {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<T>((_, reject) => {
     timeoutId = setTimeout(() => reject(new Error(`${label} timeout after ${ms}ms`)), ms);
   });
 
   try {
-    return await Promise.race([promise, timeout]);
+    return await Promise.race([Promise.resolve(promise), timeout]);
   } finally {
     if (timeoutId) clearTimeout(timeoutId);
   }
