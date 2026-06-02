@@ -7,6 +7,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.webkit.*
@@ -16,6 +17,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 
 class MainActivity : AppCompatActivity() {
+
+    private val tag = "PipsKitAndroid"
 
     companion object {
         private const val WEB_URL = "https://smartradekit.lovable.app"
@@ -34,6 +37,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d(tag, "App Start")
         setContentView(R.layout.activity_main)
 
         initViews()
@@ -43,6 +47,7 @@ class MainActivity : AppCompatActivity() {
         if (isNetworkAvailable()) {
             loadWebApp()
         } else {
+            Log.w(tag, "Network unavailable at startup")
             showOfflineError()
         }
     }
@@ -65,6 +70,7 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView() {
+        Log.d(tag, "Router Loaded")
         webView.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
@@ -98,6 +104,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadWebApp() {
+        Log.d(tag, "Loading web app: $WEB_URL")
         webView.loadUrl(WEB_URL)
     }
 
@@ -150,11 +157,13 @@ class MainActivity : AppCompatActivity() {
 
         override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
             super.onPageStarted(view, url, favicon)
+            Log.d(tag, "Page started: $url")
             progressBar.visibility = View.VISIBLE
         }
 
         override fun onPageFinished(view: WebView?, url: String?) {
             super.onPageFinished(view, url)
+            Log.d(tag, "Page finished: $url")
             progressBar.visibility = View.GONE
             swipeRefresh.isRefreshing = false
         }
@@ -162,11 +171,13 @@ class MainActivity : AppCompatActivity() {
         override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
             super.onReceivedError(view, request, error)
             if (request?.isForMainFrame == true) {
+                Log.e(tag, "Main frame error: ${error?.description}")
                 showOfflineError()
             }
         }
 
         override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: android.net.http.SslError?) {
+            Log.e(tag, "SSL error: $error")
             handler?.cancel()
             Toast.makeText(this@MainActivity, R.string.ssl_error, Toast.LENGTH_LONG).show()
         }
@@ -180,6 +191,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+            Log.d(tag, "WebView console: ${consoleMessage?.message()} @ ${consoleMessage?.sourceId()}:${consoleMessage?.lineNumber()}")
             return super.onConsoleMessage(consoleMessage)
         }
     }
