@@ -670,3 +670,8 @@ body.landing-page * {
 [dir="rtl"] .recharts-surface {
   direction: ltr;
 }
+
+/* Native-style page transition keyframe used by PageTransition.tsx */
+@keyframes pk-page-in {
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
