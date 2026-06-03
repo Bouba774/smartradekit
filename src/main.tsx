@@ -2,6 +2,20 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { logAndroidStep, markAppReady } from "./lib/androidDiagnostics";
+import { nativeStorage } from "./lib/nativeStorage";
+
+// Hydrate the localStorage mirror from Capacitor Preferences (native only),
+// then migrate any legacy localStorage values into the durable native store.
+// Fire-and-forget: it must NEVER block the first paint.
+void (async () => {
+  try {
+    await nativeStorage.hydrate();
+    await nativeStorage.migrate();
+    logAndroidStep("Native storage ready");
+  } catch (e) {
+    logAndroidStep("Native storage init failed", e, "warn");
+  }
+})();
 
 // Global error fallback to avoid Android WebView blank screen
 window.addEventListener("error", (e) => {
