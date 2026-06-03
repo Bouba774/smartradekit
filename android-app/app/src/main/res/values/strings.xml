@@ -9,4 +9,19 @@
     <string name="ssl_error">Erreur de sécurité SSL</string>
     <string name="default_notification_channel_id">smart_trade_tracker_notifications</string>
     <string name="notification_permission_required">Les notifications sont nécessaires pour recevoir les alertes de trading</string>
+
+    <!-- Back button -->
+    <string name="press_back_again">Appuyez une seconde fois pour quitter</string>
+
+    <!-- Permissions -->
+    <string name="permission_storage_rationale_title">Accès aux médias requis</string>
+    <string name="permission_storage_rationale_message">PipsKit a besoin d\'accéder à vos images, vidéos et fichiers audio pour vous permettre d\'attacher des captures d\'écran à vos trades et d\'exporter vos rapports PDF.</string>
+    <string name="permission_open_settings">Ouvrir les paramètres</string>
+    <string name="permission_cancel">Plus tard</string>
+    <string name="permission_granted">Permissions accordées</string>
+    <string name="permission_denied_settings">Activez les permissions dans les paramètres Android</string>
+
+    <!-- Share -->
+    <string name="share_pdf_title">Partager le rapport PDF</string>
+    <string name="share_error">Impossible de partager ce fichier</string>
 </resources>
