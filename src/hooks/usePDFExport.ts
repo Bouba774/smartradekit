@@ -7,6 +7,7 @@ import { useFeedback } from '@/hooks/useFeedback';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { sharePdf, isNativeAndroid } from '@/lib/androidBridge';
 import {
   Trade,
   ProfileData,
@@ -362,9 +363,14 @@ export const usePDFExport = () => {
         );
       }
 
-      // Save
-      const filename = `smart-trade-tracker-report-${format(new Date(), 'yyyy-MM-dd')}${confidentialMode ? '-confidentiel' : ''}.pdf`;
-      doc.save(filename);
+      // Save / share – prefer native Android share sheet when available
+      const filename = `pipskit-report-${format(new Date(), 'yyyy-MM-dd')}${confidentialMode ? '-confidentiel' : ''}.pdf`;
+      if (isNativeAndroid()) {
+        const blob = doc.output('blob');
+        await sharePdf(blob, filename);
+      } else {
+        doc.save(filename);
+      }
 
       triggerFeedback('success');
       toast.success(language === 'fr' ? 'PDF exporté avec succès!' : 'PDF exported successfully!');
