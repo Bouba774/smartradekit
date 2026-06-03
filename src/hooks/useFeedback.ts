@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import nativeHaptics from '@/lib/nativeHaptics';
 
 const SETTINGS_STORAGE_KEY = 'smart-trade-tracker-settings';
 
@@ -35,73 +36,56 @@ const clickSound = new Audio('/sounds/click.mp3');
 const successSound = new Audio('/sounds/success.mp3');
 const errorSound = new Audio('/sounds/error.mp3');
 
-// Set volume
 clickSound.volume = 0.3;
 successSound.volume = 0.4;
 errorSound.volume = 0.4;
 
-const HAPTIC_DURATION_MS = 70;
-let lastHapticAt = 0;
+export type FeedbackKind = 'click' | 'success' | 'error' | 'validate' | 'delete' | 'warning' | 'selection';
 
 export const useFeedback = () => {
-  const vibrate = useCallback((pattern: number | number[] = HAPTIC_DURATION_MS) => {
-    const settings = getSettings();
-    if (!settings.vibration || !navigator.vibrate) return;
-    const now = Date.now();
-    if (now - lastHapticAt < 40) return;
-    lastHapticAt = now;
-    try { navigator.vibrate(pattern); } catch { /* ignore */ }
+  // Direct native haptic (replaces old navigator.vibrate-only approach).
+  const vibrate = useCallback((kind: FeedbackKind = 'click') => {
+    switch (kind) {
+      case 'success':   void nativeHaptics.success(); break;
+      case 'error':     void nativeHaptics.error(); break;
+      case 'validate':  void nativeHaptics.validate(); break;
+      case 'delete':    void nativeHaptics.delete_(); break;
+      case 'warning':   void nativeHaptics.trigger('warning'); break;
+      case 'selection': void nativeHaptics.selection(); break;
+      default:          void nativeHaptics.click();
+    }
   }, []);
 
   const playSound = useCallback((type: 'click' | 'success' | 'error' = 'click') => {
     const settings = getSettings();
-    if (settings.sounds) {
-      try {
-        let audio: HTMLAudioElement;
-        switch (type) {
-          case 'success':
-            audio = successSound.cloneNode() as HTMLAudioElement;
-            audio.volume = 0.4;
-            break;
-          case 'error':
-            audio = errorSound.cloneNode() as HTMLAudioElement;
-            audio.volume = 0.4;
-            break;
-          default:
-            audio = clickSound.cloneNode() as HTMLAudioElement;
-            audio.volume = 0.3;
-        }
-        audio.play().catch(() => {
-          // Silently fail if audio can't play
-        });
-      } catch (e) {
-        console.warn('Audio playback failed:', e);
+    if (!settings.sounds) return;
+    try {
+      let audio: HTMLAudioElement;
+      switch (type) {
+        case 'success':
+          audio = successSound.cloneNode() as HTMLAudioElement;
+          audio.volume = 0.4;
+          break;
+        case 'error':
+          audio = errorSound.cloneNode() as HTMLAudioElement;
+          audio.volume = 0.4;
+          break;
+        default:
+          audio = clickSound.cloneNode() as HTMLAudioElement;
+          audio.volume = 0.3;
       }
+      audio.play().catch(() => { /* silently fail */ });
+    } catch (e) {
+      console.warn('Audio playback failed:', e);
     }
   }, []);
 
-  const triggerFeedback = useCallback((type: 'click' | 'success' | 'error' = 'click') => {
-    const settings = getSettings();
-    
-    // Vibration patterns
-    const vibrationPatterns = {
-      click: HAPTIC_DURATION_MS,
-      success: [HAPTIC_DURATION_MS, 50, 100],
-      error: [100, 50, 100],
-    };
-
-    if (settings.vibration && navigator.vibrate) {
-      const now = Date.now();
-      if (now - lastHapticAt >= 40) {
-        lastHapticAt = now;
-        try { navigator.vibrate(vibrationPatterns[type]); } catch { /* ignore */ }
-      }
-    }
-
-    if (settings.sounds) {
+  const triggerFeedback = useCallback((type: FeedbackKind = 'click') => {
+    vibrate(type);
+    if (type === 'success' || type === 'error' || type === 'click') {
       playSound(type);
     }
-  }, [playSound]);
+  }, [vibrate, playSound]);
 
   return {
     vibrate,
