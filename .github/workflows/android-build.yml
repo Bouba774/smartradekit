@@ -36,27 +36,10 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || secrets.SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY || secrets.SUPABASE_PUBLISHABLE_KEY || secrets.SUPABASE_ANON_KEY }}
 
-      - name: Add Android platform
-        run: npx cap add android || echo "Android platform already exists"
+      - name: Verify tracked Android project
+        run: test -f android/app/src/main/AndroidManifest.xml
 
-      - name: Capacitor sync (initial)
-        run: npx cap sync android
-
-      - name: Clean default Android icons & splashes
-        run: |
-          rm -rf android/app/src/main/res/mipmap-mdpi
-          rm -rf android/app/src/main/res/mipmap-hdpi
-          rm -rf android/app/src/main/res/mipmap-xhdpi
-          rm -rf android/app/src/main/res/mipmap-xxhdpi
-          rm -rf android/app/src/main/res/mipmap-xxxhdpi
-          rm -rf android/app/src/main/res/mipmap-anydpi-v26
-          rm -f android/app/src/main/res/drawable*/splash.png
-          rm -f android/app/src/main/res/drawable*/ic_launcher*.png
-
-      - name: Generate Android icons & splash from /resources
-        run: npx @capacitor/assets generate --android --iconBackgroundColor "#0a1929" --iconBackgroundColorDark "#0a1929" --splashBackgroundColor "#0a1929" --splashBackgroundColorDark "#0a1929"
-
-      - name: Capacitor copy & sync (after assets)
+      - name: Capacitor copy & sync
         run: |
           npx cap copy android
           npx cap sync android
