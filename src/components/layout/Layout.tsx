@@ -1,7 +1,7 @@
 import React from 'react';
 import AppSidebar from './AppSidebar';
 import Footer from './Footer';
-import NavigationProgress from '@/components/NavigationProgress';
+
 import PageTransition from '@/components/PageTransition';
 import BottomNavigation from './BottomNavigation';
 import { useLocation } from 'react-router-dom';
