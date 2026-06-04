@@ -1,7 +1,7 @@
 import React from 'react';
 import AppSidebar from './AppSidebar';
 import Footer from './Footer';
-import NavigationProgress from '@/components/NavigationProgress';
+
 import PageTransition from '@/components/PageTransition';
 import BottomNavigation from './BottomNavigation';
 import { useLocation } from 'react-router-dom';
@@ -23,7 +23,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <SidebarProvider defaultOpen={!isMobile}>
-      <NavigationProgress />
+      
       <div className="min-h-screen flex w-full bg-background relative overflow-x-hidden">
         {/* Ambient glow effects - reduced on mobile for performance */}
         <div className="fixed inset-0 pointer-events-none overflow-hidden">
