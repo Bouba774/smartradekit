@@ -20,6 +20,17 @@ const isNative = (): boolean => {
 /** Keys that must persist across uninstall/update/reboot. */
 export const CRITICAL_KEYS = [
   'smart-trade-tracker-settings',     // vibration / sounds / fontSize / capital / currency
+  'stt-current-account-id',           // current active account used by AccountContext
+  'smart-trade-tracker-favorite-assets',
+  'smart-trade-tracker-pinned-assets',
+  'smart-trade-kit-calc-risk-percent',
+  'smart-trade-kit-calc-commission-per-lot',
+  'pipskit-add-trade-session',
+  'pipskit-pending-trade',
+  'pipskit-session-settings',
+  'theme',
+  'language',
+  'user_checklist_template',
   'pipskit-active-account',           // active account id
   'pipskit-favorites',                 // favorite assets
   'pipskit-calculator-prefs',         // calculator preferences

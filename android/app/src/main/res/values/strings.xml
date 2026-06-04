@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PipsKit</string>
+    <string name="title_activity_main">PipsKit</string>
+    <string name="package_name">app.lovable.c083a032f07147138f072f3c0dc36e56</string>
+    <string name="custom_url_scheme">app.lovable.c083a032f07147138f072f3c0dc36e56</string>
+    <string name="press_back_again">Appuyez encore pour quitter</string>
+    <string name="permission_storage_rationale_title">Accès aux médias requis</string>
+    <string name="permission_denied_settings">Activez les permissions Images, Vidéos et Audio dans les paramètres Android de PipsKit.</string>
+    <string name="permission_open_settings">Ouvrir les paramètres</string>
+    <string name="permission_cancel">Plus tard</string>
+    <string name="share_pdf_title">Partager le rapport PDF</string>
+</resources>
