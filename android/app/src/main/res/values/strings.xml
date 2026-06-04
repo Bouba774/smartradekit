@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PipsKit</string>
+    <string name="title_activity_main">PipsKit</string>
+    <string name="package_name">app.lovable.c083a032f07147138f072f3c0dc36e56</string>
+    <string name="custom_url_scheme">app.lovable.c083a032f07147138f072f3c0dc36e56</string>
+</resources>
