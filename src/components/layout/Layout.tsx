@@ -23,7 +23,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <SidebarProvider defaultOpen={!isMobile}>
-      <NavigationProgress />
+      
       <div className="min-h-screen flex w-full bg-background relative overflow-x-hidden">
         {/* Ambient glow effects - reduced on mobile for performance */}
         <div className="fixed inset-0 pointer-events-none overflow-hidden">
