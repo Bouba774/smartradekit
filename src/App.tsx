@@ -425,10 +425,28 @@ const AppContent = () => {
   );
 };
 
+const NativeBackBridge = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const isRoot = ['/dashboard', '/', '/auth'].includes(location.pathname);
+    (window as typeof window & { __pipskitCanGoBack?: () => boolean }).__pipskitCanGoBack = () => !isRoot;
+    (window as typeof window & { __pipskitGoBack?: () => void }).__pipskitGoBack = () => navigate(-1);
+    return () => {
+      delete (window as typeof window & { __pipskitCanGoBack?: () => boolean }).__pipskitCanGoBack;
+      delete (window as typeof window & { __pipskitGoBack?: () => void }).__pipskitGoBack;
+    };
+  }, [location.pathname, navigate]);
+
+  return null;
+};
+
 // Wrapper to use hooks inside BrowserRouter
 const AppWrapper = () => {
   return (
     <>
+      <NativeBackBridge />
       <AppContent />
       <CookieConsent />
     </>
