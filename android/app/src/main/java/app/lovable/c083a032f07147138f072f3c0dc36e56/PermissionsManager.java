@@ -80,6 +80,7 @@ public class PermissionsManager {
     }
 
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == REQ_NOTIFICATIONS) return; // silent: optional permission
         if (requestCode != REQ_MEDIA) return;
         boolean allGranted = grantResults.length > 0;
         for (int result : grantResults) allGranted = allGranted && result == PackageManager.PERMISSION_GRANTED;
