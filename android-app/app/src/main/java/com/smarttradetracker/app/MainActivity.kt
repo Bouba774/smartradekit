@@ -24,11 +24,12 @@ class MainActivity : AppCompatActivity() {
     private val tag = "PipsKitAndroid"
 
     companion object {
-        private const val WEB_URL = "https://smartradekit.lovable.app"
+        private const val WEB_URL = "https://pipskit.lovable.app"
         private val ALLOWED_HOSTS = listOf(
-            "smartradekit.lovable.app",
             "pipskit.lovable.app",
+            "smarttradekit.lovable.app",
             "lovable.app",
+            "lovableproject.com",
             "supabase.co",
             "supabase.com"
         )
