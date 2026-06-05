@@ -13,21 +13,46 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Setup Java 17
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
-          java-version: 17
+          java-version: 21
           distribution: temurin
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Install NPM dependencies
+        run: npm install --legacy-peer-deps
 
-      - name: Verify tracked android-app project
-        run: test -f android-app/app/src/main/AndroidManifest.xml
+      - name: Install Capacitor Assets generator
+        run: npm install --legacy-peer-deps --save-dev @capacitor/assets
+
+      - name: Build web app
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || secrets.SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY || secrets.SUPABASE_PUBLISHABLE_KEY || secrets.SUPABASE_ANON_KEY }}
+
+      - name: Verify tracked Android project
+        run: test -f android/app/src/main/AndroidManifest.xml
+
+      - name: Capacitor copy & sync
+        run: |
+          npx cap copy android
+          npx cap sync android
+          npx cap doctor android || true
+
+      - name: Force Java 21 in Gradle
+        run: |
+          echo "org.gradle.java.home=$JAVA_HOME" >> android/gradle.properties
+          echo "android.useAndroidX=true" >> android/gradle.properties
 
       - name: Generate signing keystore
-        working-directory: android-app
         run: |
+          cd android
           keytool -genkey -v \
             -keystore release.keystore \
             -storepass PipsKit2026 \
@@ -35,24 +60,67 @@ jobs:
             -keypass PipsKit2026 \
             -keyalg RSA -keysize 2048 -validity 10000 \
             -dname "CN=PipsKit, OU=Mobile, O=PipsKit, L=Paris, S=IDF, C=FR"
-          cat > keystore.properties <<EOF
-          storeFile=release.keystore
-          storePassword=PipsKit2026
-          keyAlias=smarttradekit
-          keyPassword=PipsKit2026
-          EOF
 
-      - name: Gradle wrapper permissions
-        working-directory: android-app
-        run: chmod +x gradlew
+      - name: Configure release signing
+        run: |
+          python3 << 'PYEOF'
+          import re
+          path = "android/app/build.gradle"
+          with open(path, "r") as f:
+              content = f.read()
+
+          if "signingConfigs" not in content:
+              bt = re.search(r'(\s*)buildTypes\s*\{', content)
+              if bt:
+                  indent = bt.group(1)
+                  block = (
+                      f"{indent}signingConfigs {{\n"
+                      f"{indent}    release {{\n"
+                      f"{indent}        storeFile file(\"../release.keystore\")\n"
+                      f"{indent}        storePassword \"PipsKit2026\"\n"
+                      f"{indent}        keyAlias \"smarttradekit\"\n"
+                      f"{indent}        keyPassword \"PipsKit2026\"\n"
+                      f"{indent}    }}\n"
+                      f"{indent}}}\n\n"
+                  )
+                  content = content[:bt.start()] + block + content[bt.start():]
+
+          if "signingConfig signingConfigs.release" not in content:
+              bt2 = re.search(r'buildTypes\s*\{', content)
+              if bt2:
+                  rel = re.search(r'release\s*\{', content[bt2.end():])
+                  if rel:
+                      pos = bt2.end() + rel.end()
+                      content = content[:pos] + "\n            signingConfig signingConfigs.release" + content[pos:]
+
+          # Force Java 21 compileOptions to match Capacitor Android 8 requirements
+          if "JavaVersion.VERSION_21" not in content:
+              content = re.sub(
+                  r'compileOptions\s*\{[^}]*\}',
+                  'compileOptions {\n        sourceCompatibility JavaVersion.VERSION_21\n        targetCompatibility JavaVersion.VERSION_21\n    }',
+                  content,
+                  flags=re.DOTALL,
+              )
+
+          with open(path, "w") as f:
+              f.write(content)
+          print("build.gradle patched")
+          PYEOF
+
+      - name: Gradle clean
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew clean --no-daemon
 
       - name: Build Release APK
-        working-directory: android-app
-        run: ./gradlew assembleRelease --no-daemon --stacktrace
+        run: |
+          cd android
+          ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: PipsKit-APK
-          path: android-app/app/build/outputs/apk/release/*.apk
+          path: android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error

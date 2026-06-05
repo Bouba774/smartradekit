@@ -6,9 +6,7 @@
         </trust-anchors>
     </base-config>
     <domain-config cleartextTrafficPermitted="false">
-        <domain includeSubdomains="true">pipskit.lovable.app</domain>
-        <domain includeSubdomains="true">smarttradekit.lovable.app</domain>
+        <domain includeSubdomains="true">smartradekit.lovable.app</domain>
         <domain includeSubdomains="true">lovable.app</domain>
-        <domain includeSubdomains="true">lovableproject.com</domain>
     </domain-config>
 </network-security-config>
