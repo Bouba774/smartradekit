@@ -58,6 +58,8 @@ export const CRITICAL_KEY_PREFIXES = [
 const isCriticalKey = (key: string): boolean => {
   if (CRITICAL_KEYS.includes(key)) return true;
   return CRITICAL_KEY_PREFIXES.some((p) => key.startsWith(p));
+};
+
 
 const safeLocalGet = (k: string): string | null => {
   try { return localStorage.getItem(k); } catch { return null; }
