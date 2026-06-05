@@ -31,11 +31,24 @@ public class PermissionsManager {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             return new String[] {
                 Manifest.permission.READ_MEDIA_IMAGES,
-                Manifest.permission.READ_MEDIA_VIDEO,
-                Manifest.permission.READ_MEDIA_AUDIO
+                Manifest.permission.READ_MEDIA_VIDEO
             };
         }
         return new String[] { Manifest.permission.READ_EXTERNAL_STORAGE };
+    }
+
+    public boolean hasNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true;
+        return ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS)
+            == PackageManager.PERMISSION_GRANTED;
+    }
+
+    public void maybeRequestNotificationsOnFirstLaunch() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return;
+        if (hasNotificationPermission() || prefs.getBoolean(KEY_ASKED_NOTIFS, false)) return;
+        prefs.edit().putBoolean(KEY_ASKED_NOTIFS, true).apply();
+        ActivityCompat.requestPermissions(activity,
+            new String[] { Manifest.permission.POST_NOTIFICATIONS }, REQ_NOTIFICATIONS);
     }
 
     public boolean hasMediaPermissions() {
