@@ -15,8 +15,10 @@ import androidx.core.content.ContextCompat;
 
 public class PermissionsManager {
     public static final int REQ_MEDIA = 1001;
+    public static final int REQ_NOTIFICATIONS = 1002;
     private static final String PREFS = "pipskit_permissions";
     private static final String KEY_ASKED_MEDIA = "asked_media_v2";
+    private static final String KEY_ASKED_NOTIFS = "asked_notifs_v1";
     private final Activity activity;
     private final SharedPreferences prefs;
 
