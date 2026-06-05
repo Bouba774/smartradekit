@@ -43,7 +43,21 @@ export const CRITICAL_KEYS = [
   'active-account-id',
   'favorite-assets',
   'calculator-prefs',
+  // Security / device identity — must survive cache clears
+  'smart-trade-tracker-session-settings',
+  'COMMISSION_PERSIST_KEY',
+  'user_checklist_template',
 ];
+
+// Prefix-based critical key matchers (per-user keys etc.)
+export const CRITICAL_KEY_PREFIXES = [
+  'biometric_credential_',
+  'smart-trade-tracker-known-devices-',
+];
+
+const isCriticalKey = (key: string): boolean => {
+  if (CRITICAL_KEYS.includes(key)) return true;
+  return CRITICAL_KEY_PREFIXES.some((p) => key.startsWith(p));
 
 const safeLocalGet = (k: string): string | null => {
   try { return localStorage.getItem(k); } catch { return null; }
