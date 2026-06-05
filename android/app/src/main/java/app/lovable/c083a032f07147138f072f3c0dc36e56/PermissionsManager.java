@@ -15,8 +15,10 @@ import androidx.core.content.ContextCompat;
 
 public class PermissionsManager {
     public static final int REQ_MEDIA = 1001;
+    public static final int REQ_NOTIFICATIONS = 1002;
     private static final String PREFS = "pipskit_permissions";
     private static final String KEY_ASKED_MEDIA = "asked_media_v2";
+    private static final String KEY_ASKED_NOTIFS = "asked_notifs_v1";
     private final Activity activity;
     private final SharedPreferences prefs;
 
@@ -29,11 +31,24 @@ public class PermissionsManager {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             return new String[] {
                 Manifest.permission.READ_MEDIA_IMAGES,
-                Manifest.permission.READ_MEDIA_VIDEO,
-                Manifest.permission.READ_MEDIA_AUDIO
+                Manifest.permission.READ_MEDIA_VIDEO
             };
         }
         return new String[] { Manifest.permission.READ_EXTERNAL_STORAGE };
+    }
+
+    public boolean hasNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true;
+        return ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS)
+            == PackageManager.PERMISSION_GRANTED;
+    }
+
+    public void maybeRequestNotificationsOnFirstLaunch() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return;
+        if (hasNotificationPermission() || prefs.getBoolean(KEY_ASKED_NOTIFS, false)) return;
+        prefs.edit().putBoolean(KEY_ASKED_NOTIFS, true).apply();
+        ActivityCompat.requestPermissions(activity,
+            new String[] { Manifest.permission.POST_NOTIFICATIONS }, REQ_NOTIFICATIONS);
     }
 
     public boolean hasMediaPermissions() {
@@ -65,6 +80,7 @@ public class PermissionsManager {
     }
 
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == REQ_NOTIFICATIONS) return; // silent: optional permission
         if (requestCode != REQ_MEDIA) return;
         boolean allGranted = grantResults.length > 0;
         for (int result : grantResults) allGranted = allGranted && result == PackageManager.PERMISSION_GRANTED;

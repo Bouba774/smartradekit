@@ -21,6 +21,7 @@ public class MainActivity extends BridgeActivity {
         if (getBridge() != null && getBridge().getWebView() != null) {
             getBridge().getWebView().addJavascriptInterface(new PipsKitJsBridge(this, permissions, open -> modalOpen = open), "AndroidBridge");
             getBridge().getWebView().postDelayed(() -> permissions.maybeRequestMediaOnFirstLaunch(), 1200);
+            getBridge().getWebView().postDelayed(() -> permissions.maybeRequestNotificationsOnFirstLaunch(), 2400);
         }
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override public void handleOnBackPressed() { handleNativeBack(); }
