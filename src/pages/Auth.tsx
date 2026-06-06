@@ -44,13 +44,23 @@ const Auth: React.FC = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isAppleLoading, setIsAppleLoading] = useState(false);
 
-  // Enable Turnstile only if not on localhost
-  const isLocalhost = (): boolean => {
+  // Enable Turnstile everywhere EXCEPT real web dev (localhost in a normal browser).
+  // The Capacitor Android WebView reports hostname === 'localhost' too, so we must
+  // explicitly opt the native APK back into captcha protection.
+  const isCapacitorNative = (): boolean => {
+    const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string } }).Capacitor;
+    if (!cap) return false;
+    if (typeof cap.isNativePlatform === 'function') return cap.isNativePlatform();
+    if (typeof cap.getPlatform === 'function') return cap.getPlatform() !== 'web';
+    return false;
+  };
+  const isWebDevHost = (): boolean => {
+    if (isCapacitorNative()) return false;
     const hostname = window.location.hostname;
     return hostname === 'localhost' || hostname === '127.0.0.1';
   };
-  
-  const hasTurnstile = !isLocalhost();
+
+  const hasTurnstile = !isWebDevHost();
 
   const emailSchema = z.string().email(t('invalidEmail'));
   const passwordSchema = createPasswordSchema(language);

@@ -4,6 +4,23 @@ import "./index.css";
 import { logAndroidStep, markAppReady } from "./lib/androidDiagnostics";
 import { nativeStorage } from "./lib/nativeStorage";
 
+// Native StatusBar setup: keep the system status bar visible (do NOT overlap WebView)
+// so the app content never bleeds under the clock/battery icons on Android.
+void (async () => {
+  try {
+    const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+    if (cap?.isNativePlatform?.()) {
+      const { StatusBar, Style } = await import("@capacitor/status-bar");
+      await StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+      await StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
+      await StatusBar.setBackgroundColor({ color: "#0a1929" }).catch(() => {});
+    }
+  } catch (e) {
+    logAndroidStep("StatusBar setup failed", e, "warn");
+  }
+})();
+
+
 // Hydrate the localStorage mirror from Capacitor Preferences (native only),
 // then migrate any legacy localStorage values into the durable native store.
 // Fire-and-forget: it must NEVER block the first paint.
