@@ -16,8 +16,10 @@ import TurnstileWidget from '@/components/TurnstileWidget';
 import { useConnectionSecurity } from '@/hooks/useConnectionSecurity';
 import { useEmailValidation } from '@/hooks/useEmailValidation';
 
-// Cloudflare Turnstile Site Key (public key, safe to expose in client code)
-const TURNSTILE_SITE_KEY = '0x4AAAAAACG-_s2EZYR5V8_J';
+// Cloudflare Turnstile Site Key (public, safe to expose). Source of truth =
+// VITE_TURNSTILE_SITE_KEY (configured in Cloud secrets / CI). The hardcoded
+// fallback is only used when the env var is missing at build time.
+const TURNSTILE_SITE_KEY = (import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined) || '0x4AAAAAACG-_s2EZYR5V8_J';
 
 type AuthStep = 'credentials' | 'email_sent' | 'confirm_email';
 
