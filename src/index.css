@@ -675,3 +675,14 @@ body.landing-page * {
 @keyframes pk-page-in {
   to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
+
+/* ---- Android / iOS Safe Area (status bar + gesture bar) ---- */
+/* Capacitor sets <html class="capacitor-android|ios"> via the runtime, but */
+/* we also rely on env(safe-area-inset-*) which is available in any modern WebView. */
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    background-color: hsl(var(--background));
+  }
+}
